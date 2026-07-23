@@ -1,19 +1,29 @@
-target/
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-pom.xml.next
-release.properties
-dependency-reduced-pom.xml
-buildNumber.properties
-.mvn/timing.properties
-# https://github.com/takari/maven-wrapper#usage-without-binary-jar
-.mvn/wrapper/maven-wrapper.jar
+# Eclipse
+/.classpath
+/.project
+/.settings
 
-# Eclipse m2e generated files
-# Eclipse Core
-.project
-# JDT-specific (Eclipse Java Development Tools)
-.classpath
-# VSCode settings
-.vscode/
+# NetBeans
+/nbproject
+
+# Gradle
+/.gradle
+/build
+
+# vim
+.*.sw[a-p]
+
+# Mac filesystem dust
+/.DS_Store
+
+# IntelliJ
+/.idea
+*.iml
+*.ipr
+*.iws
+
+/.vscode
+/.claude
+
+# run-server-plugin dev server (downloaded Paper jar, worlds, configs)
+/run

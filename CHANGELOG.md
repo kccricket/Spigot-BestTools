@@ -1,6 +1,9 @@
 # Changelog
 
 ## 2.2.1
+- Rebranded to BestestTool (package `net.kccricket.bestesttool`); moved to a Gradle/Paper-API
+  toolchain (dropping Spigot API and Maven), raised the minimum server version to Paper 1.20.5,
+  and switched update checking from SpigotMC to Modrinth
 - Got rid of ChestSortAPI as shaded dependency
 - Fixed leaves not using the proper tool
 - Fixed BestTools sometimes not recognizing interaction when mining cobblestone generators for hours
