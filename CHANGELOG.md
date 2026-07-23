@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+- Renamed permission nodes to the `bestesttool.*` prefix (`bestesttool.use`, `bestesttool.refill`,
+  `bestesttool.reload`, `bestesttool.debug`); the old `besttools.*` nodes still work as aliases, so
+  existing permission grants keep working unchanged
+- Fixed a crash on plugin load when `global-block-blacklist` contained an invalid material name
+- Fixed `swordOnMobs` and the favorite-slot setting not surviving a server restart
+- Fixed `/besttools performance` (mixed case) not toggling the performance test
+- Removed a redundant double permission check on `/refill reload`
+- Removed the one-time flat-file playerdata migration (dead weight now that settings persist to
+  the player's PersistentDataContainer) and assorted dead/commented-out code left over from the
+  BestTools → BestestTool rebrand
+- Added a unit test suite (JUnit 5 + MockBukkit) covering tool selection, commands, and permission
+  checks
+
 ## 2.2.1
 - Rebranded to BestestTool (package `net.kccricket.bestesttool`); moved to a Gradle/Paper-API
   toolchain (dropping Spigot API and Maven), raised the minimum server version to Paper 1.20.5,
@@ -8,6 +22,11 @@
 - Fixed leaves not using the proper tool
 - Fixed BestTools sometimes not recognizing interaction when mining cobblestone generators for hours
 - Added config option "consider-swords-for-cobwebs" (default: false)
+- Removed pre-1.20.5 compatibility code now that the minimum server version is Paper 1.20.5:
+  the runtime MC-version probe, string-based `Material` lookups (replaced with compile-time
+  `Material` references), the version-guarded `try`/`catch` blocks around `Tag`/`Material`
+  registration, and the `tags/v1_17` helper (its logic is now covered directly by the
+  `Tag.MINEABLE_*` tags)
 
 ## 2.2.0
 - Added config option "consider-swords-for-cobwebs"

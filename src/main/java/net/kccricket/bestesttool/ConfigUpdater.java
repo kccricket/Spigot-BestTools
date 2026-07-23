@@ -69,17 +69,7 @@ public class ConfigUpdater {
         ArrayList<String> newLines = new ArrayList<>();
         for (String line : linesInDefaultConfig) {
             String newline = line;
-            if (line.startsWith("config-version:")) {
-
-            }
-
-            /*else if (line.startsWith("-")) {
-                continue;
-            } else if (line.startsWith(" ")) {
-                continue;
-            }*/
-
-            else if (line.startsWith("global-block-blacklist:")) {
+            if (line.startsWith("global-block-blacklist:")) {
                 newline = null;
                 newLines.add("global-block-blacklist:");
                 if (main.toolHandler != null && main.toolHandler.globalBlacklist != null) {

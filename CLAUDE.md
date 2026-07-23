@@ -4,56 +4,60 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-BestTools is a Spigot/Paper Minecraft server plugin ("Auto-Tool" plugin) that automatically switches
+BestestTool is a Paper Minecraft server plugin ("Auto-Tool" plugin) that automatically switches
 a player's held item to the best tool for the block they're about to break, or the best weapon when
-attacking a mob. It also has an optional hotbar "Refill" feature. Package root: `de.jeff_media.BestTools`.
+attacking a mob. It also has an optional hotbar "Refill" feature. Package root: `net.kccricket.bestesttool`.
 
 ## Build
 
-Maven project, no wrapper.
+Gradle project, uses the wrapper.
 
 ```bash
-mvn clean package
+./gradlew build
 ```
 
-- Produces a shaded jar at `target/BestTools-<version>.jar` (final name set via `maven-jar-plugin`, shading via
-  `maven-shade-plugin`). Shaded/relocated dependencies: `com.jeff_media.updatechecker`, `org.bstats`,
-  `com.jeff_media.morepersistentdatatypes` (relocated under `de.jeff_media.BestTools.*`).
-- Compiles to Java 11 (`maven.compiler.release`). Target Spigot API is `1.21.1-R0.1-SNAPSHOT`, but
-  `plugin.yml` declares `api-version: "1.16"` and the plugin is meant to stay compatible back to 1.13
-  (see `COMPATABILITY.md`) — do not casually raise the minimum API version.
+- Produces a shaded jar at `build/libs/BestestTool-<version>.jar` via the Shadow plugin.
+  Shaded/relocated dependencies: `org.bstats`, `com.jeff-media:MorePersistentDataTypes` (relocated under
+  `net.kccricket.bestesttool.*`).
+- Compiles to Java 21 (`options.release` in `build.gradle.kts`), built against
+  `io.papermc.paper:paper-api:26.2.build.+`. `plugin.yml` declares `api-version: "1.20.5"`, the minimum
+  supported server version (see `COMPATABILITY.md`) — do not casually lower it back below 1.20.5, since
+  the codebase now assumes direct `Material`/`Tag` references that only exist from that floor onward.
 - There are no automated tests in this repo. Verify changes by building the jar and manually testing
-  against a running Spigot/Paper server, or by reasoning carefully through the version-compatibility
-  branches described below.
-- `.vscode/launch.json` is configured for remote debug attach on port 5005 (i.e. run/attach a local
-  test server yourself; there's no built-in run task).
+  against a running Paper server — `./gradlew runServer` spins up a local dev server with the plugin
+  already loaded (see the `org.bxteam.runserver` config in `build.gradle.kts`; override the version with
+  `-PmcVersion=<version>`).
+- `.vscode/launch.json` is configured for remote debug attach on port 5005.
 
-## Cross-version compatibility model
+## Material/Tag model
 
-This is the most important architectural constraint in the codebase: BestTools ships one jar that must
-run on Spigot/Paper 1.13 through current, including forks like Leaves/Purpur where APIs can differ. This
-shapes almost every file under `BestToolsUtils.java` and related classes:
+BestestTool's floor is Paper 1.20.5, so `BestToolsUtils.initMap()` builds its Material→Tool lookup table
+using direct, compile-time references — no more per-version compatibility scaffolding:
 
-- **Materials are looked up by string name**, not by compile-time `Material` enum references, via
-  `BestToolsUtils.addToMap(String, Tool)` → `Material.getMaterial(name)`. This lets the jar load on
-  older servers where newer Material constants don't exist — an unknown material just gets skipped
-  (logged via `main.debug(...)`), rather than crashing class loading.
-- **Tag-based bulk registration is wrapped in try/catch for `NoSuchFieldError` / `NoClassDefFoundError`**,
-  grouped by the Minecraft version that introduced each `Tag` (see the `// Tags for 1.14+`, `// Tags for
-  1.15+`, `// Tags for 1.16+`, `// 1.17` comment blocks in `BestToolsUtils.initMap()`). When adding
-  support for a new version's blocks/tags, add a new guarded block rather than editing older ones.
-  `tags/v1_17.java` is an example of isolating version-specific `Tag` collection logic in its own class.
-  There's a similar deliberate `// mineable/ tag catchalls` pattern using `Tag.MINEABLE_AXE`,
-  `Tag.MINEABLE_HOE`, `Tag.MINEABLE_PICKAXE`, `Tag.MINEABLE_SHOVEL` as a catch-all/future-proofing layer.
+- Materials are referenced directly as `Material.XXX` enum constants. A material that doesn't exist on
+  the current Paper API is a compile error, not a silent runtime skip — this is a deliberate trade-off
+  for correctness/clarity now that the floor is a modern, actively-maintained API.
+- Bulk registration goes through `Tag`-based `tagToMap(...)` calls (e.g. `Tag.LOGS`, `Tag.LEAVES`,
+  `Tag.MINEABLE_AXE/HOE/PICKAXE/SHOVEL`) run directly, with no `try`/`catch` version guards — every `Tag`
+  referenced here has existed since 1.17 or earlier, well within the 1.20.5+ floor.
+- Individual `addToMap(Material, Tool)` calls fill in exceptions the tags don't (or shouldn't) cover:
+  torches/instant-break blocks, crops (`Tool.NONE`), leaves/wool/cobweb (`Tool.SHEARS`), and a handful of
+  materials verified (via a live-server `toolMap` dump) to need an explicit override even though a
+  `Tag.MINEABLE_*` pass runs at the end of `initMap()` (e.g. `GLOWSTONE`, `MOVING_PISTON`,
+  `BAMBOO_SAPLING` are not covered by any `MINEABLE_*` tag).
 - Enchantments are looked up dynamically through the Bukkit `Registry.ENCHANTMENT` (`EnchantmentUtils.
   getEnchantment`), not deprecated static `Enchantment` fields.
-- `Main.getMcVersion()` parses `Bukkit.getVersion()` to get a numeric minor version (e.g. 17 for 1.17)
-  for any runtime version checks still needed outside the Tag/Material mechanisms above.
-- When adding new block/tool mappings, prefer extending `BestToolsUtils.initMap()` following the existing
-  pattern (Tag-based bulk registration first, guarded by try/catch, then individual `addToMap(...)` calls
-  for exceptions/overrides). Order matters in several places — see the `WATCH OUT FOR ORDER` /
-  `Order important` comments, since some Tag registrations intentionally get overwritten by more specific
-  ones immediately after (e.g. stone buttons/doors/trapdoors get PICKAXE after AXE).
+- When adding new block/tool mappings, prefer extending `BestToolsUtils.initMap()`: Tag-based bulk
+  registration first, then individual `addToMap(...)` calls for exceptions/overrides. Order matters in
+  several places — see the `WATCH OUT FOR ORDER` / `Order important` comments, since some Tag
+  registrations intentionally get overwritten by more specific ones immediately after (e.g. stone
+  buttons/doors/trapdoors get PICKAXE after AXE). If you think an explicit mapping is now redundant with
+  a `Tag.MINEABLE_*` catch-all, verify with a before/after `toolMap` dump on a live server rather than
+  removing it on inspection alone — some overrides exist for materials/technical blocks the `MINEABLE_*`
+  tags don't cover.
+- `Material.getMaterial(String)` still appears in `Blacklist.java` and `CommandBlacklist.java` — that's
+  parsing user/config input (arbitrary strings a player typed), not version-compat scaffolding, and
+  should stay as-is.
 
 ## Runtime architecture
 

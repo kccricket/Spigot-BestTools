@@ -10,7 +10,7 @@ public class CommandDebug {
     static void debug(CommandSender sender, Command command, Main main, String arg) {
 
 
-        if (!sender.hasPermission("besttools.debug")) {
+        if (!PermissionUtils.has(sender,"debug")) {
             sender.sendMessage(ChatColor.YELLOW + main.getName() + ": you don't have permission to use this command.");
             return;
         }
@@ -22,7 +22,7 @@ public class CommandDebug {
                 sender.sendMessage(ChatColor.GREEN + main.getName() + " debug mode has been disabled.");
             }
         }
-        else if(arg.equals("performance")) {
+        else if(arg.equalsIgnoreCase("performance")) {
             main.measurePerformance=!main.measurePerformance;
             if(main.measurePerformance) {
                 sender.sendMessage(ChatColor.RED + main.getName() + " performance test has been enabled.");

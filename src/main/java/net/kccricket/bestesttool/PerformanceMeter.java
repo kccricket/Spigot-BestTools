@@ -65,7 +65,7 @@ public class PerformanceMeter {
         if(calcTimePercent==0) color2 = ChatColor.RED;
 
         for(Player p : main.getServer().getOnlinePlayers()) {
-            if(p.hasPermission("besttools.debug"))
+            if(PermissionUtils.has(p,"debug"))
             p.sendMessage(String.format(
                     "Elapsed: %.2f ms, BestTools: %3.2f ms or %s%2.3f %%§r\n"
                     +"%d / %d queries served by cache %s(%3d %%)\n",

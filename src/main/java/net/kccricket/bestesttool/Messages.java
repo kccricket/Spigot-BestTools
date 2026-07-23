@@ -24,8 +24,6 @@ public class Messages {
             GUI_REFILL_ENABLED,
             GUI_REFILL_DISABLED,
             GUI_FAVORITE_SLOT;
-            //GUI_BESTTOOLS_FAVORITE_SLOT,
-            //GUI_BESTTOOLS_HOTBAR_ONLY;
 
     final String
             GUI_FAVORITE_SLOT_LORE,

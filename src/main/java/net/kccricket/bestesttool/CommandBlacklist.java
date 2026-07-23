@@ -69,7 +69,6 @@ public class CommandBlacklist implements CommandExecutor {
                 return true;
             case "add":
             case "remove":
-                main.getPlayerSetting(p).changed=true;
                 if (args.length == 1) {
                     if (currentItem.getType() == Material.AIR) {
                         Messages.sendMessage(p,main.messages.BL_NOTHINGSPECIFIED);

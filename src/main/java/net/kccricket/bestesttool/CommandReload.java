@@ -9,7 +9,7 @@ public class CommandReload {
     static void reload(CommandSender sender, Command command, Main main) {
 
 
-            if (!sender.hasPermission("besttools.reload")) {
+            if (!PermissionUtils.has(sender,"reload")) {
                 sender.sendMessage(ChatColor.YELLOW + main.getName() + ": you don't have permission to use this command.");
                 return;
             }

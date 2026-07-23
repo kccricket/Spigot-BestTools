@@ -3,7 +3,6 @@ package net.kccricket.bestesttool;
 import net.kccricket.bestesttool.placeholders.BestToolsPlaceholders;
 import net.kccricket.bestesttool.update.UpdateChecker;
 
-import org.apache.commons.lang3.math.NumberUtils;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -15,8 +14,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Main extends JavaPlugin {
 
@@ -31,8 +28,6 @@ public class Main extends JavaPlugin {
     }
 
     final int configVersion = 17;
-
-    final int mcVersion = getMcVersion();
 
     BestToolsHandler toolHandler;
     BestToolsUtils toolUtils;
@@ -77,46 +72,25 @@ public class Main extends JavaPlugin {
 
     public PlayerSetting getPlayerSetting(Player player) {
 
-        //System.out.println("Getting player setting...");
-
         if(Objects.requireNonNull(playerSettings,"PlayerSettings must not be null").containsKey(player.getUniqueId())) {
-            //System.out.println("Found loaded setting");
             return playerSettings.get(player.getUniqueId());
         }
 
-        PlayerSetting setting;
-
-
-        File file = getPlayerDataFile(player.getUniqueId());
-        if(file.exists()) {
-            //System.out.println("Getting setting from legacy file");
-            debug("Loading player setting for "+player.getName()+" from file");
-            setting = new PlayerSetting(player,file);
-            file.delete();
-        } else {
-            //System.out.println("Creating setting from PDC");
-            debug("Creating new player setting for "+player.getName());
-            setting = new PlayerSetting(player,
-                    getConfig().getBoolean("besttools-enabled-by-default"),
-                    getConfig().getBoolean("refill-enabled-by-default"),
-                    getConfig().getBoolean("hotbar-only"),
-                    getConfig().getInt("favorite-slot"),
-                    getConfig().getBoolean("use-sword-on-hostile-mobs"));
-        }
+        debug("Creating new player setting for "+player.getName());
+        PlayerSetting setting = new PlayerSetting(player,
+                getConfig().getBoolean("besttools-enabled-by-default"),
+                getConfig().getBoolean("refill-enabled-by-default"),
+                getConfig().getBoolean("hotbar-only"),
+                getConfig().getInt("favorite-slot"),
+                getConfig().getBoolean("use-sword-on-hostile-mobs"));
         playerSettings.put(player.getUniqueId(),setting);
         return setting;
-    }
-
-    File getPlayerDataFile(UUID uuid) {
-        return new File(getDataFolder()+File.separator+"playerdata"+File.separator+uuid.toString()+".yml");
     }
 
     void load(boolean reload) {
 
         getDataFolder().mkdir();
         saveDefaultConfig();
-        File playerdataFolder = new File(getDataFolder()+ File.separator+"playerdata");
-        playerdataFolder.mkdir();
 
         if(reload) {
             updateChecker.stop();
@@ -211,15 +185,4 @@ public class Main extends JavaPlugin {
         getLogger().warning("==============================================");
     }
 
-    // Returns 16 for 1.16, etc.
-    static int getMcVersion() {
-        Pattern p = Pattern.compile("^1\\.(\\d*)");
-        Matcher m = p.matcher((Bukkit.getVersion()));
-        int version = -1;
-        while(m.find()) {
-            if(NumberUtils.isCreatable(m.group(1)))
-                version = Integer.parseInt(m.group(1));
-        }
-        return version;
-    }
 }

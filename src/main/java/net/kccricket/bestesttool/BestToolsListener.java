@@ -43,7 +43,7 @@ public class BestToolsListener implements Listener {
         if (!(e.getDamager() instanceof Player)) return;
         main.debug("EntityDamageByEntity 2");
         Player p = (Player) e.getDamager();
-        if(!p.hasPermission("besttools.use")) return;
+        if(!PermissionUtils.has(p,"use")) return;
         main.debug("EntityDamageByEntity 3");
         PlayerSetting playerSetting = main.getPlayerSetting(p);
         if(!playerSetting.isBestToolsEnabled()) return;
@@ -114,7 +114,7 @@ public class BestToolsListener implements Listener {
             return;
         }
         Player p = event.getPlayer();
-        if(!p.hasPermission("besttools.use")) {
+        if(!PermissionUtils.has(p,"use")) {
             //main.meter.add(st);
             return;
         }
@@ -161,7 +161,7 @@ public class BestToolsListener implements Listener {
             playerSetting.getBtcache().validate(block.getType());
             return;
         }
-        switchToBestTool(p, bestTool,playerSetting.isHotbarOnly(),block.getType()/*,playerSetting.getFavoriteSlot()*/);
+        switchToBestTool(p, bestTool,playerSetting.isHotbarOnly(),block.getType());
         playerSetting.getBtcache().validate(block.getType());
         main.meter.add(st,false);
     }

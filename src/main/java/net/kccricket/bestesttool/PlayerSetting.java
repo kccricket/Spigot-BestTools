@@ -5,7 +5,6 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import java.io.File;
 
 public class PlayerSetting {
 
@@ -26,9 +25,6 @@ public class PlayerSetting {
 
         private boolean hasSeenBestToolsMessage = false;
         private boolean hasSeenRefillMessage = false;
-
-        // Do we have to save these settings?
-        boolean changed = false;
 
         private final BestToolsCache btcache = new BestToolsCache();
 
@@ -71,45 +67,20 @@ public class PlayerSetting {
                 return player.getInventory().getHeldItemSlot();
         }
 
-        PlayerSetting(Player player, File file) {
-                //System.out.println("New PlayerSetting player, file");
-                this.player = player;
-                YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
-                blacklist = new Blacklist(yaml.getStringList("blacklist"));
-                this.bestToolsEnabled = yaml.getBoolean("bestToolsEnabled",false);
-                this.hasSeenBestToolsMessage = yaml.getBoolean("hasSeenBestToolsMessage",false);
-                this.hasSeenRefillMessage = yaml.getBoolean("hasSeenRefillMessage",false);
-                this.refillEnabled = yaml.getBoolean("refillEnabled",false);
-                this.hotbarOnly = yaml.getBoolean("hotbarOnly",true);
-                this.swordOnMobs = yaml.getBoolean("swordOnMobs",true);
-                this.favoriteSlot = yaml.getInt("favoriteSlot",main.getConfig().getInt("favorite-slot"));
-                main.debug("Loaded player setting from file "+file.getPath());
-
-                getPDCValues(player);
-        }
-
         private void getPDCValues(Player player) {
-                //System.out.println("getPDCValues player");
                 if(player.getPersistentDataContainer().has(DATA, DataType.FILE_CONFIGURATION)) {
-                        //System.out.println("Player has saved data, loading...");
                         FileConfiguration conf = player.getPersistentDataContainer().get(DATA, DataType.FILE_CONFIGURATION);
                         this.bestToolsEnabled = conf.getBoolean("bestToolsEnabled");
-                        //System.out.println("Enabled: " + bestToolsEnabled);
                         this.hasSeenBestToolsMessage = conf.getBoolean("hasSeenBestToolsMessage");
                         this.hasSeenRefillMessage = conf.getBoolean("hasSeenRefillMessage");
                         this.refillEnabled = conf.getBoolean("refillEnabled");
                         this.hotbarOnly = conf.getBoolean("hotbarOnly");
-                        //this.swordOnMobs = conf.getBoolean("swordOnMobs");
-                        //this.favoriteSlot = conf.getInt("favoriteSlot");
+                        this.swordOnMobs = conf.getBoolean("swordOnMobs");
+                        this.favoriteSlot = conf.getInt("favoriteSlot");
                 }
         }
 
-        // private static <T,Z> Z getPdc(Player player, NamespacedKey key, PersistentDataType<T,Z> type, Z defaultValue) {
-        //         return player.getPersistentDataContainer().getOrDefault(key,type,defaultValue);
-        // }
-
         private void save() {
-                //System.out.println("Saving to PDC...");
                 FileConfiguration conf = new YamlConfiguration();
                 conf.set("blacklist",blacklist.toStringList());
                 conf.set("bestToolsEnabled",bestToolsEnabled);
@@ -117,8 +88,8 @@ public class PlayerSetting {
                 conf.set("hasSeenRefillMessage",hasSeenRefillMessage);
                 conf.set("refillEnabled",refillEnabled);
                 conf.set("hotbarOnly",hotbarOnly);
-                //conf.set("swordOnMobs",swordOnMobs);
-                //conf.set("favoriteSlot",main.getConfig().getInt("favorite-slot"));
+                conf.set("swordOnMobs",swordOnMobs);
+                conf.set("favoriteSlot",favoriteSlot);
                 player.getPersistentDataContainer().set(DATA,DataType.FILE_CONFIGURATION,conf);
         }
 

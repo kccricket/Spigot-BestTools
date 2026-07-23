@@ -55,7 +55,7 @@ public class RefillListener implements Listener {
 
         main.debug("Attempting to refill "+mat.name());
 
-        if (!p.hasPermission("besttools.refill")) return;
+        if (!PermissionUtils.has(p,"refill")) return;
         if (!playerSetting.isRefillEnabled()) {
             if (!playerSetting.isHasSeenRefillMessage()) {
                 Messages.sendMessage(p,main.messages.MSG_REFILL_USAGE);

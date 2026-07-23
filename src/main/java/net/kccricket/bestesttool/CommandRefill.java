@@ -24,11 +24,12 @@ public class CommandRefill implements CommandExecutor, TabCompleter {
 
         Player p;
 
+        if (!PermissionUtils.has(sender,"refill")) {
+            sender.sendMessage(ChatColor.YELLOW + main.getName() + ": you don't have permission to use this command.");
+            return true;
+        }
+
         if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
-            if(!sender.hasPermission("besttools.reload")) {
-                sender.sendMessage(ChatColor.YELLOW + main.getName() + ": you don't have permission to use this command.");
-                return true;
-            }
             CommandReload.reload(sender,command,main);
             return true;
         }

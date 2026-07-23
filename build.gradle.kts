@@ -43,9 +43,19 @@ dependencies {
     // MorePersistentDataTypes is bundled and relocated by Shadow
     implementation("com.jeff-media:MorePersistentDataTypes:2.4.0")
 
-    // Used once each (NumberUtils, WordUtils) — bundled, not relocated
-    implementation("org.apache.commons:commons-lang3:3.16.0")
+    // Used for WordUtils — bundled, not relocated
     implementation("org.apache.commons:commons-text:1.12.0")
+
+    // Test dependencies — MockBukkit registers the vanilla Material/Tag/enchantment registries
+    // the tool-selection logic depends on; plain Mockito can't fake those out.
+    // MockBukkit's newest published data set (mockbukkit-v26.1.2) trails the paper-api version
+    // used to compile the plugin (26.2.build.+); pin the *test* classpath's paper-api to the
+    // latest stable 26.1.2 build so MockBukkit's registry data actually matches. Bump this
+    // together with the MockBukkit coordinate below once a mockbukkit-v26.2 artifact exists.
+    testImplementation("io.papermc.paper:paper-api:26.1.2.build.74-stable")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.1.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v26.1.2:4.114.0")
 }
 
 // Emit Java 21 bytecode regardless of the JDK used to compile.
@@ -62,6 +72,26 @@ configurations.compileClasspath {
     attributes {
         attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, Runtime.version().feature())
     }
+}
+
+// Same override, mirrored onto the test classpaths — otherwise resolving MockBukkit's paper-api
+// dependency for the test source set hits the identical Java-25-vs-21 mismatch.
+configurations.testCompileClasspath {
+    attributes {
+        attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, Runtime.version().feature())
+    }
+}
+configurations.testRuntimeClasspath {
+    attributes {
+        attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, Runtime.version().feature())
+    }
+}
+
+tasks.test {
+    useJUnitPlatform()
+    // The test classpath runs bStats' unrelocated org.bstats.* classes directly (relocation only
+    // happens in the shadow jar), which would otherwise trip bStats' own anti-copy-paste check.
+    systemProperty("bstats.relocatecheck", "false")
 }
 
 // Filter only plugin.yml — it's the only resource that contains a ${project.version} token.

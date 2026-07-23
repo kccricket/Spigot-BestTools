@@ -30,19 +30,33 @@ commands:
       /<command> bl remove <items...> -- Remove items from your blacklist
       /<command> bl reset -- Removes all items from your blacklist
     aliases: [ bt, besttool ]
-    permission: besttools.use
   refill:
     description: Toggle Refill
     usage: |
       /<command> -- Toggle automatically refilling your hotbar
-    aliases: [ rf ] 
-    permission: besttools.refill
+    aliases: [ rf ]
 permissions:
-  besttools.use:
+  bestesttool.use:
     description: Allows using /besttools
-  besttools.refill:
+  bestesttool.refill:
     description: Allows using /refill
-  besttools.reload:
+  bestesttool.reload:
     description: Allows to reload the config via /besttools reload
-  besttools.debug:
+  bestesttool.debug:
     description: Allows to enable the debug mode via /besttools debug and the performance test via /besttools performance
+  besttools.use:
+    description: "Legacy alias for bestesttool.use"
+    children:
+      bestesttool.use: true
+  besttools.refill:
+    description: "Legacy alias for bestesttool.refill"
+    children:
+      bestesttool.refill: true
+  besttools.reload:
+    description: "Legacy alias for bestesttool.reload"
+    children:
+      bestesttool.reload: true
+  besttools.debug:
+    description: "Legacy alias for bestesttool.debug"
+    children:
+      bestesttool.debug: true
