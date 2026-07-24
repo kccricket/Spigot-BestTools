@@ -44,18 +44,39 @@ public class MainConfig implements ManagedConfig {
 
     @Override
     public void reload() {
-        // If the file was deleted mid-session, reloadConfig() loads an empty config; saveConfig()
-        // (via applyDefaults()/load()) then recreates it with bundled defaults.
-        plugin.reloadConfig();
         load();
     }
 
+    /**
+     * {@code saveDefaultConfig()} raw-copies the bundled {@code config.yml} to disk byte-for-byte
+     * on a fresh install (or after a mid-session delete) — this is what actually preserves prose
+     * that isn't attached to any single key (section banners, the Commands/Permissions/
+     * Placeholders documentation blocks): those have no key path for
+     * {@link ResourceUpdater#copyMissingKeyComments} to hang a comment on, so relying on
+     * {@code copyDefaults(true)} alone to synthesize the whole file from scratch on first install
+     * silently drops them. The explicit {@code reloadConfig()} after it ensures {@code getConfig()}
+     * reflects whatever was just (maybe) written — needed because a prior {@code reloadConfig()}
+     * call (e.g. this method being invoked from an admin reload) can otherwise leave {@code
+     * getConfig()} pointing at a stale empty in-memory config from before the raw copy happened.
+     * {@code copyDefaults(true)} + {@code copyMissingKeyComments} then only ever have real work to
+     * do on an upgrade — an existing on-disk file missing a key a newer version added — which is
+     * exactly the synthetic-reconstruction case they're designed and tested for.
+     */
     private void applyDefaults() {
+        plugin.saveDefaultConfig();
+        plugin.reloadConfig();
         plugin.getConfig().options().copyDefaults(true);
         ResourceUpdater.copyMissingKeyComments(plugin.getConfig(), plugin.getConfig().getDefaults());
     }
 
-    /** Clamps an out-of-range {@code defaults.favorite_slot} back to the default (8), warning once. */
+    /**
+     * Clamps an out-of-range {@code defaults.favorite_slot} back to the default (8), warning once,
+     * and corrects {@code debug_level} if YAML 1.1 parsed the bundled default's bare {@code OFF} as
+     * the boolean {@code false} (YAML 1.1 treats {@code OFF}/{@code ON}/{@code YES}/{@code NO} as
+     * boolean literals) — otherwise {@code getString("debug_level")} would auto-convert that boolean
+     * to the string {@code "false"}, which {@code DebugLevel.parse} rejects. Mirrors ClickSorted's
+     * MainConfig fix for the identical bundled-default gotcha.
+     */
     private void normalizeValues() {
         int favoriteSlot = plugin.getConfig().getInt("defaults.favorite_slot");
         if (favoriteSlot > 8) {
@@ -63,6 +84,10 @@ public class MainConfig implements ManagedConfig {
                     "defaults.favorite_slot was set to %d, but it must not be higher than 8. Using default value 8",
                     favoriteSlot));
             plugin.getConfig().set("defaults.favorite_slot", 8);
+        }
+
+        if (plugin.getConfig().isBoolean("debug_level") && !plugin.getConfig().getBoolean("debug_level")) {
+            plugin.getConfig().set("debug_level", "OFF");
         }
     }
 

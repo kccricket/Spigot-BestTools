@@ -1,5 +1,8 @@
 package net.kccricket.bestesttool;
 
+import net.kccricket.kcmclib.logging.DebugLevel;
+import net.kccricket.kcmclib.logging.Log;
+
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
 
@@ -59,5 +62,25 @@ class MainConfigTest extends BestToolsTestBase {
         YamlConfiguration reloaded = YamlConfiguration.loadConfiguration(configFile);
         assertEquals(Arrays.asList(null, "my own custom comment"), reloaded.getComments("puns"),
                 "A user's own comment on an existing key must survive reload unchanged");
+    }
+
+    /**
+     * Regression test: YAML 1.1 parses the bundled default's bare {@code debug_level: OFF} as the
+     * boolean {@code false}, which {@code getString("debug_level")} then auto-converts to the
+     * string {@code "false"} — not a valid {@link DebugLevel} name. Caught by manually reading a
+     * runServer console log (MockBukkit tests don't fail on a logged warning), fixed in
+     * MainConfig#normalizeValues. A fresh load must resolve to OFF with no warning, and the on-disk
+     * value must be corrected to a real string so it round-trips cleanly from then on.
+     */
+    @Test
+    void bareOffDebugLevelParsesCorrectlyNotAsBooleanFalse() throws IOException {
+        assertEquals(DebugLevel.OFF, Log.getDebugLevel(),
+                "debug_level: OFF (bundled default) must resolve to DebugLevel.OFF, not fall back from a parse failure");
+
+        File configFile = new File(plugin.getDataFolder(), "config.yml");
+        YamlConfiguration onDisk = YamlConfiguration.loadConfiguration(configFile);
+        assertTrue(onDisk.isString("debug_level"),
+                "debug_level must be normalized to a real string on disk, not left as the YAML-1.1-parsed boolean false");
+        assertEquals("OFF", onDisk.getString("debug_level"));
     }
 }

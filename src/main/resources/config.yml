@@ -1,15 +1,11 @@
-###############################
-#######    BestTools    #######
-###############################
+# ----- BestTools -----
 
 # BestTools lets you automatically use the best tool you have in your inventory
 # when breaking blocks or attacking mobs. It also features automatic hotbar
 # refill when you run out of blocks.
 
 
-###############################
-#######    Commands     #######
-###############################
+# ----- Commands -----
 
 # /besttools (or /bt:)  Toggle BestTools per player
 # /besttools hotbar:    Toggles whether BestTools only uses tools from your hotbar
@@ -29,9 +25,7 @@
 # /besttools bl reset                Removes all items from your blacklist
 
 
-###############################
-#######   Permissions   #######
-###############################
+# ----- Permissions -----
 
 # bestesttool.use:      Allows to use the /besttools (or /bt) command
 # bestesttool.refill:    Allows to use the /refill (or /rf) command
@@ -39,9 +33,7 @@
 # bestesttool.debug:     Allows to enable the debug mode via /besttools debug and the performance test via /besttools performance
 
 
-###############################
-#######  Placeholders   #######
-###############################
+# ----- Placeholders -----
 
 # When using PlaceholderAPI, you can use the following placeholders:
 
@@ -51,9 +43,7 @@
 # %besttools_favoriteslot% - the slot number this player chose as favorite slot
 
 
-###############################
-####### Default settings ######
-###############################
+# ----- Default settings -----
 
 # Default preferences applied to new players (or any player whose PDC entry is missing).
 defaults:
@@ -76,9 +66,7 @@ defaults:
   sword_on_mobs: true
 
 
-###############################
-####### General config  #######
-###############################
+# ----- General config -----
 
 # When set to false, /besttools and /refill will only work in survival game mode
 # When set to true, it works in survival and adventure game mode
@@ -101,12 +89,10 @@ consider_swords_for_cobwebs: false
 use_axe_as_sword: false
 
 # NOT IMPLEMENTED YET, comes with next update
-#use-sword-on-friendly-mobs: false
-#use-sword-on-players: false
+# use-sword-on-friendly-mobs: false
+# use-sword-on-players: false
 
-###############################
-####### Global blacklist ######
-###############################
+# ----- Global blacklist -----
 
 # You can add blocks to the global blacklist here that will apply to ALL players.
 # Blocks broken that are mentioned in this list will not trigger BestTools.
@@ -119,11 +105,9 @@ use_axe_as_sword: false
 # - CARROTS
 # - WHEAT
 
-global_block_blacklist:
+global_block_blacklist: []
 
-###############################
-####### Update checker  #######
-###############################
+# ----- Update checker -----
 
 # Checks for updates (asynchronously).
 # When enabled, a message is printed in the console if a new
@@ -137,9 +121,7 @@ check_for_updates: true
 # of hours inbetween each update check.
 check_for_updates_interval_hours: 4
 
-###############################
-#######  Localization   #######
-###############################
+# ----- Localization -----
 
 # Fallback locale (lowercase Minecraft-style token, e.g. en_us) used for console output and for
 # any player locale with no matching file under plugins/BestestTool/lang/.
@@ -147,13 +129,11 @@ check_for_updates_interval_hours: 4
 # instead of this file — see that folder to customize or translate them.
 default_locale: en_us
 
-############################
-##### Technical stuff! #####
-############################
+# ----- Technical stuff! -----
 
 # Logging verbosity for the plugin.
 # Values: OFF (no debug output), DEBUG (high-level flow), TRACE (per-item verbose)
-debug_level: OFF
+debug_level: 'OFF'
 
 # Prints the Material<>Tool map to a csv file
 dump: false
