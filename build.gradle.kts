@@ -34,6 +34,11 @@ dependencies {
     // PlaceholderAPI is an optional soft-depend — compile against it but don't bundle it
     compileOnly("me.clip:placeholderapi:2.11.6")
 
+    // KcMcLib is a composite-build submodule (see settings.gradle.kts); its classes are bundled
+    // into the fat jar via Shadow like any other `implementation` dependency, no relocation needed
+    // (own namespace, net.kccricket.kcmclib).
+    implementation("net.kccricket:kcmclib")
+
     // Gson is provided by the server at runtime (Paper bundles it); compile against it but don't bundle it
     compileOnly("com.google.code.gson:gson:2.11.0")
 
