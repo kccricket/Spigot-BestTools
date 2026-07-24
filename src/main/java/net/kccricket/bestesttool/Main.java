@@ -1,7 +1,10 @@
 package net.kccricket.bestesttool;
 
 import net.kccricket.bestesttool.placeholders.BestToolsPlaceholders;
-import net.kccricket.bestesttool.update.UpdateChecker;
+
+import net.kccricket.kcmclib.logging.DebugLevel;
+import net.kccricket.kcmclib.logging.Log;
+import net.kccricket.kcmclib.update.ModrinthUpdateChecker;
 
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
@@ -31,8 +34,6 @@ public class Main extends JavaPlugin {
         return instance;
     }
 
-    final int configVersion = 17;
-
     BestToolsHandler toolHandler;
     BestToolsUtils toolUtils;
     RefillListener refillListener;
@@ -46,10 +47,8 @@ public class Main extends JavaPlugin {
     CommandBlacklist commandBlacklist;
     Messages messages;
     GUIHandler guiHandler;
-    UpdateChecker updateChecker;
+    ModrinthUpdateChecker updateChecker;
 
-    boolean debug=false;
-    boolean wtfdebug=false;
     boolean measurePerformance=false;
     PerformanceMeter meter;
 
@@ -59,6 +58,8 @@ public class Main extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        Log.init(this);
+
         load(false);
 
         if(Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null){
@@ -67,20 +68,13 @@ public class Main extends JavaPlugin {
 
     }
 
-    public void debug(String text) {
-        if(debug) getLogger().info("[Debug] "+text);
-    }
-    void wtfdebug(String text) {
-        if(wtfdebug) getLogger().info("[D3BUG] "+text);
-    }
-
     public PlayerSetting getPlayerSetting(Player player) {
 
         if(Objects.requireNonNull(playerSettings,"PlayerSettings must not be null").containsKey(player.getUniqueId())) {
             return playerSettings.get(player.getUniqueId());
         }
 
-        debug("Creating new player setting for "+player.getName());
+        Log.debug("Creating new player setting for "+player.getName());
         PlayerSetting setting = new PlayerSetting(player,
                 getConfig().getBoolean("besttools-enabled-by-default"),
                 getConfig().getBoolean("refill-enabled-by-default"),
@@ -103,15 +97,22 @@ public class Main extends JavaPlugin {
 
         }
 
-        if (getConfig().getInt("config-version", 0) != configVersion) {
-            showOldConfigWarning();
-            ConfigUpdater configUpdater = new ConfigUpdater(this);
-            configUpdater.updateConfig();
-        }
-
         loadDefaultValues();
 
-        updateChecker = new UpdateChecker(this);
+        updateChecker = new ModrinthUpdateChecker(
+                this,
+                "bfE7PKmz",
+                () -> getConfig().getString("check-for-updates", "true").equalsIgnoreCase("true"),
+                () -> {
+                    int hours = getConfig().getInt("check-interval", 4);
+                    return hours <= 0 ? 4 : hours;
+                },
+                (latestVersion, currentVersion) -> List.of(
+                        "A new version of BestestTool is available: " + latestVersion
+                                + " (you are running " + currentVersion + ").",
+                        "Download: https://modrinth.com/plugin/bfE7PKmz | "
+                                + "https://hangar.papermc.io/kccricket/BestestTool | "
+                                + "https://github.com/kccricket/Spigot-BestTools/releases"));
         toolHandler = new BestToolsHandler(this);
         toolUtils = new BestToolsUtils(this);
         refillListener = new RefillListener(this);
@@ -147,7 +148,19 @@ public class Main extends JavaPlugin {
 
         registerMetrics();
 
-        updateChecker.restart();
+        // "check-for-updates" is tri-state (true / on-startup / anything else = off), but
+        // ModrinthUpdateChecker's `enabled` supplier only drives one binary gate shared by both the
+        // immediate check and the recurring schedule. Preserve the tri-state in this wiring instead:
+        // "on-startup" always fires exactly one check and never arms a recurring task; "true" gets
+        // both (via restart()); anything else fires neither (restart() -> reschedule() -> stop() still
+        // cancels a previously-armed recurring task if the setting was just switched off/changed).
+        String updateCheckMode = getConfig().getString("check-for-updates", "true");
+        if (updateCheckMode.equalsIgnoreCase("on-startup")) {
+            updateChecker.stop();
+            updateChecker.check();
+        } else {
+            updateChecker.restart();
+        }
 
     }
 
@@ -239,8 +252,9 @@ public class Main extends JavaPlugin {
         getConfig().addDefault("use-axe-as-sword",false);
 
         verbose = getConfig().getBoolean("verbose",true);
-        debug = getConfig().getBoolean("debug",false);
-        wtfdebug = getConfig().getBoolean("wtf-debug", false);
+        boolean debugFlag = getConfig().getBoolean("debug",false);
+        boolean wtfDebugFlag = getConfig().getBoolean("wtf-debug", false);
+        Log.setDebugLevel(wtfDebugFlag ? DebugLevel.TRACE : (debugFlag ? DebugLevel.DEBUG : DebugLevel.OFF));
         measurePerformance = getConfig().getBoolean("measure-performance",false);
 
         if(getConfig().getInt("favorite-slot")>8) {
@@ -248,14 +262,6 @@ public class Main extends JavaPlugin {
             getConfig().set("favorite-slot",8);
         }
 
-    }
-
-    private void showOldConfigWarning() {
-        getLogger().warning("==============================================");
-        getLogger().warning("You were using an old config file. BestTools");
-        getLogger().warning("has updated the file to the newest version.");
-        getLogger().warning("Your changes have been kept.");
-        getLogger().warning("==============================================");
     }
 
 }

@@ -1,6 +1,7 @@
 package net.kccricket.bestesttool;
 
 import net.kccricket.bestesttool.events.BestToolsNotifyEvent;
+import net.kccricket.kcmclib.logging.Log;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -38,16 +39,16 @@ public class BestToolsListener implements Listener {
     @EventHandler
     public void onPlayerAttackEntity(EntityDamageByEntityEvent e) {
         long st= main.measurePerformance ? System.nanoTime() : 0;
-        main.debug("EntityDamageByEntity 1");
+        Log.debug("EntityDamageByEntity 1");
 
         if (!(e.getDamager() instanceof Player)) return;
-        main.debug("EntityDamageByEntity 2");
+        Log.debug("EntityDamageByEntity 2");
         Player p = (Player) e.getDamager();
         if(!PermissionUtils.has(p,"use")) return;
-        main.debug("EntityDamageByEntity 3");
+        Log.debug("EntityDamageByEntity 3");
         PlayerSetting playerSetting = main.getPlayerSetting(p);
         if(!playerSetting.isBestToolsEnabled()) return;
-        main.debug("EntityDamageByEntity 4");
+        Log.debug("EntityDamageByEntity 4");
         Entity enemy = e.getEntity();
 
         if(!PlayerUtils.isAllowedGamemode(p,main.getConfig().getBoolean("allow-in-adventure-mode"))) {
@@ -59,7 +60,7 @@ public class BestToolsListener implements Listener {
             // || (enemy instanceof Player && playerSetting.swordOnPlayers)
         ) return;
 
-        main.debug("Getting the best roscoe for "+enemy.getType().name());
+        Log.debug("Getting the best roscoe for "+enemy.getType().name());
 
         PlayerInventory inv = p.getInventory();
         ItemStack bestRoscoe = handler.getBestRoscoeFromInventory(enemy.getType(), p,playerSetting.isHotbarOnly(),inv.getItemInMainHand(),useAxeAsWeapon);
@@ -95,7 +96,7 @@ public class BestToolsListener implements Listener {
 
         // DEBUG
         //for (RegisteredListener registeredListener : event.getHandlers().getRegisteredListeners()) {
-        //    main.debug(registeredListener.getPlugin().getName()+": "+registeredListener.getListener().getClass().getName() + " @ "+registeredListener.getPriority().name());
+        //    Log.debug(registeredListener.getPlugin().getName()+": "+registeredListener.getListener().getClass().getName() + " @ "+registeredListener.getPriority().name());
         //}
 //        if(main.debug && event.getAction() == Action.LEFT_CLICK_BLOCK) {
 //            main.getLogger().warning(event.getClickedBlock().getType().name());
@@ -147,7 +148,7 @@ public class BestToolsListener implements Listener {
         PlayerInventory inv = p.getInventory();
 
         if(main.getConfig().getBoolean("dont-switch-during-battle") && handler.isWeapon(inv.getItemInMainHand())) {
-            main.debug("Return: It's a gun^^");
+            Log.debug("Return: It's a gun^^");
             return;
         }
 
@@ -193,16 +194,16 @@ public class BestToolsListener implements Listener {
         }
         if(bestTool == null) {
             handler.freeSlot(getFavoriteSlot(p),inv);
-            main.debug("Could not find any appropiate tool");
+            Log.debug("Could not find any appropiate tool");
             return;
         }
         int positionInInventory = handler.getPositionInInventory(bestTool,inv) ;
         if(positionInInventory != -1) {
             handler.moveToolToSlot(positionInInventory,getFavoriteSlot(p),inv);
-            main.debug("Found tool");
+            Log.debug("Found tool");
         } else {
             handler.freeSlot(getFavoriteSlot(p),inv);
-            main.debug("Use no tool");
+            Log.debug("Use no tool");
         }
 
     }
@@ -226,16 +227,16 @@ public class BestToolsListener implements Listener {
         }
         if(bestRoscoe == null) {
             handler.freeSlot(favoriteSlot,inv);
-            main.debug("Could not find any appropiate tool");
+            Log.debug("Could not find any appropiate tool");
             return;
         }
         int positionInInventory = handler.getPositionInInventory(bestRoscoe,inv) ;
         if(positionInInventory != -1) {
             handler.moveToolToSlot(positionInInventory,favoriteSlot,inv);
-            main.debug("Found tool");
+            Log.debug("Found tool");
         } else {
             handler.freeSlot(favoriteSlot,inv);
-            main.debug("Use no tool");
+            Log.debug("Use no tool");
         }
 
     }

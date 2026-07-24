@@ -1,5 +1,8 @@
 package net.kccricket.bestesttool;
 
+import net.kccricket.kcmclib.logging.DebugLevel;
+import net.kccricket.kcmclib.logging.Log;
+
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -15,8 +18,9 @@ public class CommandDebug {
             return;
         }
         if(arg.equalsIgnoreCase("debug")) {
-            main.debug=!main.debug;
-            if(main.debug) {
+            boolean nowEnabled = Log.getDebugLevel() == DebugLevel.OFF;
+            Log.setDebugLevel(nowEnabled ? DebugLevel.DEBUG : DebugLevel.OFF);
+            if(nowEnabled) {
                 sender.sendMessage(ChatColor.RED + main.getName() + " debug mode has been enabled.");
             } else {
                 sender.sendMessage(ChatColor.GREEN + main.getName() + " debug mode has been disabled.");

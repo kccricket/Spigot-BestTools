@@ -1,5 +1,7 @@
 package net.kccricket.bestesttool;
 
+import net.kccricket.kcmclib.logging.Log;
+
 import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.entity.EntityType;
@@ -59,7 +61,7 @@ public class BestToolsHandler {
                 main.getLogger().warning("Invalid material on global-block-blacklist: "+name);
                 continue;
             }
-            main.debug("Adding to global block blacklist: " + mat.name());
+            Log.debug("Adding to global block blacklist: " + mat.name());
             globalBlacklist.add(mat);
         }
 
@@ -120,7 +122,7 @@ public class BestToolsHandler {
     Tool getBestToolType(@NotNull Material mat) {
         Tool bestTool = toolMap.get(mat);
         if(bestTool == null) bestTool = Tool.NONE;
-        main.debug("Best ToolType for "+mat+" is "+bestTool.name());
+        Log.debug("Best ToolType for "+mat+" is "+bestTool.name());
         return bestTool;
     }
 
@@ -204,7 +206,7 @@ public class BestToolsHandler {
     ItemStack getBestItemStackFromArray(@NotNull Tool tool, @NotNull ItemStack[] items, boolean trySilktouch, ItemStack currentItem, Material target) {
 
         if(tool == Tool.NONE) {
-            main.debug("getNonToolItemFromArray");
+            Log.debug("getNonToolItemFromArray");
             return getNonToolItemFromArray(items,currentItem,target);
         }
 
@@ -317,10 +319,10 @@ public class BestToolsHandler {
         }
         ItemStack bestStack = getBestItemStackFromArray(bestType,items,profitsFromSilkTouch(mat),currentItem,mat);
         if(bestStack==null) {
-            main.debug("bestStack is null");
+            Log.debug("bestStack is null");
             return getNonToolItemFromArray(items,currentItem,mat);
         }
-        main.debug("bestStack is "+bestStack.toString());
+        Log.debug("bestStack is "+bestStack.toString());
         return bestStack;
 
     }
@@ -362,7 +364,7 @@ public class BestToolsHandler {
             ItemStack currentItem = inv.getItem(i);
             if(currentItem==null) continue;
             if(currentItem.equals(Objects.requireNonNull(item,"Item must not be null"))) {
-                main.debug(String.format("Found perfect tool %s at slot %d",currentItem.getType().name(),i));
+                Log.debug(String.format("Found perfect tool %s at slot %d",currentItem.getType().name(),i));
                 return i;
             }
         }
@@ -376,7 +378,7 @@ public class BestToolsHandler {
      * @param inv Player's inventory
      */
     void moveToolToSlot(int source, int dest, @NotNull PlayerInventory inv) {
-        main.debug(String.format("Moving item from slot %d to %d",source,dest));
+        Log.debug(String.format("Moving item from slot %d to %d",source,dest));
         inv.setHeldItemSlot(dest);
         if(source==dest) return;
         ItemStack sourceItem = inv.getItem(source);
@@ -399,10 +401,10 @@ public class BestToolsHandler {
         if(!item.hasItemMeta()) return false;
         ItemMeta meta = item.getItemMeta();
         if( meta instanceof Damageable) {
-            main.debug(item.getType().name() + " is damageable");
+            Log.debug(item.getType().name() + " is damageable");
             return true;
         } else {
-            main.debug(item.getType().name() + " is NOT damageable");
+            Log.debug(item.getType().name() + " is NOT damageable");
             return false;
         }
     }
@@ -426,7 +428,7 @@ public class BestToolsHandler {
         // If the item is not damageable, we don't have to move it
         if(!isDamageable(item)) return;
 
-        main.debug(String.format("Trying to free slot %d",source));
+        Log.debug(String.format("Trying to free slot %d",source));
 
         // Try to combine the item with existing stacks
         inv.setItem(source, null);
@@ -434,26 +436,26 @@ public class BestToolsHandler {
 
         // If the item was moved to the same slot, we have to move it somewhere else
         if(inv.getItem(source)==null) {
-            main.debug("Freed slot");
+            Log.debug("Freed slot");
             inv.setHeldItemSlot(source);
             return;
         }
-        main.debug("Could not free slot yet...");
+        Log.debug("Could not free slot yet...");
         for(int i = source; i < inventorySize; i++) {
             if(inv.getItem(i)==null) {
                 inv.setItem(i,item);
                 inv.setItem(source,null);
                 inv.setHeldItemSlot(source);
-                main.debug("Freed slot on second try");
+                Log.debug("Freed slot on second try");
                 return;
             }
         }
 
-        main.debug("WARNING: COULD NOT FREE SLOT AT ALL");
+        Log.debug("WARNING: COULD NOT FREE SLOT AT ALL");
 
         for(int i = 0; i < hotbarSize ; i++) {
             if(inv.getItem(i) == null || !isDamageable(inv.getItem(i))) {
-                main.debug("Found not damageable item at slot "+i);
+                Log.debug("Found not damageable item at slot "+i);
                 inv.setHeldItemSlot(i);
             }
         }

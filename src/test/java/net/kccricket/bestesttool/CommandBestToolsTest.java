@@ -1,5 +1,8 @@
 package net.kccricket.bestesttool;
 
+import net.kccricket.kcmclib.logging.DebugLevel;
+import net.kccricket.kcmclib.logging.Log;
+
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.Test;
@@ -75,11 +78,11 @@ class CommandBestToolsTest extends BestToolsTestBase {
     @Test
     void debugSubcommandDelegatesToCommandDebug() {
         PlayerMock player = opPlayer();
-        boolean before = plugin.debug;
+        boolean before = Log.getDebugLevel() != DebugLevel.OFF;
 
         player.performCommand("besttools debug");
 
-        assertEquals(!before, plugin.debug);
+        assertEquals(!before, Log.getDebugLevel() != DebugLevel.OFF);
     }
 
     @Test

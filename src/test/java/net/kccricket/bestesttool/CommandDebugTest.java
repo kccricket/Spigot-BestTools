@@ -1,5 +1,8 @@
 package net.kccricket.bestesttool;
 
+import net.kccricket.kcmclib.logging.DebugLevel;
+import net.kccricket.kcmclib.logging.Log;
+
 import org.bukkit.command.Command;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -15,12 +18,13 @@ class CommandDebugTest extends BestToolsTestBase {
     void debugGatesOnDebugPermission(Grant grantType) {
         PlayerMock player = newPlayer();
         grant(player, "debug", grantType);
-        boolean before = plugin.debug;
+        boolean before = Log.getDebugLevel() != DebugLevel.OFF;
         Command command = server.getPluginCommand("besttools");
 
         CommandDebug.debug(player, command, plugin, "debug");
 
-        assertEquals(grantType != Grant.NONE ? !before : before, plugin.debug);
+        boolean after = Log.getDebugLevel() != DebugLevel.OFF;
+        assertEquals(grantType != Grant.NONE ? !before : before, after);
     }
 
     @Test

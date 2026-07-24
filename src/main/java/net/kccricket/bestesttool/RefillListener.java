@@ -1,5 +1,7 @@
 package net.kccricket.bestesttool;
 
+import net.kccricket.kcmclib.logging.Log;
+
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -53,7 +55,7 @@ public class RefillListener implements Listener {
 
         if (item.getAmount() != 1) return;
 
-        main.debug("Attempting to refill "+mat.name());
+        Log.debug("Attempting to refill "+mat.name());
 
         if (!PermissionUtils.has(p,"refill")) return;
         if (!playerSetting.isRefillEnabled()) {
@@ -61,7 +63,7 @@ public class RefillListener implements Listener {
                 Messages.sendMessage(p,main.messages.MSG_REFILL_USAGE);
                 playerSetting.setHasSeenRefillMessage(true);
             }
-            main.debug("ABORTING");
+            Log.debug("ABORTING");
             return;
         }
 

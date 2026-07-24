@@ -1,5 +1,7 @@
 package net.kccricket.bestesttool;
 
+import net.kccricket.kcmclib.logging.Log;
+
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -34,10 +36,10 @@ public class RefillUtils {
             return true;
         }
         if(leftovers.size()>0) {
-            main.debug("Possible item loss detected due to RefillUtils#moveBowlsAndBottles, dropping leftover items...");
+            Log.debug("Possible item loss detected due to RefillUtils#moveBowlsAndBottles, dropping leftover items...");
             for(ItemStack leftover : leftovers.values()) {
                 if(!(inv.getHolder() instanceof Player)) {
-                    main.debug("Could not drop items because inventory has no player as holder :(");
+                    Log.debug("Could not drop items because inventory has no player as holder :(");
                     return false;
                 }
                 Player p = (Player) inv.getHolder();
@@ -57,17 +59,17 @@ public class RefillUtils {
 
     void refillStack(Inventory inv, int source, int dest, ItemStack stack) {
         if (!(inv.getHolder() instanceof Player player)) {
-            main.debug("Refill failed, because inventory has no player as holder :(");
+            Log.debug("Refill failed, because inventory has no player as holder :(");
             return;
         }
         player.getScheduler().run(main, task -> {
             if(inv.getItem(source)==null) return;
             if(!inv.getItem(source).equals(stack)) {
-                main.debug("Refill failed, because source ItemStack has changed. Aborting Refill to prevent item loss.");
+                Log.debug("Refill failed, because source ItemStack has changed. Aborting Refill to prevent item loss.");
                 return;
             }
             if(inv.getItem(dest)!=null && !moveBowlsAndBottles(inv,dest)) {
-                main.debug("Refill failed, because destination slot is not empty anymore. Aborting Refill to prevent item loss.");
+                Log.debug("Refill failed, because destination slot is not empty anymore. Aborting Refill to prevent item loss.");
                 return;
             }
             inv.setItem(source, null);
