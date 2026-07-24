@@ -5,13 +5,17 @@ import net.kccricket.bestesttool.update.UpdateChecker;
 
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandMap;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
+import org.bukkit.permissions.Permission;
+import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -130,8 +134,8 @@ public class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(playerListener, this);
         getServer().getPluginManager().registerEvents(bestToolsCacheListener,this);
         getServer().getPluginManager().registerEvents(guiHandler,this);
-        Objects.requireNonNull(getCommand("besttools")).setExecutor(commandBestTools);
-        Objects.requireNonNull(getCommand("refill")).setExecutor(commandRefill);
+        registerPermissions();
+        registerCommands();
 
         if(getConfig().getBoolean("dump",false)) {
             try {
@@ -150,6 +154,75 @@ public class Main extends JavaPlugin {
     private void registerMetrics() {
         @SuppressWarnings("unused")
         Metrics metrics = new Metrics(this,32836);
+    }
+
+    /**
+     * Registers the {@code /besttools} and {@code /refill} commands directly against the
+     * server's command map. {@code paper-plugin.yml} cannot declare a {@code commands:} block
+     * (unlike the legacy {@code plugin.yml}), so this replaces the old
+     * {@code getCommand(name).setExecutor(...)} wiring. Safe to call repeatedly (e.g. on
+     * {@code /besttools reload}) — re-registering just overwrites the previous mapping.
+     */
+    private void registerCommands() {
+        CommandMap commandMap = getServer().getCommandMap();
+
+        String besttoolsUsage = """
+                /<command> -- Toggle automatically using the best tool
+                /<command> hotbar -- Toggle whether to only use tools from your hotbar
+                /<command> reload -- Reloads the config file
+                /<command> debug -- Toggle debug mode
+                /<command> performance -- Toggle performance test
+
+                /<command> bl -- Show your blacklist
+                /<command> bl add -- Adds your currently held item to your blacklist
+                /<command> bl add inventory -- Adds all items from your inventory to your blacklist
+                /<command> bl add hotbar -- Adds all items from your hotbar to your blacklist
+                /<command> bl add <items...> -- Add specified items to your blacklist
+                /<command> bl remove -- Removes your currently held item from your blacklist
+                /<command> bl remove inventory -- Removes all items from your inventory from your blacklist
+                /<command> bl remove hotbar -- Removes all items from your hotbar from your blacklist
+                /<command> bl remove <items...> -- Remove items from your blacklist
+                /<command> bl reset -- Removes all items from your blacklist""";
+
+        commandMap.register(getName().toLowerCase(), new DelegatingCommand(
+                "besttools", commandBestTools, "Toggle BestTools", besttoolsUsage,
+                List.of("bt", "besttool")));
+
+        commandMap.register(getName().toLowerCase(), new DelegatingCommand(
+                "refill", commandRefill, "Toggle Refill", "/<command> -- Toggle automatically refilling your hotbar",
+                List.of("rf")));
+    }
+
+    /**
+     * Registers {@code bestesttool.*} permissions plus their {@code besttools.*} legacy aliases
+     * (as parent permissions whose children resolve to the real ones), mirroring what the old
+     * {@code plugin.yml} {@code permissions:} block declared. {@code paper-plugin.yml} cannot
+     * declare permissions, so this is done in code instead. Guarded against re-registration so
+     * {@code /besttools reload} (which re-runs {@link #load}) doesn't throw.
+     */
+    private void registerPermissions() {
+        registerPermission("bestesttool.use", "Allows using /besttools");
+        registerPermission("bestesttool.refill", "Allows using /refill");
+        registerPermission("bestesttool.reload", "Allows to reload the config via /besttools reload");
+        registerPermission("bestesttool.debug", "Allows to enable the debug mode via /besttools debug and the performance test via /besttools performance");
+
+        registerLegacyAlias("besttools.use", "bestesttool.use");
+        registerLegacyAlias("besttools.refill", "bestesttool.refill");
+        registerLegacyAlias("besttools.reload", "bestesttool.reload");
+        registerLegacyAlias("besttools.debug", "bestesttool.debug");
+    }
+
+    private void registerPermission(String name, String description) {
+        if (getServer().getPluginManager().getPermission(name) != null) return;
+        getServer().getPluginManager().addPermission(new Permission(name, description, PermissionDefault.OP));
+    }
+
+    private void registerLegacyAlias(String aliasName, String targetName) {
+        if (getServer().getPluginManager().getPermission(aliasName) != null) return;
+        Permission alias = new Permission(aliasName, "Legacy alias for " + targetName, PermissionDefault.OP);
+        alias.getChildren().put(targetName, true);
+        getServer().getPluginManager().addPermission(alias);
+        alias.recalculatePermissibles();
     }
 
     private void loadDefaultValues() {

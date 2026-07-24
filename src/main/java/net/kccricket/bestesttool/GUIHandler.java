@@ -174,9 +174,7 @@ public class GUIHandler implements Listener {
     void open(Player p) {
         Inventory inv = create(p);
         p.closeInventory();
-        Bukkit.getScheduler().runTask(main,() -> {
-           p.openInventory(inv);
-        });
+        p.getScheduler().run(main, task -> p.openInventory(inv), null);
     }
 
 

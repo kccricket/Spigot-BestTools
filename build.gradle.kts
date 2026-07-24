@@ -94,12 +94,12 @@ tasks.test {
     systemProperty("bstats.relocatecheck", "false")
 }
 
-// Filter only plugin.yml — it's the only resource that contains a ${project.version} token.
+// Filter only paper-plugin.yml — it's the only resource that contains a ${project.version} token.
 // config.yml contains no ${}/$ tokens, so it is left untouched.
 tasks.processResources {
     val props = mapOf("project" to mapOf("version" to version))
     inputs.properties(props)
-    filesMatching("plugin.yml") {
+    filesMatching("paper-plugin.yml") {
         expand(props)
     }
 }

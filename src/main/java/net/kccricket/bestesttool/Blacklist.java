@@ -1,8 +1,10 @@
 package net.kccricket.bestesttool;
 
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.TextComponent;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
@@ -58,30 +60,24 @@ public class Blacklist {
             return;
         }
 
-        p.sendMessage(ChatColor.translateAlternateColorCodes('&',main.getConfig().getString("blacklist-title")));
+        p.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(main.getConfig().getString("blacklist-title")));
 
         /*p.sendMessage("This list will be nicer in the next version :P");
         p.sendMessage("Blacklist: ");
         StringBuilder slist = new StringBuilder();
         */
         for(Material mat : mats) {
-            TextComponent text = new TextComponent("");
-            TextComponent link = createLink("[X] ","/besttools blacklist remove "+mat.name());
-            TextComponent name = new TextComponent(mat.name());
-            name.setColor(net.md_5.bungee.api.ChatColor.GRAY);
-            text.addExtra(link);
-            text.addExtra(name);
-            p.spigot().sendMessage(text);
+            Component link = createLink("[X] ","/besttools blacklist remove "+mat.name());
+            Component name = Component.text(mat.name(), NamedTextColor.GRAY);
+            p.sendMessage(link.append(name));
         }
     }
 
-    private TextComponent createLink(String text, String link) {
-        TextComponent tc = new TextComponent(text);
-        tc.setBold(true);
+    private Component createLink(String text, String link) {
         // TODO: Make color configurable
-        tc.setColor(net.md_5.bungee.api.ChatColor.DARK_RED);
-        tc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, link));
-        return tc;
+        return Component.text(text, NamedTextColor.DARK_RED)
+                .decorate(TextDecoration.BOLD)
+                .clickEvent(ClickEvent.runCommand(link));
     }
 
 }

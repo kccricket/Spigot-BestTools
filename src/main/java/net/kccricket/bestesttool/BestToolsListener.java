@@ -79,10 +79,10 @@ public class BestToolsListener implements Listener {
     public void onBreak(BlockBreakEvent event) {
         //System.out.println("BlockBreakEvent LISTENER");
         //System.out.println(event.getBlock());
-        Bukkit.getScheduler().runTaskLater(main, () -> {
+        event.getPlayer().getScheduler().runDelayed(main, task -> {
             Bukkit.getPluginManager().callEvent(new BestToolsNotifyEvent(event.getPlayer(), event.getBlock()));
             //Bukkit.getPluginManager().callEvent(new PlayerInteractEvent(event.getPlayer(), Action.LEFT_CLICK_BLOCK, event.getPlayer().getInventory().getItemInMainHand(),event.getBlock(),BlockFace.SELF,EquipmentSlot.HAND));
-        },1);
+        }, null, 1);
     }
 
     @EventHandler

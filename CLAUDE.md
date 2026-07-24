@@ -20,9 +20,18 @@ Gradle project, uses the wrapper.
   Shaded/relocated dependencies: `org.bstats`, `com.jeff-media:MorePersistentDataTypes` (relocated under
   `net.kccricket.bestesttool.*`).
 - Compiles to Java 21 (`options.release` in `build.gradle.kts`), built against
-  `io.papermc.paper:paper-api:26.2.build.+`. `plugin.yml` declares `api-version: "1.20.5"`, the minimum
-  supported server version (see `COMPATABILITY.md`) — do not casually lower it back below 1.20.5, since
-  the codebase now assumes direct `Material`/`Tag` references that only exist from that floor onward.
+  `io.papermc.paper:paper-api:26.2.build.+`. `paper-plugin.yml` declares `api-version: "1.20.5"`, the
+  minimum supported server version (see `COMPATABILITY.md`) — do not casually lower it back below
+  1.20.5, since the codebase now assumes direct `Material`/`Tag` references that only exist from that
+  floor onward.
+- The plugin uses the modern `paper-plugin.yml` descriptor (not the legacy `plugin.yml`), and declares
+  `folia-supported: true`. `paper-plugin.yml` cannot declare `commands:` or `permissions:` blocks, so
+  both are registered in code in `Main.registerCommands()`/`Main.registerPermissions()` instead —
+  commands via `getServer().getCommandMap().register(...)` wrapping each `CommandExecutor` in a
+  `DelegatingCommand`, permissions via `getServer().getPluginManager().addPermission(...)`. Because
+  Folia has no single main thread, **never use `Bukkit.getScheduler()`** — dispatch player/entity-tied
+  work through `entity.getScheduler().run(...)`/`runDelayed(...)`, and anything not tied to a specific
+  entity through `getServer().getAsyncScheduler()` (as `UpdateChecker` already does).
 - There are no automated tests in this repo. Verify changes by building the jar and manually testing
   against a running Paper server — `./gradlew runServer` spins up a local dev server with the plugin
   already loaded (see the `org.bxteam.runserver` config in `build.gradle.kts`; override the version with
@@ -94,7 +103,8 @@ using direct, compile-time references — no more per-version compatibility scaf
   migration logic together when changing `config.yml`'s shape.
 - **`BestToolsPlaceholders`** registers PlaceholderAPI placeholders when PAPI is present (soft depend).
 - Commands (`CommandBestTools`, `CommandBlacklist`, `CommandRefill`, `CommandReload`, `CommandDebug`) map
-  directly to the subcommands documented in `plugin.yml`.
+  directly to the subcommands documented in the `besttools`/`refill` usage strings registered by
+  `Main.registerCommands()` (see above — not declared in the descriptor).
 
 ## Config/versioning conventions
 

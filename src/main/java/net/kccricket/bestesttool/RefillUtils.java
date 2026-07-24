@@ -1,6 +1,5 @@
 package net.kccricket.bestesttool;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -57,7 +56,11 @@ public class RefillUtils {
     }
 
     void refillStack(Inventory inv, int source, int dest, ItemStack stack) {
-        Bukkit.getScheduler().runTask(main, () -> {
+        if (!(inv.getHolder() instanceof Player player)) {
+            main.debug("Refill failed, because inventory has no player as holder :(");
+            return;
+        }
+        player.getScheduler().run(main, task -> {
             if(inv.getItem(source)==null) return;
             if(!inv.getItem(source).equals(stack)) {
                 main.debug("Refill failed, because source ItemStack has changed. Aborting Refill to prevent item loss.");
@@ -69,7 +72,7 @@ public class RefillUtils {
             }
             inv.setItem(source, null);
             inv.setItem(dest, stack);
-        });
+        }, null);
     }
 
     static int getMatchingStackPosition(PlayerInventory inv, Material mat, int currentSlot) {

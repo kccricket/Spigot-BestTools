@@ -1,6 +1,14 @@
 # Changelog
 
 ## Unreleased
+- Added Folia support (`folia-supported: true`), switched the plugin descriptor from the legacy
+  `plugin.yml` to `paper-plugin.yml`, and moved all scheduling off `Bukkit.getScheduler()` onto
+  the per-entity scheduler so tool-switching, refills, and the settings GUI work correctly on
+  Folia. Commands and permissions (including the `besttools.*` legacy aliases) are now
+  registered in code rather than declared in the descriptor, since `paper-plugin.yml` can't
+  declare either
+- Replaced the last Spigot-only API usage (`p.spigot().sendMessage(...)` with a BungeeCord
+  `TextComponent`) in the `/besttools bl` blacklist listing with Paper's bundled Adventure API
 - Renamed permission nodes to the `bestesttool.*` prefix (`bestesttool.use`, `bestesttool.refill`,
   `bestesttool.reload`, `bestesttool.debug`); the old `besttools.*` nodes still work as aliases, so
   existing permission grants keep working unchanged

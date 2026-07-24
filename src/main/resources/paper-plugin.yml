@@ -1,0 +1,16 @@
+main: net.kccricket.bestesttool.Main
+name: BestestTool
+version: ${project.version}
+api-version: "1.20.5"
+description: Automatically chooses the best tool when breaking blocks
+author: kccricket
+prefix: BestestTool
+folia-supported: true
+dependencies:
+  server:
+    ChestSort:
+      load: BEFORE
+      required: false
+    PlaceholderAPI:
+      load: BEFORE
+      required: false
