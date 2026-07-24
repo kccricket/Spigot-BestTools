@@ -1,10 +1,11 @@
 package net.kccricket.bestesttool;
 
+import net.kccricket.bestesttool.text.MessageUtil;
+
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
@@ -53,14 +54,14 @@ public class Blacklist {
         return list;
     }
 
-    void print(Player p,Main main) {
+    void print(Player p) {
 
         if(mats.size()==0) {
-            Messages.sendMessage(p,main.messages.BL_EMPTY);
+            MessageUtil.send(p, "blacklistEmpty");
             return;
         }
 
-        p.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(main.getConfig().getString("blacklist-title")));
+        p.sendMessage(MessageUtil.get(p, "blacklistTitle"));
 
         /*p.sendMessage("This list will be nicer in the next version :P");
         p.sendMessage("Blacklist: ");

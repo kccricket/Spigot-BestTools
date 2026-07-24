@@ -7,6 +7,7 @@ import net.kccricket.kcmclib.logging.DebugLevel;
 import net.kccricket.kcmclib.logging.Log;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Wraps {@code config.yml} via Bukkit's built-in {@code JavaPlugin} config machinery, mirroring
@@ -20,6 +21,9 @@ import java.util.List;
 public class MainConfig implements ManagedConfig {
 
     private final Main plugin;
+    // Reassigned on reload; read on Folia-async-scheduler threads (e.g. ModrinthUpdateChecker's
+    // notice lines), so publish via volatile — mirrors ClickSorted's MainConfig.
+    private volatile Locale defaultLocale = Locale.forLanguageTag("en-US");
 
     public MainConfig(Main plugin) {
         this.plugin = plugin;
@@ -64,6 +68,21 @@ public class MainConfig implements ManagedConfig {
 
     private void applyToRuntime() {
         Log.setDebugLevel(DebugLevel.parse(plugin.getConfig().getString("debug_level"), DebugLevel.OFF));
+        defaultLocale = parseLocaleToken(plugin.getConfig().getString("default_locale", "en_us"));
+    }
+
+    /** Parses a lowercase Minecraft-style locale token ({@code lang} or {@code lang_country}), falling back to {@code en_us} on garbage. */
+    private static Locale parseLocaleToken(String token) {
+        if (token != null) {
+            String[] parts = token.trim().toLowerCase(Locale.ROOT).split("_", 2);
+            if (parts[0].matches("[a-z]{2,3}")) {
+                return parts.length == 2 && !parts[1].isEmpty()
+                        ? Locale.of(parts[0], parts[1].toUpperCase(Locale.ROOT))
+                        : Locale.of(parts[0]);
+            }
+        }
+        Log.warning("Invalid default_locale '" + token + "' — falling back to en_us");
+        return Locale.of("en", "US");
     }
 
     // -------------------------------------------------------------------------
@@ -146,5 +165,13 @@ public class MainConfig implements ManagedConfig {
 
     public boolean getPuns() {
         return plugin.getConfig().getBoolean("puns", false);
+    }
+
+    /**
+     * The fallback locale ({@code default_locale}) used for console output and for any player
+     * locale with no matching lang file. Parsed and cached on load/reload.
+     */
+    public Locale getDefaultLocale() {
+        return defaultLocale;
     }
 }

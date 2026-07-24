@@ -1,5 +1,7 @@
 package net.kccricket.bestesttool;
 
+import net.kccricket.bestesttool.text.MessageUtil;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -130,10 +132,10 @@ public class GUIHandler implements Listener {
         return ChatColor.RED+"Disabled";
     }
 
-    private void addBestToolsButton(PlayerSetting ps, Inventory gui) {
+    private void addBestToolsButton(Player p, PlayerSetting ps, Inventory gui) {
         int slot = coords2slot(BESTTOOLS_SLOT[0],BESTTOOLS_SLOT[1]);
         Material mat = ps.isBestToolsEnabled() ? Material.GOLDEN_PICKAXE : Material.WOODEN_PICKAXE;
-        ItemStack is = createGUIItem(mat,String.format("BestTools: %s",getEnabledString(ps.isBestToolsEnabled())),main.messages.GUI_BESTTOOLS_LORE);
+        ItemStack is = createGUIItem(mat,String.format("BestTools: %s",getEnabledString(ps.isBestToolsEnabled())),MessageUtil.legacy(p, "guiBesttoolsLore"));
         if(ps.isBestToolsEnabled()) {
             ItemMeta meta = is.getItemMeta();
             meta.addEnchant(EnchantmentUtils.getEnchantment("efficiency"),5,false);
@@ -144,14 +146,14 @@ public class GUIHandler implements Listener {
 
         slot = coords2slot(HOTBAR_SLOT[0],HOTBAR_SLOT[1]);
         mat = ps.isHotbarOnly() ? main.configManager.main().getPuns() ? Material.BLAZE_ROD : Material.CHEST : Material.ENDER_CHEST;
-        is = createGUIItem(mat,String.format("Hotbar only: %s",getEnabledString(ps.isHotbarOnly())), main.messages.GUI_HOTBAR_LORE);
+        is = createGUIItem(mat,String.format("Hotbar only: %s",getEnabledString(ps.isHotbarOnly())), MessageUtil.legacy(p, "guiHotbarLore"));
         gui.setItem(slot,is);
 
     }
 
-    private void addRefillButton(PlayerSetting ps, Inventory gui) {
+    private void addRefillButton(Player p, PlayerSetting ps, Inventory gui) {
         Material mat = ps.isRefillEnabled() ? Material.MILK_BUCKET : Material.BUCKET;
-        addItem(gui,2,8,mat,String.format("Refill: %s",getEnabledString(ps.isRefillEnabled())),main.messages.GUI_REFILL_LORE);
+        addItem(gui,2,8,mat,String.format("Refill: %s",getEnabledString(ps.isRefillEnabled())),MessageUtil.legacy(p, "guiRefillLore"));
     }
 
     Inventory create(Player p) {
@@ -162,10 +164,10 @@ public class GUIHandler implements Listener {
         for (int i = 1; i <= 9; i++) {
             addItem(gui, 6, i,
                     i == ps.getFavoriteSlot()+1 ? Material.GREEN_STAINED_GLASS_PANE : Material.WHITE_STAINED_GLASS_PANE,
-                    main.messages.GUI_FAVORITE_SLOT, main.messages.GUI_FAVORITE_SLOT_LORE);
+                    MessageUtil.legacy(p, "guiFavoriteSlot"), MessageUtil.legacy(p, "guiFavoriteSlotLore"));
         }
-        addBestToolsButton(ps,gui);
-        addRefillButton(ps,gui);
+        addBestToolsButton(p,ps,gui);
+        addRefillButton(p,ps,gui);
 
 
         return gui;

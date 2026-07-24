@@ -1,8 +1,10 @@
 package net.kccricket.bestesttool;
 
 import net.kccricket.bestesttool.security.Permissions;
+import net.kccricket.bestesttool.text.MessageUtil;
 
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -26,7 +28,7 @@ public class CommandBestTools implements CommandExecutor {
         PlayerSetting setting;
 
         if (!Permissions.isAllowedTo(sender, Permissions.PERM_USE)) {
-            sender.sendMessage(ChatColor.YELLOW + main.getName() + ": you don't have permission to use this command.");
+            MessageUtil.send(sender, "noPermission", Placeholder.unparsed("plugin", main.getName()));
             return true;
         }
 
@@ -42,7 +44,7 @@ public class CommandBestTools implements CommandExecutor {
         }
 
         if (!(sender instanceof Player)) {
-            sender.sendMessage("You must be a player to run this command.");
+            MessageUtil.send(sender, "notAPlayer");
             return true;
         }
 
@@ -64,9 +66,9 @@ public class CommandBestTools implements CommandExecutor {
                     || args[0].equalsIgnoreCase("hotbar")) {
 
                 if (setting.toggleHotbarOnly()) {
-                    Messages.sendMessage(p,main.messages.MSG_HOTBAR_ONLY_ENABLED);
+                    MessageUtil.send(p, "hotbarOnlyEnabled");
                 } else {
-                    Messages.sendMessage(p,main.messages.MSG_HOTBAR_ONLY_DISABLED);
+                    MessageUtil.send(p, "hotbarOnlyDisabled");
                 }
                 return true;
             }
@@ -81,9 +83,9 @@ public class CommandBestTools implements CommandExecutor {
 
         // Toggle bestToolEnabled
         if (main.getPlayerSetting(p).toggleBestToolsEnabled()) {
-            Messages.sendMessage(p,main.messages.MSG_BESTTOOL_ENABLED);
+            MessageUtil.send(p, "besttoolsEnabled");
         } else {
-            Messages.sendMessage(p,main.messages.MSG_BESTTOOL_DISABLED);
+            MessageUtil.send(p, "besttoolsDisabled");
         }
         return true;
     }

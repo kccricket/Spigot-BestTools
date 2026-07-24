@@ -1,8 +1,10 @@
 package net.kccricket.bestesttool;
 
 import net.kccricket.bestesttool.security.Permissions;
+import net.kccricket.bestesttool.text.MessageUtil;
 
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 
@@ -12,11 +14,11 @@ public class CommandReload {
 
 
             if (!Permissions.isAllowedTo(sender, Permissions.PERM_RELOAD)) {
-                sender.sendMessage(ChatColor.YELLOW + main.getName() + ": you don't have permission to use this command.");
+                MessageUtil.send(sender, "noPermission", Placeholder.unparsed("plugin", main.getName()));
                 return;
             }
             main.load(true);
-            sender.sendMessage(ChatColor.GREEN + main.getName() + " has been reloaded.");
+            MessageUtil.send(sender, "reloaded", Placeholder.unparsed("plugin", main.getName()));
     }
 
 }

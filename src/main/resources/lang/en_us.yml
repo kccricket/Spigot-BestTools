@@ -1,0 +1,67 @@
+# BestestTool internal English (en_us) language defaults.
+#
+# This file is the plugin's built-in source of truth for every user-facing message and is
+# bundled inside the jar — it is NOT read from the plugin data folder, so editing a copy of it
+# there has no effect. Changed defaults here take effect for every server on the next release
+# automatically, with no admin action required.
+#
+# To customize strings for your server, edit plugins/BestestTool/lang/en_us.yml (or another
+# locale file in that folder) instead: that file is sparse — only the keys you uncomment and
+# edit are overridden; every other key keeps resolving to this internal default, so your
+# customizations survive future releases that change unrelated defaults.
+#
+# All values are rendered with MiniMessage (https://docs.advntr.dev/minimessage).
+# You may use color/formatting tags such as <white>, <red>, <bold>, etc.
+# Edits (to an on-disk override file) take effect after running /besttools reload.
+#
+# Placeholder tags are listed in comments above each message that accepts one.
+# Do not remove a placeholder from a message that requires it.
+
+# Command feedback — /besttools toggle
+besttoolsEnabled: "<gray>BestTools has been <green>enabled</green>.</gray>"
+besttoolsDisabled: "<gray>BestTools has been <red>disabled</red>.</gray>"
+
+# Command feedback — /refill toggle
+refillEnabled: "<gray>Refill has been <green>enabled</green>.</gray>"
+refillDisabled: "<gray>Refill has been <red>disabled</red>.</gray>"
+
+# One-time hint shown the first time BestTools/Refill would have acted for a player who hasn't
+# enabled the feature yet.
+besttoolsUsage: "<gray>Hint: Type <gold>/besttools</gold> or <gold>/bt</gold> to automatically use the best tool when breaking blocks.</gray>"
+refillUsage: "<gray>Hint: Type <gold>/refill</gold> or <gold>/rf</gold> to automatically refill empty items from your inventory.</gray>"
+
+# Command feedback — /besttools hotbar toggle
+hotbarOnlyEnabled: "<gray>BestTools will only use tools from your hotbar.</gray>"
+hotbarOnlyDisabled: "<gray>BestTools will use all tools from your inventory.</gray>"
+
+# Blacklist command feedback
+blacklistEmpty: "<gray>Your blacklist is empty.</gray>"
+# Placeholder: <items>
+blacklistAdded: "<dark_green>Added to blacklist:</dark_green> <gray><items></gray>"
+# Placeholder: <items>
+blacklistInvalid: "<dark_red>Invalid items:</dark_red> <gray><items></gray>"
+# Placeholder: <items>
+blacklistRemoved: "<dark_green>Removed from blacklist:</dark_green> <gray><items></gray>"
+blacklistNothingSpecified: "<gray>You must either hold an item in your hand or specify at least one material as a parameter.</gray>"
+blacklistTitle: "----- <red>Blacklist</red> -----"
+
+# Shared command feedback
+# Placeholder: <plugin>
+noPermission: "<yellow><plugin>: you don't have permission to use this command.</yellow>"
+notAPlayer: "You must be a player to run this command."
+# Placeholder: <plugin>
+reloaded: "<green><plugin> has been reloaded.</green>"
+
+# /besttools debug and /besttools performance toggles
+# Placeholder: <plugin>
+debugEnabled: "<red><plugin> debug mode has been enabled.</red>"
+debugDisabled: "<green><plugin> debug mode has been disabled.</green>"
+performanceEnabled: "<red><plugin> performance test has been enabled.</red>"
+performanceDisabled: "<green><plugin> performance test has been disabled.</green>"
+
+# Settings GUI item names/lore
+guiFavoriteSlot: "Set as favorite slot"
+guiFavoriteSlotLore: "If your hotbar is full and BestTools uses\na tool from your inventory, it will be\nplaced in this slot."
+guiBesttoolsLore: "Automatically chooses the best tools\nwhen breaking blocks."
+guiHotbarLore: "When enabled, BestTools will only use\ntools from your hotbar instead of from\nyour whole inventory."
+guiRefillLore: "Automatically refills empty hotbar slots."

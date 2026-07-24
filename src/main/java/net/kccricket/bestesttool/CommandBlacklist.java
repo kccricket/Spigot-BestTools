@@ -1,5 +1,9 @@
 package net.kccricket.bestesttool;
 
+import net.kccricket.bestesttool.text.MessageUtil;
+
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -65,13 +69,13 @@ public class CommandBlacklist implements CommandExecutor {
 
         switch (option) {
             case "show":
-                b.print(p, main);
+                b.print(p);
                 return true;
             case "add":
             case "remove":
                 if (args.length == 1) {
                     if (currentItem.getType() == Material.AIR) {
-                        Messages.sendMessage(p,main.messages.BL_NOTHINGSPECIFIED);
+                        MessageUtil.send(p, "blacklistNothingSpecified");
                         return true;
                     }
                     candidates.add(currentItem.getType());
@@ -115,21 +119,16 @@ public class CommandBlacklist implements CommandExecutor {
                 }
 
                 if (errors.size() > 0) {
-                    p.sendMessage(String.format(main.messages.BL_INVALID, stringlist2string(errors)));
+                    p.sendMessage(MessageUtil.get(p, "blacklistInvalid", Placeholder.unparsed("items", stringlist2string(errors))));
                 }
                 if (successes.size() > 0) {
-                    String message;
-                    if (option.equals("add")) {
-                        message = main.messages.BL_ADDED;
-                    } else {
-                        message = main.messages.BL_REMOVED;
-                    }
-                    p.sendMessage(String.format(message, matlist2string(successes)));
+                    String key = option.equals("add") ? "blacklistAdded" : "blacklistRemoved";
+                    p.sendMessage(MessageUtil.get(p, key, Placeholder.unparsed("items", matlist2string(successes))));
                 }
 
                 return true;
             case "reset":
-                p.sendMessage(String.format(main.messages.BL_REMOVED, matlist2string(b.mats)));
+                p.sendMessage(MessageUtil.get(p, "blacklistRemoved", Placeholder.unparsed("items", matlist2string(b.mats))));
                 b.mats.clear();
                 return true;
             default:

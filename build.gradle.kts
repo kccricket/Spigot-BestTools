@@ -45,9 +45,6 @@ dependencies {
     // bStats is bundled and relocated by Shadow
     implementation("org.bstats:bstats-bukkit:3.1.0")
 
-    // Used for WordUtils — bundled, not relocated
-    implementation("org.apache.commons:commons-text:1.12.0")
-
     // Test dependencies — MockBukkit registers the vanilla Material/Tag/enchantment registries
     // the tool-selection logic depends on; plain Mockito can't fake those out.
     // MockBukkit's newest published data set (mockbukkit-v26.1.2) trails the paper-api version

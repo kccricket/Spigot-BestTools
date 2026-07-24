@@ -1,8 +1,10 @@
 package net.kccricket.bestesttool;
 
 import net.kccricket.bestesttool.security.Permissions;
+import net.kccricket.bestesttool.text.MessageUtil;
 
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -27,7 +29,7 @@ public class CommandRefill implements CommandExecutor, TabCompleter {
         Player p;
 
         if (!Permissions.isAllowedTo(sender, Permissions.PERM_REFILL)) {
-            sender.sendMessage(ChatColor.YELLOW + main.getName() + ": you don't have permission to use this command.");
+            MessageUtil.send(sender, "noPermission", Placeholder.unparsed("plugin", main.getName()));
             return true;
         }
 
@@ -37,7 +39,7 @@ public class CommandRefill implements CommandExecutor, TabCompleter {
         }
 
         if(!(sender instanceof Player)) {
-            sender.sendMessage("You must be a player to run this command.");
+            MessageUtil.send(sender, "notAPlayer");
             return true;
         }
 
@@ -48,9 +50,9 @@ public class CommandRefill implements CommandExecutor, TabCompleter {
 
         // Toggle AutoRefill //
         if(playerSetting.toggleRefillEnabled()) {
-            Messages.sendMessage(p,main.messages.MSG_REFILL_ENABLED);
+            MessageUtil.send(p, "refillEnabled");
         } else {
-            Messages.sendMessage(p,main.messages.MSG_REFILL_DISABLED);
+            MessageUtil.send(p, "refillDisabled");
         }
 
         return true;

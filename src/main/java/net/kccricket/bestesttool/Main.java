@@ -3,6 +3,7 @@ package net.kccricket.bestesttool;
 import net.kccricket.bestesttool.config.ConfigManager;
 import net.kccricket.bestesttool.placeholders.BestToolsPlaceholders;
 import net.kccricket.bestesttool.security.Permissions;
+import net.kccricket.bestesttool.text.MessageUtil;
 
 import net.kccricket.kcmclib.logging.Log;
 import net.kccricket.kcmclib.update.ModrinthUpdateChecker;
@@ -35,6 +36,10 @@ public class Main extends JavaPlugin {
         return instance;
     }
 
+    public ConfigManager getConfigManager() {
+        return configManager;
+    }
+
     ConfigManager configManager;
     BestToolsHandler toolHandler;
     BestToolsUtils toolUtils;
@@ -47,7 +52,6 @@ public class Main extends JavaPlugin {
     CommandBestTools commandBestTools;
     CommandRefill commandRefill;
     CommandBlacklist commandBlacklist;
-    Messages messages;
     GUIHandler guiHandler;
     ModrinthUpdateChecker updateChecker;
 
@@ -96,6 +100,7 @@ public class Main extends JavaPlugin {
             configManager = new ConfigManager(this);
             configManager.loadAll();
         }
+        MessageUtil.init(configManager);
 
         measurePerformance = configManager.main().getMeasurePerformance();
 
@@ -120,7 +125,6 @@ public class Main extends JavaPlugin {
         commandRefill = new CommandRefill(this);
         commandBlacklist = new CommandBlacklist(this);
         refillUtils = new RefillUtils((this));
-        messages = new Messages(this);
         fileUtils = new FileUtils(this);
         playerSettings = new HashMap<>();
         guiHandler = new GUIHandler(this);

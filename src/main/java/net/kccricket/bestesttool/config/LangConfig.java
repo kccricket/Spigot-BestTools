@@ -1,0 +1,160 @@
+package net.kccricket.bestesttool.config;
+
+import net.kccricket.bestesttool.Main;
+import net.kccricket.kcmclib.config.ManagedConfig;
+import net.kccricket.kcmclib.logging.Log;
+import net.kccricket.kcmclib.text.lang.Localized;
+import net.kccricket.kcmclib.text.lang.LocaleMessages;
+import net.kccricket.kcmclib.text.lang.MessageSource;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+/**
+ * Loads and swaps the plugin's {@link LocaleMessages} snapshot: internal (jar-bundled) defaults
+ * under {@code lang/<locale>.yml} plus sparse on-disk overrides under
+ * {@code plugins/BestestTool/lang/<locale>.yml}. Mirrors ClickSorted's {@code LangConfig}
+ * exactly. Unlike {@code config.yml}, lang loading deliberately does <em>not</em> use
+ * {@code copyDefaults(true)}/{@link net.kccricket.kcmclib.config.ResourceUpdater} — that would
+ * bake every default onto disk, shadowing future default changes forever. On-disk override files
+ * stay sparse; missing keys always fall through to the internal default.
+ *
+ * <p>A fresh {@link LocaleMessages} is built locally on each {@link #load()} and published to the
+ * {@code volatile} field in one assignment, so Folia region/async-scheduler threads never observe
+ * a partially-built snapshot.
+ */
+public class LangConfig implements ManagedConfig, MessageSource {
+
+    /** Locale tokens bundled inside the jar under {@code lang/<token>.yml}. Jars can't cheaply list a resource directory, so this is a maintained constant list. */
+    private static final List<String> INTERNAL_LOCALES = List.of("en_us");
+
+    private static final String DIR = "lang";
+
+    private final Main plugin;
+    private volatile LocaleMessages messages = new LocaleMessages(Map.of(), Map.of(), Locale.US);
+
+    public LangConfig(Main plugin) {
+        this.plugin = plugin;
+    }
+
+    @Override
+    public String fileName() {
+        return DIR + "/en_us.yml";
+    }
+
+    @Override
+    public void load() {
+        File langDir = new File(plugin.getDataFolder(), DIR);
+        if (!langDir.isDirectory() && !langDir.mkdirs()) {
+            Log.warning("Failed to create lang directory: " + langDir);
+        }
+
+        writeCommentedTemplateIfAbsent(langDir);
+
+        Map<String, FileConfiguration> internal = loadInternalDefaults();
+        Map<String, FileConfiguration> overrides = loadOverrides(langDir);
+        Locale defaultLocale = plugin.getConfigManager().main().getDefaultLocale();
+
+        messages = new LocaleMessages(internal, overrides, defaultLocale);
+    }
+
+    private Map<String, FileConfiguration> loadInternalDefaults() {
+        Map<String, FileConfiguration> internal = new HashMap<>();
+        for (String token : INTERNAL_LOCALES) {
+            String resourceName = DIR + "/" + token + ".yml";
+            try (InputStream stream = plugin.getResource(resourceName)) {
+                if (stream == null) {
+                    Log.warning("Bundled internal lang resource missing: " + resourceName);
+                    continue;
+                }
+                internal.put(token, YamlConfiguration.loadConfiguration(
+                        new InputStreamReader(stream, StandardCharsets.UTF_8)));
+            } catch (IOException e) {
+                Log.warning("Failed to close internal lang resource stream: " + resourceName, e);
+            }
+        }
+        return internal;
+    }
+
+    private Map<String, FileConfiguration> loadOverrides(File langDir) {
+        Map<String, FileConfiguration> overrides = new HashMap<>();
+        File[] files = langDir.listFiles((dir, name) -> name.toLowerCase(Locale.ROOT).endsWith(".yml"));
+        if (files == null) {
+            return overrides;
+        }
+        for (File file : files) {
+            String name = file.getName();
+            String token = name.substring(0, name.length() - ".yml".length()).toLowerCase(Locale.ROOT);
+            overrides.put(token, YamlConfiguration.loadConfiguration(file));
+        }
+        return overrides;
+    }
+
+    /**
+     * Writes a fully-commented copy of the internal {@code en_us.yml} to the data folder, as
+     * documentation of every available key. Every non-blank, non-comment line is prefixed with
+     * {@code "# "} so the file parses to an empty config and overrides nothing by default. Never
+     * clobbers an existing file (an admin override).
+     */
+    private void writeCommentedTemplateIfAbsent(File langDir) {
+        File target = new File(langDir, "en_us.yml");
+        if (target.exists()) {
+            return;
+        }
+        try (InputStream in = plugin.getResource(DIR + "/en_us.yml")) {
+            if (in == null) {
+                Log.warning("Bundled internal lang resource missing: " + DIR + "/en_us.yml");
+                return;
+            }
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+                 BufferedWriter writer = Files.newBufferedWriter(target.toPath(), StandardCharsets.UTF_8)) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String trimmed = line.trim();
+                    if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+                        writer.write(line);
+                    } else {
+                        writer.write("# " + line);
+                    }
+                    writer.newLine();
+                }
+            }
+        } catch (IOException e) {
+            Log.warning("Failed to write commented lang template: " + target, e);
+        }
+    }
+
+    @Override
+    public String getMessage(Locale locale, String path) {
+        return messages.getMessage(locale, path);
+    }
+
+    @Override
+    public Component getColoredMessage(Locale locale, String path, TagResolver... resolvers) {
+        return messages.getColoredMessage(locale, path, resolvers);
+    }
+
+    @Override
+    public Localized forLocale(Locale locale) {
+        return messages.forLocale(locale);
+    }
+
+    /** The default-locale-bound handle, for console output and any non-player sender. */
+    public Localized defaultLocale() {
+        return messages.defaultLocale();
+    }
+}

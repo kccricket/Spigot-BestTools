@@ -2,6 +2,7 @@ package net.kccricket.bestesttool;
 
 import net.kccricket.bestesttool.events.BestToolsNotifyEvent;
 import net.kccricket.bestesttool.security.Permissions;
+import net.kccricket.bestesttool.text.MessageUtil;
 import net.kccricket.kcmclib.logging.Log;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -245,7 +246,7 @@ public class BestToolsListener implements Listener {
     private boolean hasBestToolsEnabled(Player p, PlayerSetting playerSetting) {
         if(!playerSetting.isBestToolsEnabled()) {
             if (!playerSetting.isHasSeenBestToolsMessage()) {
-                Messages.sendMessage(p,main.messages.MSG_BESTTOOL_USAGE);
+                MessageUtil.send(p, "besttoolsUsage");
                 playerSetting.setHasSeenBestToolsMessage(true);
             }
             return false;
