@@ -1,5 +1,8 @@
 package net.kccricket.bestesttool;
 
+import net.kccricket.kcmclib.logging.DebugLevel;
+import net.kccricket.kcmclib.logging.Log;
+
 import org.bukkit.Material;
 
 import java.io.File;
@@ -17,23 +20,17 @@ public class FileUtils {
     void dumpFile(File file) throws IOException {
         FileWriter fileWriter = new FileWriter(file);
         PrintWriter printWriter = new PrintWriter(fileWriter);
-        boolean debug = main.getConfig().getBoolean("debug");
-        main.getConfig().set("debug",false);
+        // getBestToolType() logs a Log.debug() line per material; suppress that spam for the
+        // duration of iterating every Material, then restore whatever level was active.
+        DebugLevel previousLevel = Log.getDebugLevel();
+        Log.setDebugLevel(DebugLevel.OFF);
         for(Material mat: Material.values()) {
             if(!mat.isBlock()) continue;
             printWriter.printf("%s,%s\n",mat.name(),main.toolHandler.getBestToolType(mat).name());
         }
-        main.getConfig().set("debug",debug);
+        Log.setDebugLevel(previousLevel);
 
         printWriter.close();
     }
-
-    public static void renameFileInPluginDir(Main plugin,String oldName, String newName) {
-        File oldFile = new File(plugin.getDataFolder().getAbsolutePath() + File.separator + oldName);
-        File newFile = new File(plugin.getDataFolder().getAbsolutePath() + File.separator + newName);
-        //noinspection ResultOfMethodCallIgnored
-        oldFile.getAbsoluteFile().renameTo(newFile.getAbsoluteFile());
-    }
-
 
 }

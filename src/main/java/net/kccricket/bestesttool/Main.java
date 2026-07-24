@@ -1,9 +1,9 @@
 package net.kccricket.bestesttool;
 
+import net.kccricket.bestesttool.config.ConfigManager;
 import net.kccricket.bestesttool.placeholders.BestToolsPlaceholders;
 import net.kccricket.bestesttool.security.Permissions;
 
-import net.kccricket.kcmclib.logging.DebugLevel;
 import net.kccricket.kcmclib.logging.Log;
 import net.kccricket.kcmclib.update.ModrinthUpdateChecker;
 
@@ -35,6 +35,7 @@ public class Main extends JavaPlugin {
         return instance;
     }
 
+    ConfigManager configManager;
     BestToolsHandler toolHandler;
     BestToolsUtils toolUtils;
     RefillListener refillListener;
@@ -54,7 +55,6 @@ public class Main extends JavaPlugin {
     PerformanceMeter meter;
 
     HashMap<UUID,PlayerSetting> playerSettings;
-    boolean verbose = true;
 
 
     @Override
@@ -77,37 +77,33 @@ public class Main extends JavaPlugin {
 
         Log.debug("Creating new player setting for "+player.getName());
         PlayerSetting setting = new PlayerSetting(player,
-                getConfig().getBoolean("besttools-enabled-by-default"),
-                getConfig().getBoolean("refill-enabled-by-default"),
-                getConfig().getBoolean("hotbar-only"),
-                getConfig().getInt("favorite-slot"),
-                getConfig().getBoolean("use-sword-on-hostile-mobs"));
+                configManager.main().getDefaultBestToolsEnabled(),
+                configManager.main().getDefaultRefillEnabled(),
+                configManager.main().getDefaultHotbarOnly(),
+                configManager.main().getDefaultFavoriteSlot(),
+                configManager.main().getDefaultSwordOnMobs());
         playerSettings.put(player.getUniqueId(),setting);
         return setting;
     }
 
     void load(boolean reload) {
 
-        getDataFolder().mkdir();
-        saveDefaultConfig();
-
         if(reload) {
             updateChecker.stop();
             HandlerList.unregisterAll(this);
-            reloadConfig();
-
+            configManager.reloadAll();
+        } else {
+            configManager = new ConfigManager(this);
+            configManager.loadAll();
         }
 
-        loadDefaultValues();
+        measurePerformance = configManager.main().getMeasurePerformance();
 
         updateChecker = new ModrinthUpdateChecker(
                 this,
                 "bfE7PKmz",
-                () -> getConfig().getString("check-for-updates", "true").equalsIgnoreCase("true"),
-                () -> {
-                    int hours = getConfig().getInt("check-interval", 4);
-                    return hours <= 0 ? 4 : hours;
-                },
+                () -> configManager.main().getCheckForUpdatesMode().equalsIgnoreCase("true"),
+                () -> configManager.main().getCheckForUpdatesIntervalHours(),
                 (latestVersion, currentVersion) -> List.of(
                         "A new version of BestestTool is available: " + latestVersion
                                 + " (you are running " + currentVersion + ").",
@@ -139,7 +135,7 @@ public class Main extends JavaPlugin {
         registerPermissions();
         registerCommands();
 
-        if(getConfig().getBoolean("dump",false)) {
+        if(configManager.main().getDump()) {
             try {
                 fileUtils.dumpFile(new File(getDataFolder()+File.separator+"dump.csv"));
             } catch (IOException e) {
@@ -149,13 +145,13 @@ public class Main extends JavaPlugin {
 
         registerMetrics();
 
-        // "check-for-updates" is tri-state (true / on-startup / anything else = off), but
+        // "check_for_updates" is tri-state (true / on-startup / anything else = off), but
         // ModrinthUpdateChecker's `enabled` supplier only drives one binary gate shared by both the
         // immediate check and the recurring schedule. Preserve the tri-state in this wiring instead:
         // "on-startup" always fires exactly one check and never arms a recurring task; "true" gets
         // both (via restart()); anything else fires neither (restart() -> reschedule() -> stop() still
         // cancels a previously-armed recurring task if the setting was just switched off/changed).
-        String updateCheckMode = getConfig().getString("check-for-updates", "true");
+        String updateCheckMode = configManager.main().getCheckForUpdatesMode();
         if (updateCheckMode.equalsIgnoreCase("on-startup")) {
             updateChecker.stop();
             updateChecker.check();
@@ -224,32 +220,6 @@ public class Main extends JavaPlugin {
     private void registerPermission(String name, String description) {
         if (getServer().getPluginManager().getPermission(name) != null) return;
         getServer().getPluginManager().addPermission(new Permission(name, description, PermissionDefault.OP));
-    }
-
-    private void loadDefaultValues() {
-        getConfig().addDefault("besttools-enabled-by-default",false);
-        getConfig().addDefault("refill-enabled-by-default",false);
-        getConfig().addDefault("hotbar-only", true);
-        getConfig().addDefault("favorite-slot",8);
-        getConfig().addDefault("check-interval",4);
-        getConfig().addDefault("check-for-updates","true");
-        getConfig().addDefault("allow-in-adventure-mode",false);
-        getConfig().addDefault("dont-switch-during-battle",true);
-        getConfig().addDefault("puns",false);
-        getConfig().addDefault("use-sword-on-hostile-mobs",true);
-        getConfig().addDefault("use-axe-as-sword",false);
-
-        verbose = getConfig().getBoolean("verbose",true);
-        boolean debugFlag = getConfig().getBoolean("debug",false);
-        boolean wtfDebugFlag = getConfig().getBoolean("wtf-debug", false);
-        Log.setDebugLevel(wtfDebugFlag ? DebugLevel.TRACE : (debugFlag ? DebugLevel.DEBUG : DebugLevel.OFF));
-        measurePerformance = getConfig().getBoolean("measure-performance",false);
-
-        if(getConfig().getInt("favorite-slot")>8) {
-            getLogger().warning(String.format("favorite-slot was set to %d, but it must not be higher than 8. Using default value 8",getConfig().getInt("favorite-slot")));
-            getConfig().set("favorite-slot",8);
-        }
-
     }
 
 }

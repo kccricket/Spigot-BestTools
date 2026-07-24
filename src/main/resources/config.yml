@@ -33,9 +33,10 @@
 #######   Permissions   #######
 ###############################
 
-# besttools.use:        Allows to use the /besttools (or /bt) command
-# besttools.refill:     Allows to use the /refill (or /rf) command
-# besttools.reload:     Allows to use the /besttools reload command
+# bestesttool.use:      Allows to use the /besttools (or /bt) command
+# bestesttool.refill:    Allows to use the /refill (or /rf) command
+# bestesttool.reload:    Allows to use the /besttools reload command
+# bestesttool.debug:     Allows to enable the debug mode via /besttools debug and the performance test via /besttools performance
 
 
 ###############################
@@ -51,46 +52,53 @@
 
 
 ###############################
+####### Default settings ######
+###############################
+
+# Default preferences applied to new players (or any player whose PDC entry is missing).
+defaults:
+  # When false, new players have to run /besttools or /bt once to enable BestTools
+  enabled: false
+
+  # When false, new players have to run /refill or /rf once to enable hotbar refill
+  refill_enabled: false
+
+  # Only use tools from the hotbar? Can be changed per player using /besttools hotbar
+  hotbar_only: true
+
+  # The preferred slot where BestTools should move the tool if it's not in the hotbar
+  # and hotbar_only is set to false. Must be a number between 0 (leftmost hotbar slot)
+  # and 8 (rightmost hotbar slot)
+  # Set this to -1 to always use the player's current slot
+  favorite_slot: 8
+
+  # Allow /besttools to switch to your sword/axe (whatever is better) when attacking mobs?
+  sword_on_mobs: true
+
+
+###############################
 ####### General config  #######
 ###############################
 
-# When false, new players have to run /besttools or /bt once to enable BestTools
-besttools-enabled-by-default: false
-
-# When false, new players have to run /refill or /rf once to enable hotbar refill
-refill-enabled-by-default: false
-
-# Only use tools from the hotbar? Can be changed per player using /besttools hotbar
-hotbar-only: true
-
-# The preferred slot where BestTools should move the tool if it's not in the hotbar
-# and hotbar-only is set to false. Must be a number between 0 (leftmost hotbar slot)
-# and 8 (rightmost hotbar slot)
-# Set this to -1 to always use the player's current slot
-favorite-slot: 8
-
 # When set to false, /besttools and /refill will only work in survival game mode
 # When set to true, it works in survival and adventure game mode
-allow-in-adventure-mode: false
+allow_in_adventure_mode: false
 
 # When enabled, BestTools will not attempt to switch any tools when the player is
 # holding a sword, crossbow, bow or trident
-dont-switch-during-battle: true
+dont_switch_during_battle: true
 
 # The best tool for leaves are shears as only those give drops. BestTools will try to
 # use hoes instead if you don't have any shears. You can also make BestTools try to use
 # swords if you don't have both, however swords will take twice the damage when breaking
 # leaves with it.
-consider-swords-for-leaves: false
+consider_swords_for_leaves: false
 
 # Uses swords for cobwebs if you don't have shears.
-consider-swords-for-cobwebs: false
-
-# Allow /besttools to switch to your sword/axe (whatever is better) when attacking mobs?
-use-sword-on-hostile-mobs: true
+consider_swords_for_cobwebs: false
 
 # Use axe instead of sword when the axe does more damage (it's slower though and does not deal sweep damage)
-use-axe-as-sword: false
+use_axe_as_sword: false
 
 # NOT IMPLEMENTED YET, comes with next update
 #use-sword-on-friendly-mobs: false
@@ -105,13 +113,13 @@ use-axe-as-sword: false
 
 # Example:
 #
-# global-block-blacklist:
+# global_block_blacklist:
 # - POTATOES
 # - BEETROOTS
 # - CARROTS
 # - WHEAT
 
-global-block-blacklist:
+global_block_blacklist:
 
 ###############################
 ####### Update checker  #######
@@ -120,14 +128,14 @@ global-block-blacklist:
 # Checks for updates (asynchronously).
 # When enabled, a message is printed in the console if a new
 # version has been found, and OPs will be notified when they join the server
-# When set to true, check for updates on startup and every X hours (see "check-interval" below)
+# When set to true, check for updates on startup and every X hours (see "check_for_updates_interval_hours" below)
 # When set to on-startup, only check on server startup
 # When set to false, don't check for updates
-check-for-updates: true
+check_for_updates: true
 
-# When you set "check-for-updates" to true, you can define the amount
+# When you set "check_for_updates" to true, you can define the amount
 # of hours inbetween each update check.
-check-interval: 4
+check_for_updates_interval_hours: 4
 
 ###############################
 #######  Localization   #######
@@ -364,21 +372,15 @@ gui-refill-lore: "Automatically refills empty hotbar slots."
 ##### Technical stuff! #####
 ############################
 
-# Show some infos on startup
-verbose: true
-
-# You can enable debug mode using /bt debug (permission: besttools.debug)
-debug: false
+# Logging verbosity for the plugin.
+# Values: OFF (no debug output), DEBUG (high-level flow), TRACE (per-item verbose)
+debug_level: OFF
 
 # Prints the Material<>Tool map to a csv file
 dump: false
 
-# You can enable performance test using /bt performance (permission: besttools.debug)
-measure-performance: false
+# You can enable performance test using /bt performance (permission: bestesttool.debug)
+measure_performance: false
 
 # Do you like bad puns?
 puns: false
-
-# Do not change the following line! It is used to automatically update
-# your config to the latest version. Your changes will be kept.
-config-version: 17

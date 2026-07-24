@@ -143,7 +143,7 @@ public class GUIHandler implements Listener {
         gui.setItem(slot,is);
 
         slot = coords2slot(HOTBAR_SLOT[0],HOTBAR_SLOT[1]);
-        mat = ps.isHotbarOnly() ? main.getConfig().getBoolean("puns") ? Material.BLAZE_ROD : Material.CHEST : Material.ENDER_CHEST;
+        mat = ps.isHotbarOnly() ? main.configManager.main().getPuns() ? Material.BLAZE_ROD : Material.CHEST : Material.ENDER_CHEST;
         is = createGUIItem(mat,String.format("Hotbar only: %s",getEnabledString(ps.isHotbarOnly())), main.messages.GUI_HOTBAR_LORE);
         gui.setItem(slot,is);
 

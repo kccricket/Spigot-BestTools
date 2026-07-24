@@ -55,10 +55,10 @@ public class BestToolsHandler {
 
         this.main=Objects.requireNonNull(main,"Main must not be null");
 
-        for(String name : main.getConfig().getStringList("global-block-blacklist")) {
+        for(String name : main.configManager.main().getGlobalBlockBlacklist()) {
             Material mat = Material.getMaterial(name.toUpperCase());
             if(mat==null) {
-                main.getLogger().warning("Invalid material on global-block-blacklist: "+name);
+                main.getLogger().warning("Invalid material on global_block_blacklist: "+name);
                 continue;
             }
             Log.debug("Adding to global block blacklist: " + mat.name());
@@ -311,7 +311,7 @@ public class BestToolsHandler {
                 bestType = Tool.SHEARS;
             }  else if(LeavesUtils.hasHoe(hotbarOnly,p.getInventory().getStorageContents()) && mat != Material.COBWEB) {
                 bestType = Tool.HOE;
-            } else if(((main.getConfig().getBoolean("consider-swords-for-cobwebs") && mat == Material.COBWEB)||(mat != Material.COBWEB && main.getConfig().getBoolean("consider-swords-for-leaves"))) && LeavesUtils.hasSword(hotbarOnly, p.getInventory().getStorageContents())) {
+            } else if(((main.configManager.main().getConsiderSwordsForCobwebs() && mat == Material.COBWEB)||(mat != Material.COBWEB && main.configManager.main().getConsiderSwordsForLeaves())) && LeavesUtils.hasSword(hotbarOnly, p.getInventory().getStorageContents())) {
                 bestType = Tool.SWORD;
             } else {
                 bestType = Tool.NONE;

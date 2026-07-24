@@ -33,7 +33,7 @@ public class BestToolsListener implements Listener {
     BestToolsListener(@NotNull Main main) {
         this.main=Objects.requireNonNull(main,"Main must not be null");
         handler=Objects.requireNonNull(main.toolHandler,"ToolHandler must not be null");
-        useAxeAsWeapon = main.getConfig().getBoolean("use-axe-as-sword");
+        useAxeAsWeapon = main.configManager.main().getUseAxeAsSword();
     }
 
 
@@ -52,7 +52,7 @@ public class BestToolsListener implements Listener {
         Log.debug("EntityDamageByEntity 4");
         Entity enemy = e.getEntity();
 
-        if(!PlayerUtils.isAllowedGamemode(p,main.getConfig().getBoolean("allow-in-adventure-mode"))) {
+        if(!PlayerUtils.isAllowedGamemode(p,main.configManager.main().getAllowInAdventureMode())) {
             return;
         }
 
@@ -143,12 +143,12 @@ public class BestToolsListener implements Listener {
             return;
 
        //main.wtfdebug("Cache invalid, doing onPlayerInteractWithBlock");
-        if(!PlayerUtils.isAllowedGamemode(p,main.getConfig().getBoolean("allow-in-adventure-mode"))) {
+        if(!PlayerUtils.isAllowedGamemode(p,main.configManager.main().getAllowInAdventureMode())) {
             return;
         }
         PlayerInventory inv = p.getInventory();
 
-        if(main.getConfig().getBoolean("dont-switch-during-battle") && handler.isWeapon(inv.getItemInMainHand())) {
+        if(main.configManager.main().getDontSwitchDuringBattle() && handler.isWeapon(inv.getItemInMainHand())) {
             Log.debug("Return: It's a gun^^");
             return;
         }
@@ -169,10 +169,10 @@ public class BestToolsListener implements Listener {
     }
 
     private int getFavoriteSlot(Player player) {
-        if(main.getConfig().getInt("favorite-slot")==-1) {
+        if(main.configManager.main().getDefaultFavoriteSlot()==-1) {
             return player.getInventory().getHeldItemSlot();
         } else {
-            return main.getConfig().getInt("favorite-slot");
+            return main.configManager.main().getDefaultFavoriteSlot();
         }
     }
 

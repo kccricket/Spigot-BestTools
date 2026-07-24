@@ -1,6 +1,7 @@
 package net.kccricket.bestesttool;
 
 import net.kccricket.bestesttool.BestToolsHandler.Tool;
+import net.kccricket.kcmclib.logging.Log;
 
 import org.bukkit.Material;
 import org.bukkit.Tag;
@@ -244,9 +245,7 @@ public class BestToolsUtils {
 
         long endTime = System.nanoTime();
 
-        if (main.verbose) {
-            main.getLogger().info(String.format("Building the <Block,Tool> map took %d ms", (endTime - startTime) / 1000000));
-        }
+        Log.debug(String.format("Building the <Block,Tool> map took %d ms", (endTime - startTime) / 1000000));
     }
 
 }

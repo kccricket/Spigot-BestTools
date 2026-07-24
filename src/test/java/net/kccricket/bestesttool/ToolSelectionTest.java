@@ -190,7 +190,7 @@ class ToolSelectionTest extends BestToolsTestBase {
 
     @Test
     void getBestToolFromInventory_leavesFallsBackToSwordWhenConfigured() {
-        plugin.getConfig().set("consider-swords-for-leaves", true);
+        plugin.getConfig().set("consider_swords_for_leaves", true);
         PlayerMock player = newPlayer();
         PlayerInventory inv = player.getInventory();
         inv.setItem(2, new ItemStack(Material.IRON_SWORD));
@@ -287,7 +287,7 @@ class ToolSelectionTest extends BestToolsTestBase {
 
     @Test
     void invalidGlobalBlockBlacklistEntryIsSkippedNotThrown() {
-        plugin.getConfig().set("global-block-blacklist", List.of("NOT_A_REAL_MATERIAL", "STONE"));
+        plugin.getConfig().set("global_block_blacklist", List.of("NOT_A_REAL_MATERIAL", "STONE"));
 
         BestToolsHandler handler = assertDoesNotThrow(() -> new BestToolsHandler(plugin));
 

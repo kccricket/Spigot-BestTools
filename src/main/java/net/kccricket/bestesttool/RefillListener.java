@@ -45,7 +45,7 @@ public class RefillListener implements Listener {
     }
 
     private void attemptRefill(Player p, boolean offHand) {
-        if(!PlayerUtils.isAllowedGamemode(p,main.getConfig().getBoolean("allow-in-adventure-mode"))) {
+        if(!PlayerUtils.isAllowedGamemode(p,main.configManager.main().getAllowInAdventureMode())) {
             return;
         }
         PlayerInventory inv = p.getInventory();
