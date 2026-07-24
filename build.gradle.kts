@@ -45,9 +45,6 @@ dependencies {
     // bStats is bundled and relocated by Shadow
     implementation("org.bstats:bstats-bukkit:3.1.0")
 
-    // MorePersistentDataTypes is bundled and relocated by Shadow
-    implementation("com.jeff-media:MorePersistentDataTypes:2.4.0")
-
     // Used for WordUtils — bundled, not relocated
     implementation("org.apache.commons:commons-text:1.12.0")
 
@@ -114,7 +111,6 @@ tasks.shadowJar {
     // Produce build/libs/BestestTool-${version}.jar — the distributable artifact.
     archiveFileName.set("BestestTool-${version}.jar")
     relocate("org.bstats", "net.kccricket.bestesttool.bstats")
-    relocate("com.jeff_media.morepersistentdatatypes", "net.kccricket.bestesttool.morepersistentdatatypes")
     manifest {
         attributes["Main-Class"] = "net.kccricket.bestesttool.Main"
     }
@@ -137,7 +133,7 @@ tasks.runServer {
     serverType(org.bxteam.runserver.ServerType.PAPER)
     serverVersion((project.findProperty("mcVersion") as String?) ?: "26.2")
     acceptMojangEula()
-    // Use the Shadow JAR (bStats/MorePersistentDataTypes relocated) instead of the plain jar output.
+    // Use the Shadow JAR (bStats relocated) instead of the plain jar output.
     inputTask(tasks.named("shadowJar"))
 }
 
