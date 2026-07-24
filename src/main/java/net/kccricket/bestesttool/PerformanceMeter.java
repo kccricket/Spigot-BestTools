@@ -1,5 +1,7 @@
 package net.kccricket.bestesttool;
 
+import net.kccricket.bestesttool.security.Permissions;
+
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
@@ -65,7 +67,7 @@ public class PerformanceMeter {
         if(calcTimePercent==0) color2 = ChatColor.RED;
 
         for(Player p : main.getServer().getOnlinePlayers()) {
-            if(PermissionUtils.has(p,"debug"))
+            if(Permissions.isAllowedTo(p, Permissions.PERM_DEBUG))
             p.sendMessage(String.format(
                     "Elapsed: %.2f ms, BestTools: %3.2f ms or %s%2.3f %%§r\n"
                     +"%d / %d queries served by cache %s(%3d %%)\n",

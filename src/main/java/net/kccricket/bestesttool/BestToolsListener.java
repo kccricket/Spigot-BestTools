@@ -1,6 +1,7 @@
 package net.kccricket.bestesttool;
 
 import net.kccricket.bestesttool.events.BestToolsNotifyEvent;
+import net.kccricket.bestesttool.security.Permissions;
 import net.kccricket.kcmclib.logging.Log;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -44,7 +45,7 @@ public class BestToolsListener implements Listener {
         if (!(e.getDamager() instanceof Player)) return;
         Log.debug("EntityDamageByEntity 2");
         Player p = (Player) e.getDamager();
-        if(!PermissionUtils.has(p,"use")) return;
+        if(!Permissions.isAllowedTo(p, Permissions.PERM_USE)) return;
         Log.debug("EntityDamageByEntity 3");
         PlayerSetting playerSetting = main.getPlayerSetting(p);
         if(!playerSetting.isBestToolsEnabled()) return;
@@ -115,7 +116,7 @@ public class BestToolsListener implements Listener {
             return;
         }
         Player p = event.getPlayer();
-        if(!PermissionUtils.has(p,"use")) {
+        if(!Permissions.isAllowedTo(p, Permissions.PERM_USE)) {
             //main.meter.add(st);
             return;
         }

@@ -1,5 +1,7 @@
 package net.kccricket.bestesttool;
 
+import net.kccricket.bestesttool.security.Permissions;
+
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -24,7 +26,7 @@ public class CommandRefill implements CommandExecutor, TabCompleter {
 
         Player p;
 
-        if (!PermissionUtils.has(sender,"refill")) {
+        if (!Permissions.isAllowedTo(sender, Permissions.PERM_REFILL)) {
             sender.sendMessage(ChatColor.YELLOW + main.getName() + ": you don't have permission to use this command.");
             return true;
         }

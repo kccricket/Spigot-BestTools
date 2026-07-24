@@ -1,5 +1,6 @@
 package net.kccricket.bestesttool;
 
+import net.kccricket.bestesttool.security.Permissions;
 import net.kccricket.kcmclib.logging.DebugLevel;
 import net.kccricket.kcmclib.logging.Log;
 
@@ -13,7 +14,7 @@ public class CommandDebug {
     static void debug(CommandSender sender, Command command, Main main, String arg) {
 
 
-        if (!PermissionUtils.has(sender,"debug")) {
+        if (!Permissions.isAllowedTo(sender, Permissions.PERM_DEBUG)) {
             sender.sendMessage(ChatColor.YELLOW + main.getName() + ": you don't have permission to use this command.");
             return;
         }

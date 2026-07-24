@@ -1,6 +1,7 @@
 package net.kccricket.bestesttool;
 
 import net.kccricket.bestesttool.placeholders.BestToolsPlaceholders;
+import net.kccricket.bestesttool.security.Permissions;
 
 import net.kccricket.kcmclib.logging.DebugLevel;
 import net.kccricket.kcmclib.logging.Log;
@@ -207,35 +208,22 @@ public class Main extends JavaPlugin {
     }
 
     /**
-     * Registers {@code bestesttool.*} permissions plus their {@code besttools.*} legacy aliases
-     * (as parent permissions whose children resolve to the real ones), mirroring what the old
-     * {@code plugin.yml} {@code permissions:} block declared. {@code paper-plugin.yml} cannot
-     * declare permissions, so this is done in code instead. Guarded against re-registration so
-     * {@code /besttools reload} (which re-runs {@link #load}) doesn't throw.
+     * Registers the {@code bestesttool.*} permissions, mirroring what the old {@code plugin.yml}
+     * {@code permissions:} block declared. {@code paper-plugin.yml} cannot declare permissions, so
+     * this is done in code instead. Guarded against re-registration so {@code /besttools reload}
+     * (which re-runs {@link #load}) doesn't throw. No {@code besttools.*} legacy alias — BestestTool
+     * is a fresh re-release with no backward compatibility to preserve.
      */
     private void registerPermissions() {
-        registerPermission("bestesttool.use", "Allows using /besttools");
-        registerPermission("bestesttool.refill", "Allows using /refill");
-        registerPermission("bestesttool.reload", "Allows to reload the config via /besttools reload");
-        registerPermission("bestesttool.debug", "Allows to enable the debug mode via /besttools debug and the performance test via /besttools performance");
-
-        registerLegacyAlias("besttools.use", "bestesttool.use");
-        registerLegacyAlias("besttools.refill", "bestesttool.refill");
-        registerLegacyAlias("besttools.reload", "bestesttool.reload");
-        registerLegacyAlias("besttools.debug", "bestesttool.debug");
+        registerPermission(Permissions.PERM_USE, "Allows using /besttools");
+        registerPermission(Permissions.PERM_REFILL, "Allows using /refill");
+        registerPermission(Permissions.PERM_RELOAD, "Allows to reload the config via /besttools reload");
+        registerPermission(Permissions.PERM_DEBUG, "Allows to enable the debug mode via /besttools debug and the performance test via /besttools performance");
     }
 
     private void registerPermission(String name, String description) {
         if (getServer().getPluginManager().getPermission(name) != null) return;
         getServer().getPluginManager().addPermission(new Permission(name, description, PermissionDefault.OP));
-    }
-
-    private void registerLegacyAlias(String aliasName, String targetName) {
-        if (getServer().getPluginManager().getPermission(aliasName) != null) return;
-        Permission alias = new Permission(aliasName, "Legacy alias for " + targetName, PermissionDefault.OP);
-        alias.getChildren().put(targetName, true);
-        getServer().getPluginManager().addPermission(alias);
-        alias.recalculatePermissibles();
     }
 
     private void loadDefaultValues() {

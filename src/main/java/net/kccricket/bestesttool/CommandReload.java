@@ -1,5 +1,7 @@
 package net.kccricket.bestesttool;
 
+import net.kccricket.bestesttool.security.Permissions;
+
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -9,7 +11,7 @@ public class CommandReload {
     static void reload(CommandSender sender, Command command, Main main) {
 
 
-            if (!PermissionUtils.has(sender,"reload")) {
+            if (!Permissions.isAllowedTo(sender, Permissions.PERM_RELOAD)) {
                 sender.sendMessage(ChatColor.YELLOW + main.getName() + ": you don't have permission to use this command.");
                 return;
             }

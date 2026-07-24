@@ -1,5 +1,7 @@
 package net.kccricket.bestesttool;
 
+import net.kccricket.bestesttool.security.Permissions;
+
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -23,7 +25,7 @@ public class CommandBestTools implements CommandExecutor {
         Player p;
         PlayerSetting setting;
 
-        if (!PermissionUtils.has(sender,"use")) {
+        if (!Permissions.isAllowedTo(sender, Permissions.PERM_USE)) {
             sender.sendMessage(ChatColor.YELLOW + main.getName() + ": you don't have permission to use this command.");
             return true;
         }

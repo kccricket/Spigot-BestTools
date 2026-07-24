@@ -26,12 +26,11 @@ abstract class BestToolsTestBase {
         return server.addPlayer();
     }
 
-    enum Grant { NEW, LEGACY, NONE }
+    enum Grant { NEW, NONE }
 
     void grant(PlayerMock player, String suffix, Grant grant) {
         switch (grant) {
             case NEW -> player.addAttachment(plugin).setPermission("bestesttool." + suffix, true);
-            case LEGACY -> player.addAttachment(plugin).setPermission("besttools." + suffix, true);
             case NONE -> { /* no permission granted */ }
         }
     }
