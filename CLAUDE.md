@@ -93,7 +93,15 @@ using direct, compile-time references — no more per-version compatibility scaf
   enum), plus lists of which materials count as pickaxes/axes/hoes/shovels/swords/weapons/leaves/insta-
   breakable-by-hand — and the core "what's the best item for this block/target" selection logic
   (`getBestToolFromInventory`, `getBestRoscoeFromInventory` for combat, `getBestItemStackFromArray`,
-  `moveToolToSlot`, `freeSlot`).
+  `moveToolToSlot`, `freeSlot`). `neverSwitch` (built-in, not configurable — see `isNeverSwitch`) holds
+  blocks BestTools must never touch the held item for: bedrock-class blocks no tool can break/drop
+  (`hardness < 0`, plus `REINFORCED_DEEPSLATE`, which doesn't fit that rule but still drops nothing)
+  and `DECORATED_POT`, where the held item is the player's own choice between an intact pot and 4
+  sherds. When `getBestToolFromInventory` finds nothing that beats a bare hand, `BestToolsListener`
+  falls back to an actual bare hand (`shouldKeepHeldItem`/`getBareHandSlot`) — unless
+  `silkChangesDrops` (decided from the block's live `getDrops()`, not a hardcoded list) says Silk
+  Touch is the only way to get a drop at all (glass, sea lantern, coral, turtle eggs, ...), in which
+  case a Silk Touch item is switched to instead.
 - **`BestToolsUtils`** populates `BestToolsHandler`'s lookup tables at startup (`initMap()`), and *must*
   be constructed after `BestToolsHandler` (`Main.load()` enforces this ordering).
 - **`BestToolsListener`** is the event-driven entry point: on `BlockBreakEvent` it re-fires as a delayed

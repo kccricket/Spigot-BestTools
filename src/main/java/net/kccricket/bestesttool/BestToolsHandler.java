@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This will probably be a separate plugin called BestTool or something
@@ -49,6 +50,20 @@ public class BestToolsHandler {
 
     final EnumSet<Material> leaves = EnumSet.noneOf(Material.class);
 
+    // Blocks BestTools must never switch tools/hands for, full stop: bedrock-class blocks that no
+    // tool can break or drop (hardness < 0, plus REINFORCED_DEEPSLATE which doesn't fit that rule
+    // but still drops nothing regardless of tool), and DECORATED_POT, where the held item is the
+    // player's own choice between an intact pot and 4 sherds. See BestToolsListener.onPlayerInteractWithBlock.
+    final EnumSet<Material> neverSwitch = EnumSet.noneOf(Material.class);
+
+    // Per-Material memo of silkChangesDrops(); see that method. Not an EnumMap: mutated from
+    // per-region Folia threads, and discarded whenever Main.load() rebuilds this handler.
+    private final Map<Material, Boolean> silkMattersCache = new ConcurrentHashMap<>();
+    // Built once here, not as a static field: EnchantmentUtils.getEnchantment reads
+    // Registry.ENCHANTMENT, which isn't populated until the server is up, and this constructor
+    // already only ever runs after that point (Main.load() constructs BestToolsHandler on enable
+    // /reload).
+    private final ItemStack silkProbe;
 
     final ArrayList<Material> weapons = new ArrayList<>();
 
@@ -80,7 +95,23 @@ public class BestToolsHandler {
             }
         });
 
+        Arrays.stream(Material.values()).forEach(material -> {
+            if(material.isLegacy() || !material.isBlock()) return;
+            if(material.getHardness() < 0) {
+                neverSwitch.add(material);
+            }
+        });
+        neverSwitch.add(Material.REINFORCED_DEEPSLATE); // hardness 55, but drops nothing regardless of tool
+        neverSwitch.add(Material.DECORATED_POT); // held item decides intact pot vs. sherds; respect the player's choice
 
+        silkProbe = new ItemStack(Material.DIAMOND_PICKAXE);
+        ItemMeta silkMeta = silkProbe.getItemMeta();
+        silkMeta.addEnchant(EnchantmentUtils.getEnchantment("silk_touch"), 1, true);
+        silkProbe.setItemMeta(silkMeta);
+    }
+
+    boolean isNeverSwitch(Material mat) {
+        return neverSwitch.contains(mat);
     }
 
     boolean isWeapon(ItemStack itemInMainHand) {
@@ -146,6 +177,12 @@ public class BestToolsHandler {
             case QUARTZ:
             case SPAWNER:
             case SEA_LANTERN:
+            case BEEHIVE: // Silk Touch keeps the bees and honey level; a plain axe releases angry bees
+            case BEE_NEST:
+            case AMETHYST_CLUSTER: // buds/clusters drop nothing at all without Silk Touch
+            case SMALL_AMETHYST_BUD:
+            case MEDIUM_AMETHYST_BUD:
+            case LARGE_AMETHYST_BUD:
                 return true;
         }
         if(name.equals("NETHER_GOLD_ORE")) return true; // Fortune also improves this, but according to wiki even fortune 3 on avg only gives 8.8 nuggets which is less than 1 ingot
@@ -176,23 +213,30 @@ public class BestToolsHandler {
         return -1;
     }
 
-    @Nullable
-    ItemStack getNonToolItemFromArray(@NotNull ItemStack[] items,ItemStack currentItem, Material target) {
+    /**
+     * Whether it's even worth switching off the currently-held item when nothing beats a bare
+     * hand. True if the current item is already effectively a bare hand (not a tool/roscoe), or if
+     * {@code target} insta-breaks and the held item isn't a hoe (insta-breaks don't cost durability
+     * except on hoes, so churning the hotbar for a torch or a flower gains nothing).
+     */
+    boolean shouldKeepHeldItem(@NotNull ItemStack currentItem, Material target) {
+        if(!isToolOrRoscoe(currentItem)) return true;
+        return instaBreakableByHand.contains(target) && !hoes.contains(currentItem.getType());
+    }
 
-        // Note: InstaBreaks dont cause damage except on hoes
-        // TODO: Take this into account: https://minecraft.gamepedia.com/Item_durability
-        // TODO: itemMeta instanceof Damageable may also mean the tool is unused!
-        if(instaBreakableByHand.contains(target) && !hoes.contains(currentItem.getType()) ||
-            !isToolOrRoscoe(currentItem))
-            return currentItem;
-
-        for(ItemStack item: items) {
-            if(item==null || !isDamageable(item)) {
-                return item;
-            }
+    /**
+     * Slot holding the best stand-in for a bare hand: a genuinely empty hotbar slot if there is
+     * one, otherwise the first non-damageable item (won't take wear standing in for a hand).
+     * Returns -1 if neither exists. {@code items} must come from {@link #inventoryToArray}, whose
+     * array index maps 1:1 to inventory slot.
+     */
+    int getBareHandSlot(@NotNull PlayerInventory inv, @NotNull ItemStack[] items) {
+        int empty = getEmptyHotbarSlot(inv);
+        if(empty != -1) return empty;
+        for(int i = 0; i < items.length; i++) {
+            if(items[i] != null && !isDamageable(items[i])) return i;
         }
-        return null;
-
+        return -1;
     }
 
     boolean hasSilktouch(ItemStack item) {
@@ -203,7 +247,7 @@ public class BestToolsHandler {
 
     /**
      * Ranks inventory items against a block's live mining data and returns the best one, or
-     * {@code null} if nothing beats a bare hand (speed {@code 1.0}).
+     * {@code null} if nothing beats {@code floor}.
      * <p>
      * Ranked by {@code (isPreferredTool desc, getDestroySpeed desc)} — drops beat speed. {@link
      * BlockData#getDestroySpeed} alone is not enough: an Efficiency V iron pickaxe outscores a
@@ -211,22 +255,27 @@ public class BestToolsHandler {
      * BlockData#isPreferredTool} is only consulted when {@link BlockData#requiresCorrectToolForDrops()}
      * is true, and only for a candidate that's already the fastest seen so far — for the common
      * case (dirt, wood, leaves, wool) that's zero calls; for ores, typically one to three.
+     * @param floor A candidate must score strictly above this to be worth switching to. Normally
+     *              {@code 1.0} (bare-hand speed): a switch has to actually be faster to be worth
+     *              it. The Silk Touch pass ({@code trySilktouch}) is called with {@code 0.0}
+     *              instead, since on a block where Silk Touch is the only way to get a drop at all
+     *              (see {@link #silkChangesDrops}) the enchant is the point, not the speed.
      */
     @Nullable
-    ItemStack getBestItemStackFromArray(@NotNull BlockData data, @NotNull ItemStack[] items, boolean trySilktouch, @NotNull Material target) {
+    ItemStack getBestItemStackFromArray(@NotNull BlockData data, @NotNull ItemStack[] items, boolean trySilktouch, @NotNull Material target, float floor) {
 
         boolean needsCorrect = data.requiresCorrectToolForDrops();
 
         ItemStack bestAny = null;
-        float bestAnySpeed = 1.0f; // 1.0 == bare hand; a candidate must beat it to be worth switching to
+        float bestAnySpeed = floor;
         ItemStack bestCorrect = null;
-        float bestCorrectSpeed = 1.0f;
+        float bestCorrectSpeed = floor;
 
         for(ItemStack item : items) {
             if(item==null) continue; // IntelliJ says this is always false
             // TODO: Check if durability is 1
 
-            if(trySilktouch && !hasSilktouch(item)) continue;
+            if(trySilktouch && (!isToolOrRoscoe(item) || !hasSilktouch(item))) continue;
             if(!isCandidate(item,target)) continue;
 
             float speed = data.getDestroySpeed(item,true);
@@ -242,7 +291,7 @@ public class BestToolsHandler {
 
         if(bestAny == null) {
             if(trySilktouch) {
-                return getBestItemStackFromArray(data,items,false,target);
+                return getBestItemStackFromArray(data,items,false,target,1.0f);
             } else {
                 return null;
             }
@@ -288,28 +337,70 @@ public class BestToolsHandler {
     }
 
     /**
+     * Whether Silk Touch is the difference between getting a drop from {@code block} at all and
+     * getting nothing (e.g. glass, sea lantern, coral, turtle eggs) — answered from the block's
+     * live loot table rather than a hardcoded list, so it covers every such block including
+     * datapack-defined ones. Only meaningful (and only called) on the fallback path in {@link
+     * #getBestToolFromInventory}, once nothing has already beaten a bare hand: silk also changes
+     * the drop for ordinary stone/ore/grass blocks, but those always have a real tool that beats a
+     * bare hand and so never reach this check — a Fortune pickaxe still wins on ores as before.
+     * <p>
+     * {@link Block#getDrops(ItemStack)} rolls the loot table — its javadoc warns results aren't
+     * stable across calls — so the comparison is by material set, not exact stacks, and the
+     * verdict is memoized per {@link Material} to pin down an answer and avoid re-rolling the loot
+     * table on every interaction. Caveats worth knowing: the memo ignores block state (e.g. a
+     * cracked decorated pot — moot, since {@code DECORATED_POT} is in {@link #neverSwitch}
+     * anyway), and for a block whose non-silk drop is itself random (ferns, candles, sea pickles,
+     * sweet berry bushes) the first roll decides the cached verdict for the session; the worst
+     * case there is switching to a Silk Touch tool instead of a bare hand, costing a point of
+     * durability.
+     */
+    boolean silkChangesDrops(@NotNull Block block) {
+        return silkMattersCache.computeIfAbsent(block.getType(), mat ->
+                !dropMaterials(block.getDrops(null)).equals(dropMaterials(block.getDrops(silkProbe))));
+    }
+
+    static Set<Material> dropMaterials(@NotNull Collection<ItemStack> drops) {
+        Set<Material> materials = EnumSet.noneOf(Material.class);
+        for(ItemStack drop : drops) {
+            materials.add(drop.getType());
+        }
+        return materials;
+    }
+
+    /**
      * Tries to get the ItemStack that is the best for this block, ranked by live mining data
      * ({@link BlockData#getDestroySpeed}/{@link BlockData#isPreferredTool}) rather than the static
      * {@code toolMap} — see {@link #getBestItemStackFromArray}. This also covers leaves and cobweb
      * natively (shears/hoe/sword are simply whichever candidate scores highest), replacing what
      * used to be a separate {@code LeavesUtils}-driven branch here.
+     * <p>
+     * Returns {@code null} if nothing in the inventory is worth switching to — the caller should
+     * fall back to a bare hand (see {@link #shouldKeepHeldItem}/{@link #getBareHandSlot}).
      * @param block The block being mined
      * @param p Player
      * @return
      */
     @Nullable
-    ItemStack getBestToolFromInventory(@NotNull Block block, Player p, boolean hotbarOnly,ItemStack currentItem) {
+    ItemStack getBestToolFromInventory(@NotNull Block block, Player p, boolean hotbarOnly) {
         ItemStack[] items = inventoryToArray(p,hotbarOnly);
         Material mat = block.getType();
+        BlockData data = block.getBlockData();
 
-        ItemStack bestStack = getBestItemStackFromArray(block.getBlockData(),items,profitsFromSilkTouch(mat),mat);
-        if(bestStack==null) {
-            Log.debug("bestStack is null");
-            return getNonToolItemFromArray(items,currentItem,mat);
+        ItemStack bestStack = getBestItemStackFromArray(data,items,profitsFromSilkTouch(mat),mat,1.0f);
+        if(bestStack!=null) {
+            Log.debug("bestStack is "+bestStack.toString());
+            return bestStack;
         }
-        Log.debug("bestStack is "+bestStack.toString());
-        return bestStack;
-
+        Log.debug("bestStack is null");
+        if(silkChangesDrops(block)) {
+            ItemStack silkStack = getBestItemStackFromArray(data,items,true,mat,0.0f);
+            if(silkStack!=null) {
+                Log.debug("silkStack is "+silkStack.toString());
+                return silkStack;
+            }
+        }
+        return null;
     }
 
     /**
@@ -321,11 +412,7 @@ public class BestToolsHandler {
     ItemStack getBestRoscoeFromInventory(@NotNull EntityType enemy, Player p, boolean hotbarOnly, ItemStack currentItem, boolean useAxe) {
         ItemStack[] items = inventoryToArray(p,hotbarOnly);
 
-        ItemStack bestRoscoe = getBestRoscoeFromArray(items,currentItem,enemy,useAxe);
-        //if(bestRoscoe==null) {
-        //    bestRoscoe = getNonToolItemFromArray(items,currentItem,mat);
-        //}
-        return bestRoscoe;
+        return getBestRoscoeFromArray(items,currentItem,enemy,useAxe);
 
     }
 
@@ -383,15 +470,22 @@ public class BestToolsHandler {
 
     boolean isDamageable(ItemStack item) {
         if(item==null) return false;
-        if(!item.hasItemMeta()) return false;
-        ItemMeta meta = item.getItemMeta();
-        if( meta instanceof Damageable) {
+        // A pristine tool (unenchanted, undamaged) carries no component patch, so hasItemMeta()
+        // is false for it — checking that first (as this used to) misclassifies every unused tool
+        // as non-damageable. getMaxDurability() reflects the material itself, not the item's
+        // current meta, so it's correct regardless of whether the stack has been touched yet.
+        if(item.getType().getMaxDurability() > 0) {
             Log.debug(item.getType().name() + " is damageable");
             return true;
-        } else {
-            Log.debug(item.getType().name() + " is NOT damageable");
-            return false;
         }
+        // 1.20.5+ lets a datapack/plugin attach a max_damage component to an otherwise
+        // non-damageable material; catch that case too.
+        if(item.hasItemMeta() && item.getItemMeta() instanceof Damageable damageable && damageable.hasMaxDamage()) {
+            Log.debug(item.getType().name() + " is damageable (custom max_damage component)");
+            return true;
+        }
+        Log.debug(item.getType().name() + " is NOT damageable");
+        return false;
     }
 
     /**

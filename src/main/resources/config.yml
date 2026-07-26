@@ -102,6 +102,10 @@ use_axe_as_sword: false
 
 # ----- Global blacklist -----
 
+# BestTools already never switches tools/hands for blocks no tool can break or drop (bedrock,
+# reinforced deepslate, barrier, portals, ...) or for decorated pots, where the held item is your
+# own choice between an intact pot and 4 sherds — that list is built in and isn't editable here.
+#
 # You can add blocks to the global blacklist here that will apply to ALL players.
 # Blocks broken that are mentioned in this list will not trigger BestTools.
 

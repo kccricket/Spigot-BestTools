@@ -72,7 +72,7 @@ public class BestToolsListener implements Listener {
             //playerSetting.getBtcache().validate(enemy.getType());
             return;
         }
-        switchToBestRoscoe(p, bestRoscoe,playerSetting.isHotbarOnly(),playerSetting.getFavoriteSlot());
+        switchToBestRoscoe(p, bestRoscoe,playerSetting.getFavoriteSlot());
         //playerSetting.getBtcache().validate(enemy.getType());
         main.meter.add(st,false);
 
@@ -143,6 +143,14 @@ public class BestToolsListener implements Listener {
         if(playerSetting.getBlacklist().contains(block.getType()))
             return;
 
+        if(main.toolHandler.isNeverSwitch(block.getType())) {
+            // No tool can break/drop this (bedrock, reinforced deepslate, ...), or the held item
+            // is the player's own choice to make (decorated pots) — leave the hand alone.
+            playerSetting.getBtcache().validate(block.getType());
+            main.meter.add(st,false);
+            return;
+        }
+
        //main.wtfdebug("Cache invalid, doing onPlayerInteractWithBlock");
         if(!PlayerUtils.isAllowedGamemode(p,main.configManager.main().getAllowInAdventureMode())) {
             return;
@@ -157,14 +165,15 @@ public class BestToolsListener implements Listener {
         if (event.getAction() != Action.LEFT_CLICK_BLOCK) return;
         if (event.getHand() != EquipmentSlot.HAND) return;
 
-        ItemStack bestTool = handler.getBestToolFromInventory(block, p,playerSetting.isHotbarOnly(),inv.getItemInMainHand());
+        ItemStack bestTool = handler.getBestToolFromInventory(block, p,playerSetting.isHotbarOnly());
 
-        if(bestTool==null || bestTool.equals(inv.getItemInMainHand())) {
-            main.meter.add(st,false);
-            playerSetting.getBtcache().validate(block.getType());
-            return;
+        if(bestTool!=null) {
+            if(!bestTool.equals(inv.getItemInMainHand())) {
+                switchToBestTool(p, bestTool);
+            }
+        } else {
+            switchToBareHand(p, playerSetting, block.getType());
         }
-        switchToBestTool(p, bestTool,playerSetting.isHotbarOnly(),block.getType());
         playerSetting.getBtcache().validate(block.getType());
         main.meter.add(st,false);
     }
@@ -177,28 +186,9 @@ public class BestToolsListener implements Listener {
         }
     }
 
-    private void switchToBestTool(Player p, ItemStack bestTool, boolean hotbarOnly, Material target) {
+    private void switchToBestTool(Player p, @NotNull ItemStack bestTool) {
 
         PlayerInventory inv = p.getInventory();
-        if(bestTool == null) {
-            ItemStack currentItem = inv.getItemInMainHand();
-
-            if(currentItem==null) return; // IntelliJ says this is always false
-
-            int emptyHotbarSlot = BestToolsHandler.getEmptyHotbarSlot(inv);
-            if(emptyHotbarSlot!=-1) {
-                inv.setHeldItemSlot(emptyHotbarSlot);
-                return;
-            }
-
-            if(!main.toolHandler.isDamageable(currentItem)) return;
-            bestTool = handler.getNonToolItemFromArray(handler.inventoryToArray(p,hotbarOnly),currentItem,target);
-        }
-        if(bestTool == null) {
-            handler.freeSlot(getFavoriteSlot(p),inv);
-            Log.debug("Could not find any appropiate tool");
-            return;
-        }
         int positionInInventory = handler.getPositionInInventory(bestTool,inv) ;
         if(positionInInventory != -1) {
             handler.moveToolToSlot(positionInInventory,getFavoriteSlot(p),inv);
@@ -210,28 +200,32 @@ public class BestToolsListener implements Listener {
 
     }
 
-    private void switchToBestRoscoe(Player p, ItemStack bestRoscoe, boolean hotbarOnly, int favoriteSlot) {
+    /**
+     * Nothing in the inventory beat a bare hand for {@code target} — switch to an actual bare
+     * hand (an empty hotbar slot) if one exists and it's worth the swap, otherwise free up the
+     * favorite slot as today.
+     */
+    private void switchToBareHand(Player p, PlayerSetting playerSetting, Material target) {
 
         PlayerInventory inv = p.getInventory();
-        if(bestRoscoe == null) {
-            ItemStack currentItem = inv.getItemInMainHand();
+        ItemStack currentItem = inv.getItemInMainHand();
 
-            if(currentItem==null) return; // IntelliJ says this is always false
+        if(handler.shouldKeepHeldItem(currentItem,target)) return;
 
-            int emptyHotbarSlot = BestToolsHandler.getEmptyHotbarSlot(inv);
-            if(emptyHotbarSlot!=-1) {
-                inv.setHeldItemSlot(emptyHotbarSlot);
-                return;
-            }
-
-            if(!main.toolHandler.isDamageable(currentItem)) return;
-            bestRoscoe = handler.getNonToolItemFromArray(handler.inventoryToArray(p,hotbarOnly),currentItem,Material.BEDROCK);
+        ItemStack[] items = handler.inventoryToArray(p,playerSetting.isHotbarOnly());
+        int bareHandSlot = handler.getBareHandSlot(inv,items);
+        if(bareHandSlot != -1) {
+            handler.moveToolToSlot(bareHandSlot,getFavoriteSlot(p),inv);
+            Log.debug("Found bare-hand stand-in");
+        } else {
+            handler.freeSlot(getFavoriteSlot(p),inv);
+            Log.debug("Could not find any bare-hand stand-in");
         }
-        if(bestRoscoe == null) {
-            handler.freeSlot(favoriteSlot,inv);
-            Log.debug("Could not find any appropiate tool");
-            return;
-        }
+    }
+
+    private void switchToBestRoscoe(Player p, @NotNull ItemStack bestRoscoe, int favoriteSlot) {
+
+        PlayerInventory inv = p.getInventory();
         int positionInInventory = handler.getPositionInInventory(bestRoscoe,inv) ;
         if(positionInInventory != -1) {
             handler.moveToolToSlot(positionInInventory,favoriteSlot,inv);

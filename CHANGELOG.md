@@ -1,6 +1,15 @@
 # Changelog
 
 ## Unreleased
+- Fixed BestTools switching to a diamond pickaxe on blocks no tool can break or drop (bedrock,
+  reinforced deepslate, barrier, portals, ...) and on "any tool" blocks (glass, sea lantern, wool
+  carpet) instead of leaving the hand alone — a regression from the live-mining-data switch above
+  caused by `isDamageable` misclassifying every pristine (unenchanted, undamaged) tool as
+  non-damageable. BestTools now never switches for unbreakable blocks or decorated pots (the held
+  item there is your own choice between an intact pot and 4 sherds), and falls back to an empty
+  hotbar slot for "any tool" blocks — unless you're holding a Silk Touch item that's the only way
+  to get a drop at all (glass, sea lantern, coral, turtle eggs, ...), in which case it switches to
+  that instead
 - Renamed the command from `/besttools` to `/bestesttool` (alias `/bt`) and rebuilt it on Paper's
   Brigadier command API, adding real per-argument tab completion — including block-name
   suggestions for `/bestesttool blacklist add`/`remove` — and client-side argument validation.

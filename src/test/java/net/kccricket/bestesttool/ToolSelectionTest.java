@@ -75,7 +75,8 @@ class ToolSelectionTest extends BestToolsTestBase {
 
     @ParameterizedTest
     @EnumSource(value = Material.class, names = {"GLOWSTONE", "ENDER_CHEST", "QUARTZ", "SPAWNER", "SEA_LANTERN",
-            "NETHER_GOLD_ORE", "GLASS", "TINTED_GLASS", "GLASS_PANE"})
+            "NETHER_GOLD_ORE", "GLASS", "TINTED_GLASS", "GLASS_PANE", "BEEHIVE", "BEE_NEST",
+            "AMETHYST_CLUSTER", "LARGE_AMETHYST_BUD"})
     void profitsFromSilkTouch_trueForSpecialBlocks(Material mat) {
         assertTrue(plugin.toolHandler.profitsFromSilkTouch(mat));
     }
@@ -117,7 +118,7 @@ class ToolSelectionTest extends BestToolsTestBase {
         FakeBlockData data = new FakeBlockData(Material.STONE, false,
                 Map.of(Material.WOODEN_PICKAXE, 2f, Material.STONE_PICKAXE, 4f), Set.of());
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE, 1.0f);
 
         assertEquals(Material.STONE_PICKAXE, best.getType());
     }
@@ -135,7 +136,7 @@ class ToolSelectionTest extends BestToolsTestBase {
                 Map.of(Material.IRON_PICKAXE, 32f, Material.DIAMOND_PICKAXE, 8f),
                 Set.of(Material.DIAMOND_PICKAXE));
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(obsidian, items, false, Material.OBSIDIAN);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(obsidian, items, false, Material.OBSIDIAN, 1.0f);
 
         assertEquals(Material.DIAMOND_PICKAXE, best.getType());
     }
@@ -149,7 +150,7 @@ class ToolSelectionTest extends BestToolsTestBase {
         FakeBlockData diamondOre = new FakeBlockData(Material.DIAMOND_ORE, true,
                 Map.of(Material.WOODEN_PICKAXE, 2f, Material.IRON_PICKAXE, 6f), Set.of());
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(diamondOre, items, false, Material.DIAMOND_ORE);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(diamondOre, items, false, Material.DIAMOND_ORE, 1.0f);
 
         assertEquals(Material.IRON_PICKAXE, best.getType());
     }
@@ -161,7 +162,7 @@ class ToolSelectionTest extends BestToolsTestBase {
 
         FakeBlockData dirt = new FakeBlockData(Material.DIRT, false, Map.of(Material.IRON_SHOVEL, 6f), Set.of());
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(dirt, items, false, Material.DIRT);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(dirt, items, false, Material.DIRT, 1.0f);
 
         assertEquals(Material.IRON_SHOVEL, best.getType());
         assertTrue(dirt.preferredToolChecks.isEmpty());
@@ -176,7 +177,7 @@ class ToolSelectionTest extends BestToolsTestBase {
         FakeBlockData data = new FakeBlockData(Material.STONE, false,
                 Map.of(Material.IRON_PICKAXE, 6f, Material.DIAMOND_PICKAXE, 6f), Set.of());
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE, 1.0f);
 
         assertEquals(first, best);
     }
@@ -188,7 +189,7 @@ class ToolSelectionTest extends BestToolsTestBase {
 
         FakeBlockData data = new FakeBlockData(Material.STONE, false, Map.of(), Set.of());
 
-        assertNull(plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE));
+        assertNull(plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE, 1.0f));
     }
 
     @Test
@@ -199,7 +200,7 @@ class ToolSelectionTest extends BestToolsTestBase {
 
         FakeBlockData glowstone = new FakeBlockData(Material.GLOWSTONE, false, Map.of(Material.IRON_PICKAXE, 6f), Set.of());
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(glowstone, items, true, Material.GLOWSTONE);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(glowstone, items, true, Material.GLOWSTONE, 1.0f);
 
         assertEquals(silkPick, best);
     }
@@ -211,9 +212,33 @@ class ToolSelectionTest extends BestToolsTestBase {
 
         FakeBlockData glowstone = new FakeBlockData(Material.GLOWSTONE, false, Map.of(Material.IRON_PICKAXE, 6f), Set.of());
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(glowstone, items, true, Material.GLOWSTONE);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(glowstone, items, true, Material.GLOWSTONE, 1.0f);
 
         assertEquals(plainPick, best);
+    }
+
+    @Test
+    void getBestItemStackFromArray_floorZeroLetsSilkTouchWinAtBareHandSpeed() {
+        // The scenario silkChangesDrops()/getBestToolFromInventory rely on: a block with no
+        // matching #mineable/* tool (empty speed map, so every item is at bare-hand speed 1.0f).
+        // A Silk Touch tool has to be selectable there even though it's no faster than a hand.
+        ItemStack silkPick = enchanted(Material.IRON_PICKAXE, "silk_touch", 1);
+        ItemStack[] items = {silkPick};
+
+        FakeBlockData glass = new FakeBlockData(Material.GLASS, false, Map.of(), Set.of());
+
+        assertEquals(silkPick, plugin.toolHandler.getBestItemStackFromArray(glass, items, true, Material.GLASS, 0.0f));
+        assertNull(plugin.toolHandler.getBestItemStackFromArray(glass, items, true, Material.GLASS, 1.0f));
+    }
+
+    @Test
+    void getBestItemStackFromArray_silkPassSkipsNonToolsEvenWithTheEnchant() {
+        ItemStack silkHelmet = enchanted(Material.DIAMOND_HELMET, "silk_touch", 1);
+        ItemStack[] items = {silkHelmet};
+
+        FakeBlockData glass = new FakeBlockData(Material.GLASS, false, Map.of(), Set.of());
+
+        assertNull(plugin.toolHandler.getBestItemStackFromArray(glass, items, true, Material.GLASS, 0.0f));
     }
 
     // --- isCandidate: the only remaining category filter (sword-for-leaves/cobweb toggles) -------
@@ -255,31 +280,118 @@ class ToolSelectionTest extends BestToolsTestBase {
         assertTrue(plugin.toolHandler.isCandidate(new ItemStack(Material.IRON_SWORD), Material.STONE));
     }
 
-    // --- getNonToolItemFromArray: unaffected by the live-speed switch ----------------------------
+    // --- isDamageable: the regression that let a pristine tool masquerade as a bare hand --------
 
     @Test
-    void getNonToolItemFromArray_keepsCurrentItemForInstaBreakWithoutHoe() {
-        ItemStack current = new ItemStack(Material.IRON_PICKAXE);
-        ItemStack[] items = {new ItemStack(Material.DIRT)};
-
-        ItemStack result = plugin.toolHandler.getNonToolItemFromArray(items, current, Material.WHEAT);
-
-        assertEquals(current, result);
+    void isDamageable_trueForPristineTool() {
+        // The bug this guards against: a pristine (unenchanted, undamaged) tool has no ItemMeta
+        // component patch, so the old hasItemMeta()-first check misclassified it as NOT
+        // damageable — which is exactly what let getNonToolItemFromArray hand back a diamond
+        // pickaxe as a "bare hand" substitute for bedrock/glass/decorated pots.
+        assertTrue(plugin.toolHandler.isDamageable(new ItemStack(Material.DIAMOND_PICKAXE)));
+        assertTrue(plugin.toolHandler.isDamageable(new ItemStack(Material.SHEARS)));
     }
 
     @Test
-    void getNonToolItemFromArray_looksForAlternativeWithHoeInHand() {
-        // MockBukkit's ItemMeta mock reports every material as Damageable, so an empty (null)
-        // slot is the only way to exercise "non-damageable item found" fidelity here; what this
-        // proves is that a hoe in hand does NOT short-circuit to the current item like the
-        // instaBreak-without-hoe case does.
-        ItemStack current = new ItemStack(Material.IRON_HOE);
-        ItemStack[] items = {new ItemStack(Material.DIAMOND_PICKAXE), null};
+    void isDamageable_falseForMaterialsWithNoDurability() {
+        assertFalse(plugin.toolHandler.isDamageable(new ItemStack(Material.DIRT)));
+        assertFalse(plugin.toolHandler.isDamageable(new ItemStack(Material.STONE)));
+    }
 
-        ItemStack result = plugin.toolHandler.getNonToolItemFromArray(items, current, Material.WHEAT);
+    @Test
+    void isDamageable_falseForNull() {
+        assertFalse(plugin.toolHandler.isDamageable(null));
+    }
 
-        assertNotEquals(current, result);
-        assertNull(result);
+    // --- neverSwitch/isNeverSwitch: bedrock-class blocks and decorated pots -------------------
+
+    @Test
+    void isNeverSwitch_trueForUnbreakableBlocksAndDecoratedPot() {
+        assertTrue(plugin.toolHandler.isNeverSwitch(Material.BEDROCK));
+        assertTrue(plugin.toolHandler.isNeverSwitch(Material.BARRIER));
+        assertTrue(plugin.toolHandler.isNeverSwitch(Material.MOVING_PISTON));
+        assertTrue(plugin.toolHandler.isNeverSwitch(Material.REINFORCED_DEEPSLATE));
+        assertTrue(plugin.toolHandler.isNeverSwitch(Material.DECORATED_POT));
+    }
+
+    @Test
+    void isNeverSwitch_falseForOrdinaryAndAnyToolBlocks() {
+        assertFalse(plugin.toolHandler.isNeverSwitch(Material.STONE));
+        assertFalse(plugin.toolHandler.isNeverSwitch(Material.GLASS));
+        assertFalse(plugin.toolHandler.isNeverSwitch(Material.SEA_LANTERN));
+    }
+
+    // --- shouldKeepHeldItem / getBareHandSlot: the bare-hand fallback --------------------------
+
+    @Test
+    void shouldKeepHeldItem_trueWhenCurrentItemIsAlreadyNotATool() {
+        assertTrue(plugin.toolHandler.shouldKeepHeldItem(new ItemStack(Material.DIRT), Material.GLASS));
+    }
+
+    @Test
+    void shouldKeepHeldItem_trueForInstaBreakBlockWithoutHoeInHand() {
+        assertTrue(plugin.toolHandler.shouldKeepHeldItem(new ItemStack(Material.IRON_PICKAXE), Material.WHEAT));
+    }
+
+    @Test
+    void shouldKeepHeldItem_falseForInstaBreakBlockWithHoeInHand() {
+        assertFalse(plugin.toolHandler.shouldKeepHeldItem(new ItemStack(Material.IRON_HOE), Material.WHEAT));
+    }
+
+    @Test
+    void shouldKeepHeldItem_falseWhenHoldingToolAtNonInstaBreakBlock() {
+        assertFalse(plugin.toolHandler.shouldKeepHeldItem(new ItemStack(Material.IRON_PICKAXE), Material.GLASS));
+    }
+
+    @Test
+    void getBareHandSlot_prefersEmptyHotbarSlotOverNonDamageableItem() {
+        PlayerMock player = newPlayer();
+        PlayerInventory inv = player.getInventory();
+        inv.setItem(0, new ItemStack(Material.DIRT)); // a non-damageable candidate, but not the best one
+        // slot 1 is left empty on purpose
+        ItemStack[] items = plugin.toolHandler.inventoryToArray(player, true);
+
+        assertEquals(1, plugin.toolHandler.getBareHandSlot(inv, items));
+    }
+
+    @Test
+    void getBareHandSlot_fallsBackToNonDamageableItemWhenHotbarIsFull() {
+        PlayerMock player = newPlayer();
+        PlayerInventory inv = player.getInventory();
+        for (int i = 0; i < 9; i++) {
+            inv.setItem(i, i == 3 ? new ItemStack(Material.DIRT) : new ItemStack(Material.IRON_PICKAXE));
+        }
+        ItemStack[] items = plugin.toolHandler.inventoryToArray(player, true);
+
+        assertEquals(3, plugin.toolHandler.getBareHandSlot(inv, items));
+    }
+
+    @Test
+    void getBareHandSlot_returnsMinusOneWhenEverythingIsDamageable() {
+        PlayerMock player = newPlayer();
+        PlayerInventory inv = player.getInventory();
+        for (int i = 0; i < 9; i++) {
+            inv.setItem(i, new ItemStack(Material.IRON_PICKAXE));
+        }
+        ItemStack[] items = plugin.toolHandler.inventoryToArray(player, true);
+
+        assertEquals(-1, plugin.toolHandler.getBareHandSlot(inv, items));
+    }
+
+    // --- dropMaterials: the getDrops() comparison silkChangesDrops relies on ------------------
+
+    @Test
+    void dropMaterials_equalSetsRegardlessOfStackSize() {
+        assertEquals(
+                BestToolsHandler.dropMaterials(List.of(new ItemStack(Material.GLASS, 1))),
+                BestToolsHandler.dropMaterials(List.of(new ItemStack(Material.GLASS, 64))));
+    }
+
+    @Test
+    void dropMaterials_differsWhenMaterialsDiffer() {
+        assertNotEquals(
+                BestToolsHandler.dropMaterials(List.of(new ItemStack(Material.GLASS))),
+                BestToolsHandler.dropMaterials(List.of()));
     }
 
     @Test
