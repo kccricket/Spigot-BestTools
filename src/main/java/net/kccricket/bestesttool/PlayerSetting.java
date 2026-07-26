@@ -131,19 +131,31 @@ public class PlayerSetting {
         }
 
         boolean toggleBestToolsEnabled() {
-                bestToolsEnabled =!bestToolsEnabled;
+                return setBestToolsEnabled(!bestToolsEnabled);
+        }
+
+        boolean setBestToolsEnabled(boolean enabled) {
+                bestToolsEnabled = enabled;
                 save();
                 return bestToolsEnabled;
         }
 
         boolean toggleRefillEnabled() {
-                refillEnabled=!refillEnabled;
+                return setRefillEnabled(!refillEnabled);
+        }
+
+        boolean setRefillEnabled(boolean enabled) {
+                refillEnabled = enabled;
                 save();
                 return refillEnabled;
         }
 
         boolean toggleHotbarOnly() {
-                hotbarOnly=!hotbarOnly;
+                return setHotbarOnly(!hotbarOnly);
+        }
+
+        boolean setHotbarOnly(boolean enabled) {
+                hotbarOnly = enabled;
                 save();
                 return hotbarOnly;
         }

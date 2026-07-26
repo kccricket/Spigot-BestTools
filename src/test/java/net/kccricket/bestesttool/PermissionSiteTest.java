@@ -30,7 +30,8 @@ class PermissionSiteTest extends BestToolsTestBase {
                 player.getInventory().getItemInMainHand(), null, BlockFace.SELF, EquipmentSlot.HAND);
         plugin.bestToolsListener.onPlayerInteractWithBlock(event);
 
-        boolean granted = grantType != Grant.NONE;
+        // bestesttool.use defaults to true, so only an explicit DENIED actually withholds it.
+        boolean granted = grantType != Grant.DENIED;
         assertEquals(granted, plugin.getPlayerSetting(player).isHasSeenBestToolsMessage());
     }
 
@@ -51,7 +52,8 @@ class PermissionSiteTest extends BestToolsTestBase {
                 EntityDamageEvent.DamageCause.ENTITY_ATTACK, 1.0);
         plugin.bestToolsListener.onPlayerAttackEntity(event);
 
-        boolean granted = grantType != Grant.NONE;
+        // bestesttool.use defaults to true, so only an explicit DENIED actually withholds it.
+        boolean granted = grantType != Grant.DENIED;
         assertEquals(granted ? 1 : 0, inv.getHeldItemSlot());
     }
 
@@ -68,7 +70,8 @@ class PermissionSiteTest extends BestToolsTestBase {
                 mainHand, null, BlockFace.SELF, EquipmentSlot.HAND);
         plugin.refillListener.onInteract(event);
 
-        boolean granted = grantType != Grant.NONE;
+        // bestesttool.refill defaults to true, so only an explicit DENIED actually withholds it.
+        boolean granted = grantType != Grant.DENIED;
         assertEquals(granted, plugin.getPlayerSetting(player).isHasSeenRefillMessage());
     }
 
@@ -83,7 +86,8 @@ class PermissionSiteTest extends BestToolsTestBase {
             plugin.meter.add(System.nanoTime(), false);
         }
 
-        boolean granted = grantType != Grant.NONE;
+        // bestesttool.debug defaults to op, so only an explicit grant is allowed here.
+        boolean granted = grantType == Grant.NEW;
         if (granted) {
             assertNotNull(player.nextComponentMessage());
         } else {

@@ -7,30 +7,35 @@
 
 # ----- Commands -----
 
-# /besttools (or /bt:)  Toggle BestTools per player
-# /besttools hotbar:    Toggles whether BestTools only uses tools from your hotbar
-# /besttools reload:    Reloads the config file
+# /bestesttool (or /bt:)          Toggle BestTools per player
+# /bestesttool hotbaronly [<state>]  Toggles (or sets) whether BestTools only uses tools from your hotbar
+# /bestesttool refill [<state>]:  Toggle (or set) automatic hotbar refill per player (aliases /refill, /rf)
+# /bestesttool reload:            Reloads the config file
+# /bestesttool debug [<state>]:   Toggle (or set) debug mode
+# /bestesttool performance [<state>]: Toggle (or set) the performance meter
+#
+# Boolean toggles above accept an optional state argument: yes/no, true/false, on/off, enable/disable
 
-# /refill (or /rf:)     Toggle automatic hotbar refill per player
-
-# /besttools bl                      Shows your blacklist
-# /besttools bl add                  Adds your current item to your blacklist
-# /besttools bl add <items...>       Adds all specified items to your blacklist
-# /besttools bl add inventory        Adds all items in your inventory to your blacklist
-# /besttools bl add hotbar           Adds all items in your hotbar to your blacklist
-# /besttools bl remove               Removes your current item from your blacklist
-# /besttools bl remove <items...>    Removes all specified items from your blacklist
-# /besttools bl remove inventory     Removes all items in your inventory from your blacklist
-# /besttools bl remove hotbar        Removes all items in your hotbar from your blacklist
-# /besttools bl reset                Removes all items from your blacklist
+# /bestesttool blacklist                      Shows your blacklist
+# /bestesttool blacklist add                  Adds your current item to your blacklist
+# /bestesttool blacklist add <items...>       Adds all specified items to your blacklist
+# /bestesttool blacklist add inventory        Adds all items in your inventory to your blacklist
+# /bestesttool blacklist add hotbar           Adds all items in your hotbar to your blacklist
+# /bestesttool blacklist remove               Removes your current item from your blacklist
+# /bestesttool blacklist remove <items...>    Removes all specified items from your blacklist
+# /bestesttool blacklist remove inventory     Removes all items in your inventory from your blacklist
+# /bestesttool blacklist remove hotbar        Removes all items in your hotbar from your blacklist
+# /bestesttool blacklist reset                Removes all items from your blacklist
 
 
 # ----- Permissions -----
 
-# bestesttool.use:      Allows to use the /besttools (or /bt) command
-# bestesttool.refill:    Allows to use the /refill (or /rf) command
-# bestesttool.reload:    Allows to use the /besttools reload command
-# bestesttool.debug:     Allows to enable the debug mode via /besttools debug and the performance test via /besttools performance
+# bestesttool.use:      (default: true)  Allows using /bestesttool (or /bt), including hotbar,
+#                        gui/settings, and the blacklist subcommands
+# bestesttool.refill:   (default: true)  Allows using /bestesttool refill (or /refill, /rf)
+# bestesttool.reload:   (default: op)    Allows using /bestesttool reload
+# bestesttool.debug:    (default: op)    Allows enabling debug mode via /bestesttool debug and
+#                        the performance test via /bestesttool performance
 
 
 # ----- Placeholders -----
@@ -41,19 +46,22 @@
 # %besttools_rfenabled%    - true if this player has Refill enabled, otherwise false
 # %besttools_hotbaronly%   - true if this player has set BestTools to hotbar-only
 # %besttools_favoriteslot% - the slot number this player chose as favorite slot
+#
+# (Placeholder prefix stays "besttools" — unrelated to the /bestesttool command name.)
 
 
 # ----- Default settings -----
 
 # Default preferences applied to new players (or any player whose PDC entry is missing).
 defaults:
-  # When false, new players have to run /besttools or /bt once to enable BestTools
+  # When false, new players have to run /bestesttool or /bt once to enable BestTools
   enabled: false
 
-  # When false, new players have to run /refill or /rf once to enable hotbar refill
+  # When false, new players have to run /bestesttool refill (or /refill, /rf) once to enable
+  # hotbar refill
   refill_enabled: false
 
-  # Only use tools from the hotbar? Can be changed per player using /besttools hotbar
+  # Only use tools from the hotbar? Can be changed per player using /bestesttool hotbaronly
   hotbar_only: true
 
   # The preferred slot where BestTools should move the tool if it's not in the hotbar
@@ -62,13 +70,13 @@ defaults:
   # Set this to -1 to always use the player's current slot
   favorite_slot: 8
 
-  # Allow /besttools to switch to your sword/axe (whatever is better) when attacking mobs?
+  # Allow /bestesttool to switch to your sword/axe (whatever is better) when attacking mobs?
   sword_on_mobs: true
 
 
 # ----- General config -----
 
-# When set to false, /besttools and /refill will only work in survival game mode
+# When set to false, /bestesttool (and /bestesttool refill) will only work in survival game mode
 # When set to true, it works in survival and adventure game mode
 allow_in_adventure_mode: false
 

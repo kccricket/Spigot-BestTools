@@ -1,7 +1,7 @@
 main: net.kccricket.bestesttool.Main
 name: BestestTool
 version: ${project.version}
-api-version: "1.20.5"
+api-version: "1.20.6"
 description: Automatically chooses the best tool when breaking blocks
 author: kccricket
 prefix: BestestTool
@@ -14,3 +14,28 @@ dependencies:
     PlaceholderAPI:
       load: BEFORE
       required: false
+permissions:
+  bestesttool:
+    description: Umbrella node for all player-facing BestestTool features
+    default: true
+    children:
+      bestesttool.use: true
+      bestesttool.refill: true
+  bestesttool.use:
+    description: Automatic best-tool switching and the /bestesttool command
+    default: true
+  bestesttool.refill:
+    description: Automatic hotbar refilling and /bestesttool refill (aliases /refill, /rf)
+    default: true
+  bestesttool.admin:
+    description: Full admin control for BestestTool
+    default: op
+    children:
+      bestesttool.reload: true
+      bestesttool.debug: true
+  bestesttool.reload:
+    description: Reload the config via /bestesttool reload
+    default: op
+  bestesttool.debug:
+    description: Toggle debug mode (/bestesttool debug) and the performance meter (/bestesttool performance)
+    default: op

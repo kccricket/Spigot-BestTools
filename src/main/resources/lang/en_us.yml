@@ -12,25 +12,25 @@
 #
 # All values are rendered with MiniMessage (https://docs.advntr.dev/minimessage).
 # You may use color/formatting tags such as <white>, <red>, <bold>, etc.
-# Edits (to an on-disk override file) take effect after running /besttools reload.
+# Edits (to an on-disk override file) take effect after running /bestesttool reload.
 #
 # Placeholder tags are listed in comments above each message that accepts one.
 # Do not remove a placeholder from a message that requires it.
 
-# Command feedback — /besttools toggle
+# Command feedback — /bestesttool toggle
 besttoolsEnabled: "<gray>BestTools has been <green>enabled</green>.</gray>"
 besttoolsDisabled: "<gray>BestTools has been <red>disabled</red>.</gray>"
 
-# Command feedback — /refill toggle
+# Command feedback — /bestesttool refill (aliases /refill, /rf) toggle
 refillEnabled: "<gray>Refill has been <green>enabled</green>.</gray>"
 refillDisabled: "<gray>Refill has been <red>disabled</red>.</gray>"
 
 # One-time hint shown the first time BestTools/Refill would have acted for a player who hasn't
 # enabled the feature yet.
-besttoolsUsage: "<gray>Hint: Type <gold>/besttools</gold> or <gold>/bt</gold> to automatically use the best tool when breaking blocks.</gray>"
+besttoolsUsage: "<gray>Hint: Type <gold>/bestesttool</gold> or <gold>/bt</gold> to automatically use the best tool when breaking blocks.</gray>"
 refillUsage: "<gray>Hint: Type <gold>/refill</gold> or <gold>/rf</gold> to automatically refill empty items from your inventory.</gray>"
 
-# Command feedback — /besttools hotbar toggle
+# Command feedback — /bestesttool hotbaronly toggle
 hotbarOnlyEnabled: "<gray>BestTools will only use tools from your hotbar.</gray>"
 hotbarOnlyDisabled: "<gray>BestTools will use all tools from your inventory.</gray>"
 
@@ -51,8 +51,11 @@ noPermission: "<yellow><plugin>: you don't have permission to use this command.<
 notAPlayer: "You must be a player to run this command."
 # Placeholder: <plugin>
 reloaded: "<green><plugin> has been reloaded.</green>"
+# Placeholders: <value>, <valid> — sent when a boolean toggle's optional [<state>] argument
+# (e.g. /bestesttool refill <state>) isn't one of the recognized yes/no words.
+invalidValue: "<red>Invalid value '<value>'. Valid values: <valid>.</red>"
 
-# /besttools debug and /besttools performance toggles
+# /bestesttool debug and /bestesttool performance toggles
 # Placeholder: <plugin>
 debugEnabled: "<red><plugin> debug mode has been enabled.</red>"
 debugDisabled: "<green><plugin> debug mode has been disabled.</green>"

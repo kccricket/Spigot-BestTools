@@ -1,6 +1,22 @@
 # Changelog
 
 ## Unreleased
+- Renamed the command from `/besttools` to `/bestesttool` (alias `/bt`) and rebuilt it on Paper's
+  Brigadier command API, adding real per-argument tab completion — including block-name
+  suggestions for `/bestesttool blacklist add`/`remove` — and client-side argument validation.
+  `/refill`/`/rf` now alias directly to `/bestesttool refill` instead of being registered as a
+  separate command, and `/refill reload` is removed (it only ever forwarded to the same reload
+  logic as `/bestesttool reload`; use that instead). Raises the minimum server version to Paper
+  1.20.6 (up from 1.20.5), since Brigadier command registration requires it
+- Removed the `bl` and `hotbar` subcommand aliases (`/bestesttool blacklist`/`hotbaronly` are now
+  the only names); the `hotbaronly`, `refill`, `debug`, and `performance` toggles now also take an
+  optional `[<state>]` argument (`yes`/`no`, `true`/`false`, `on`/`off`, `enable`/`disable`) to set
+  the value explicitly instead of only flipping it. The root `/bestesttool` toggle does not take a
+  state argument, since it's the entry point to the rest of the subcommand tree
+- `bestesttool.use` and `bestesttool.refill` now default to `true` (previously `op`), so
+  BestestTool works for every player out of the box without an admin granting anything;
+  `bestesttool.reload` and `bestesttool.debug` remain `op`-only. Permission nodes are now
+  declared in `paper-plugin.yml`'s `permissions:` block instead of registered in code
 - Tool selection for mining now reads Paper's live per-item mining data
   (`BlockData.getDestroySpeed`/`isPreferredTool`) instead of the plugin's own hand-maintained
   tool-tier table, so new blocks, new tools, and datapack-defined tool components are picked up
@@ -11,17 +27,15 @@
 - Added Folia support (`folia-supported: true`), switched the plugin descriptor from the legacy
   `plugin.yml` to `paper-plugin.yml`, and moved all scheduling off `Bukkit.getScheduler()` onto
   the per-entity scheduler so tool-switching, refills, and the settings GUI work correctly on
-  Folia. Commands and permissions (including the `besttools.*` legacy aliases) are now
-  registered in code rather than declared in the descriptor, since `paper-plugin.yml` can't
-  declare either
+  Folia
 - Replaced the last Spigot-only API usage (`p.spigot().sendMessage(...)` with a BungeeCord
-  `TextComponent`) in the `/besttools bl` blacklist listing with Paper's bundled Adventure API
+  `TextComponent`) in the `/bestesttool blacklist` listing with Paper's bundled Adventure API
 - Renamed permission nodes to the `bestesttool.*` prefix (`bestesttool.use`, `bestesttool.refill`,
-  `bestesttool.reload`, `bestesttool.debug`); the old `besttools.*` nodes still work as aliases, so
-  existing permission grants keep working unchanged
+  `bestesttool.reload`, `bestesttool.debug`) — no `besttools.*` legacy alias, since BestestTool is
+  a fresh re-release with no backward compatibility to preserve
 - Fixed a crash on plugin load when `global-block-blacklist` contained an invalid material name
 - Fixed `swordOnMobs` and the favorite-slot setting not surviving a server restart
-- Fixed `/besttools performance` (mixed case) not toggling the performance test
+- Fixed `/bestesttool performance` (mixed case) not toggling the performance test
 - Removed a redundant double permission check on `/refill reload`
 - Removed the one-time flat-file playerdata migration (dead weight now that settings persist to
   the player's PersistentDataContainer) and assorted dead/commented-out code left over from the

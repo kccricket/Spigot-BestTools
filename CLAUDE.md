@@ -29,17 +29,21 @@ Gradle project, uses the wrapper.
   library change: commit + push on the `KcMcLib` repo's `develop` branch, then `cd KcMcLib && git
   pull origin develop` here and commit the updated submodule pointer.
 - Compiles to Java 21 (`options.release` in `build.gradle.kts`), built against
-  `io.papermc.paper:paper-api:26.2.build.+`. `paper-plugin.yml` declares `api-version: "1.20.5"`, the
+  `io.papermc.paper:paper-api:26.2.build.+`. `paper-plugin.yml` declares `api-version: "1.20.6"`, the
   minimum supported server version (see `COMPATABILITY.md`) — do not casually lower it back below
-  1.20.5, since the codebase now assumes direct `Material`/`Tag` references that only exist from that
-  floor onward.
+  1.20.6, since the codebase now assumes direct `Material`/`Tag` references that only exist from that
+  floor onward, and the command tree is built on Paper's Brigadier command API
+  (`io.papermc.paper.command.brigadier`), which only exists from 1.20.6.
 - The plugin uses the modern `paper-plugin.yml` descriptor (not the legacy `plugin.yml`), and declares
-  `folia-supported: true`. `paper-plugin.yml` cannot declare `commands:` or `permissions:` blocks, so
-  both are registered in code in `Main.registerCommands()`/`Main.registerPermissions()` instead —
-  commands via `getServer().getCommandMap().register(...)` wrapping each `CommandExecutor` in a
-  `DelegatingCommand`, permissions via `getServer().getPluginManager().addPermission(...)`. Because
-  Folia has no single main thread, **never use `Bukkit.getScheduler()`** — dispatch player/entity-tied
-  work through `entity.getScheduler().run(...)`/`runDelayed(...)`, and anything not tied to a specific
+  `folia-supported: true`. `paper-plugin.yml` cannot declare a `commands:` block, but it *can* (and
+  does) declare a `permissions:` block — the `bestesttool.*` nodes, including their `default:` and
+  `children:`, live there, not in code. Commands are instead built as a Brigadier tree
+  (`BestToolsCommands.buildBestTools`/`buildRefillAlias`) and registered once, in `Main.onEnable()`,
+  via `getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, ...)` — this is what gives
+  `/bestesttool` real per-argument tab completion and client-side argument validation, superseding the
+  old `DelegatingCommand`-wrapped `getServer().getCommandMap().register(...)` approach. Because Folia
+  has no single main thread, **never use `Bukkit.getScheduler()`** — dispatch player/entity-tied work
+  through `entity.getScheduler().run(...)`/`runDelayed(...)`, and anything not tied to a specific
   entity through `getServer().getAsyncScheduler()` (as KcMcLib's `ModrinthUpdateChecker` already does).
 - `./gradlew test` runs the MockBukkit-based test suite (`src/test/java`) — bootstraps the real plugin
   via `MockBukkit.load(Main.class)` and dispatches real Bukkit events/commands; see `BestToolsTestBase`
@@ -50,7 +54,7 @@ Gradle project, uses the wrapper.
 
 ## Material/Tag model
 
-BestestTool's floor is Paper 1.20.5, so `BestToolsUtils.initMap()` builds its Material→Tool lookup table
+BestestTool's floor is Paper 1.20.6, so `BestToolsUtils.initMap()` builds its Material→Tool lookup table
 using direct, compile-time references — no more per-version compatibility scaffolding:
 
 - Materials are referenced directly as `Material.XXX` enum constants. A material that doesn't exist on
@@ -58,7 +62,7 @@ using direct, compile-time references — no more per-version compatibility scaf
   for correctness/clarity now that the floor is a modern, actively-maintained API.
 - Bulk registration goes through `Tag`-based `tagToMap(...)` calls (e.g. `Tag.LOGS`, `Tag.LEAVES`,
   `Tag.MINEABLE_AXE/HOE/PICKAXE/SHOVEL`) run directly, with no `try`/`catch` version guards — every `Tag`
-  referenced here has existed since 1.17 or earlier, well within the 1.20.5+ floor.
+  referenced here has existed since 1.17 or earlier, well within the 1.20.6+ floor.
 - Individual `addToMap(Material, Tool)` calls fill in exceptions the tags don't (or shouldn't) cover:
   torches/instant-break blocks, crops (`Tool.NONE`), leaves/wool/cobweb (`Tool.SHEARS`), and a handful of
   materials verified (via a live-server `toolMap` dump) to need an explicit override even though a
@@ -81,8 +85,10 @@ using direct, compile-time references — no more per-version compatibility scaf
 ## Runtime architecture
 
 - **`Main`** (the `JavaPlugin`) owns the plugin lifecycle and wires everything together in `load()`,
-  which runs on enable and on `/besttools reload`. It also owns per-player state (`playerSettings` map)
-  and the `config.ConfigManager` (constructed fresh on enable, `reloadAll()`'d on reload).
+  which runs on enable and on `/bestesttool reload`. It also owns per-player state (`playerSettings`
+  map) and the `config.ConfigManager` (constructed fresh on enable, `reloadAll()`'d on reload).
+  Commands are registered separately, once, in `onEnable()` (not in `load()`) — see
+  `Main.registerCommands()`.
 - **`BestToolsHandler`** holds the built-in-memory lookup tables — `toolMap` (Material → best `Tool`
   enum), plus lists of which materials count as pickaxes/axes/hoes/shovels/swords/weapons/leaves/insta-
   breakable-by-hand — and the core "what's the best item for this block/target" selection logic
@@ -97,18 +103,19 @@ using direct, compile-time references — no more per-version compatibility scaf
 - **`BestToolsCache`** / **`BestToolsCacheListener`** implement a cheap per-player last-block-type cache
   (`PlayerSetting.btcache`) so repeated interactions with the same block type skip the full lookup —
   invalidated whenever the player's inventory changes. This exists purely for performance (see
-  `PerformanceMeter`, toggled via `/besttools performance` and `measure_performance` config option).
+  `PerformanceMeter`, toggled via `/bestesttool performance` and `measure_performance` config option).
 - **`PlayerSetting`** is per-player state (enabled flags, hotbar-only, blacklist, favorite slot). It
   persists to the player's `PersistentDataContainer` as one native `NamespacedKey` leaf per field
   (`BYTE` for booleans, `INTEGER` for `favorite_slot`, a comma-delimited `STRING` for the material
   blacklist) — no third-party PDC library. Leaf names match the `defaults.*` config keys. New plugin,
   no legacy data — no migration path.
-- **`Blacklist`** is a per-player set of materials to never auto-switch for; managed via `/besttools bl ...`
-  (`CommandBlacklist`). Mutations (`add`/`remove`) aren't explicitly persisted — they ride along on the
-  next `PlayerSetting.save()` call some other mutator triggers. Known pre-existing quirk, not a bug
-  introduced by any recent refactor.
-- **`RefillListener`/`RefillUtils`** implement the separate `/refill` feature (auto-refilling hotbar stacks
-  from the rest of the inventory) — largely independent of the tool-switching logic above.
+- **`Blacklist`** is a per-player set of materials to never auto-switch for; managed via
+  `/bestesttool blacklist ...` (`CommandBlacklist`). Mutations (`add`/`remove`) aren't explicitly persisted —
+  they ride along on the next `PlayerSetting.save()` call some other mutator triggers. Known
+  pre-existing quirk, not a bug introduced by any recent refactor.
+- **`RefillListener`/`RefillUtils`** implement the separate `/bestesttool refill` feature (aliases
+  `/refill`, `/rf`; auto-refilling hotbar stacks from the rest of the inventory) — largely independent
+  of the tool-switching logic above.
 - **`GUIHandler`/`GUIHolder`** implement an inventory-based settings GUI. Item names/lore route through
   `MessageUtil.legacy(player, key)` (renders a lang key down to a single legacy string, embedded `\n`
   preserved) since the GUI predates Adventure Components and already splits lore on `\n` itself.
@@ -127,12 +134,21 @@ using direct, compile-time references — no more per-version compatibility scaf
     `MessageUtil.send(sender, "key", Placeholder.unparsed("name", value)...)` for chat messages, never
     a hardcoded string or a `main.getConfig()` message read.
 - **`security.Permissions`** holds the `bestesttool.*` node constants and delegates the actual check to
-  KcMcLib's `security.Permissions.isAllowedTo`, mirroring ClickSorted's facade pattern. No
-  `besttools.*` legacy alias (dropped — new plugin, no backward compat).
+  KcMcLib's `security.Permissions.isAllowedTo`, mirroring ClickSorted's facade pattern. The nodes
+  themselves (including `default:` and `children:`) are declared in `paper-plugin.yml`, not registered
+  in code. No `besttools.*` legacy alias (dropped — new plugin, no backward compat).
 - **`BestToolsPlaceholders`** registers PlaceholderAPI placeholders when PAPI is present (soft depend).
-- Commands (`CommandBestTools`, `CommandBlacklist`, `CommandRefill`, `CommandReload`, `CommandDebug`) map
-  directly to the subcommands documented in the `besttools`/`refill` usage strings registered by
-  `Main.registerCommands()` (see above — not declared in the descriptor).
+- **`BestToolsCommands`** builds the `/bestesttool` Brigadier command tree (alias `bt`) plus the
+  `/refill`/`rf` root alias that `redirect`s at the tree's `refill` child node — see
+  `Main.registerCommands()`. `CommandBestTools`, `CommandBlacklist`, `CommandRefill`, `CommandReload`,
+  and `CommandDebug` are now plain action-method classes (no `CommandExecutor`/`onCommand`); permission
+  checks, sender-type checks, and argument parsing all live in `BestToolsCommands`, which calls into
+  them once a call site has already established the sender is an authorized `Player`. `reload`/`debug`/
+  `performance` are additionally gated with `.requires(...)` on their Brigadier nodes so they're hidden
+  from tab completion (and fail to parse at all) for senders lacking the node, rather than answered
+  with a `noPermission` chat message — the two static helpers' own internal permission checks
+  (`CommandReload.reload`/`CommandDebug.debug`) are therefore only reachable directly (as the test suite
+  does), not through the command path.
 
 ## Config/lang conventions
 

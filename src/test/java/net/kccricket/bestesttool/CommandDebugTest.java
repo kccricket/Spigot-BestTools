@@ -3,13 +3,14 @@ package net.kccricket.bestesttool;
 import net.kccricket.kcmclib.logging.DebugLevel;
 import net.kccricket.kcmclib.logging.Log;
 
-import org.bukkit.command.Command;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CommandDebugTest extends BestToolsTestBase {
 
@@ -19,12 +20,11 @@ class CommandDebugTest extends BestToolsTestBase {
         PlayerMock player = newPlayer();
         grant(player, "debug", grantType);
         boolean before = Log.getDebugLevel() != DebugLevel.OFF;
-        Command command = server.getPluginCommand("besttools");
 
-        CommandDebug.debug(player, command, plugin, "debug");
+        CommandDebug.debug(player, plugin, "debug");
 
         boolean after = Log.getDebugLevel() != DebugLevel.OFF;
-        assertEquals(grantType != Grant.NONE ? !before : before, after);
+        assertEquals(grantType == Grant.NEW ? !before : before, after);
     }
 
     @Test
@@ -32,10 +32,54 @@ class CommandDebugTest extends BestToolsTestBase {
         PlayerMock player = newPlayer();
         player.setOp(true);
         boolean before = plugin.measurePerformance;
-        Command command = server.getPluginCommand("besttools");
 
-        CommandDebug.debug(player, command, plugin, "Performance");
+        CommandDebug.debug(player, plugin, "Performance");
 
         assertEquals(!before, plugin.measurePerformance);
+    }
+
+    @Test
+    void explicitStateSetsDebugRegardlessOfCurrentValue() {
+        PlayerMock player = newPlayer();
+        player.setOp(true);
+        Log.setDebugLevel(DebugLevel.OFF);
+
+        CommandDebug.debug(player, plugin, "debug", true);
+        assertTrue(Log.getDebugLevel() != DebugLevel.OFF);
+
+        CommandDebug.debug(player, plugin, "debug", true);
+        assertTrue(Log.getDebugLevel() != DebugLevel.OFF);
+
+        CommandDebug.debug(player, plugin, "debug", false);
+        assertEquals(DebugLevel.OFF, Log.getDebugLevel());
+    }
+
+    @Test
+    void explicitStateSetsPerformanceRegardlessOfCurrentValue() {
+        PlayerMock player = newPlayer();
+        player.setOp(true);
+        plugin.measurePerformance = false;
+
+        CommandDebug.debug(player, plugin, "performance", true);
+        assertTrue(plugin.measurePerformance);
+
+        CommandDebug.debug(player, plugin, "performance", true);
+        assertTrue(plugin.measurePerformance);
+
+        CommandDebug.debug(player, plugin, "performance", false);
+        assertFalse(plugin.measurePerformance);
+    }
+
+    @Test
+    void debugStateArgumentViaCommandPath() {
+        PlayerMock player = newPlayer();
+        player.setOp(true);
+        Log.setDebugLevel(DebugLevel.OFF);
+
+        player.performCommand("bestesttool debug yes");
+        assertTrue(Log.getDebugLevel() != DebugLevel.OFF);
+
+        player.performCommand("bestesttool debug no");
+        assertEquals(DebugLevel.OFF, Log.getDebugLevel());
     }
 }

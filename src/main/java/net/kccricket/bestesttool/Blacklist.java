@@ -68,7 +68,7 @@ public class Blacklist {
         StringBuilder slist = new StringBuilder();
         */
         for(Material mat : mats) {
-            Component link = createLink("[X] ","/besttools blacklist remove "+mat.name());
+            Component link = createLink("[X] ","/bestesttool blacklist remove "+mat.name());
             Component name = Component.text(mat.name(), NamedTextColor.GRAY);
             p.sendMessage(link.append(name));
         }

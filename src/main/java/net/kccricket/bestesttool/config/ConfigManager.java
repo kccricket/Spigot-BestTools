@@ -28,7 +28,7 @@ public class ConfigManager {
         lang.load();
     }
 
-    /** Reload all config files. Called by {@code /besttools reload}. */
+    /** Reload all config files. Called by {@code /bestesttool reload}. */
     public void reloadAll() {
         main.reload();
         lang.reload();

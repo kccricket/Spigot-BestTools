@@ -26,12 +26,19 @@ abstract class BestToolsTestBase {
         return server.addPlayer();
     }
 
-    enum Grant { NEW, NONE }
+    /**
+     * {@code NEW} explicitly grants the node; {@code NONE} leaves it at its {@code paper-plugin.yml}
+     * default (which is {@code true} for {@code bestesttool.use}/{@code bestesttool.refill}, so
+     * {@code NONE} alone no longer means "denied" for those two — use {@code DENIED} to test an
+     * actual denial); {@code DENIED} explicitly revokes the node regardless of its default.
+     */
+    enum Grant { NEW, NONE, DENIED }
 
     void grant(PlayerMock player, String suffix, Grant grant) {
         switch (grant) {
             case NEW -> player.addAttachment(plugin).setPermission("bestesttool." + suffix, true);
-            case NONE -> { /* no permission granted */ }
+            case NONE -> { /* no permission granted; falls back to the paper-plugin.yml default */ }
+            case DENIED -> player.addAttachment(plugin).setPermission("bestesttool." + suffix, false);
         }
     }
 }

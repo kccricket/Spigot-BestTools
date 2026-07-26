@@ -22,7 +22,7 @@ class CommandBlacklistTest extends BestToolsTestBase {
         PlayerMock player = opPlayer();
         player.getInventory().setItemInMainHand(new ItemStack(Material.STONE));
 
-        player.performCommand("besttools bl add");
+        player.performCommand("bestesttool blacklist add");
 
         assertTrue(plugin.getPlayerSetting(player).getBlacklist().contains(Material.STONE));
     }
@@ -31,7 +31,7 @@ class CommandBlacklistTest extends BestToolsTestBase {
     void addExplicitMaterial() {
         PlayerMock player = opPlayer();
 
-        player.performCommand("besttools bl add DIRT");
+        player.performCommand("bestesttool blacklist add DIRT");
 
         assertTrue(plugin.getPlayerSetting(player).getBlacklist().contains(Material.DIRT));
     }
@@ -41,7 +41,7 @@ class CommandBlacklistTest extends BestToolsTestBase {
         PlayerMock player = opPlayer();
         plugin.getPlayerSetting(player).getBlacklist().add(Material.DIRT);
 
-        player.performCommand("besttools bl remove DIRT");
+        player.performCommand("bestesttool blacklist remove DIRT");
 
         assertFalse(plugin.getPlayerSetting(player).getBlacklist().contains(Material.DIRT));
     }
@@ -51,7 +51,7 @@ class CommandBlacklistTest extends BestToolsTestBase {
         PlayerMock player = opPlayer();
         plugin.getPlayerSetting(player).getBlacklist().add(Material.DIRT);
 
-        player.performCommand("besttools bl reset");
+        player.performCommand("bestesttool blacklist reset");
 
         assertFalse(plugin.getPlayerSetting(player).getBlacklist().contains(Material.DIRT));
     }
@@ -60,6 +60,39 @@ class CommandBlacklistTest extends BestToolsTestBase {
     void showDoesNotThrow() {
         PlayerMock player = opPlayer();
 
-        assertDoesNotThrow(() -> player.performCommand("besttools bl show"));
+        assertDoesNotThrow(() -> player.performCommand("bestesttool blacklist show"));
+    }
+
+    @Test
+    void addInventoryAddsAllInventoryItems() {
+        PlayerMock player = opPlayer();
+        player.getInventory().setItem(9, new ItemStack(Material.DIRT));
+        player.getInventory().setItem(10, new ItemStack(Material.STONE));
+
+        player.performCommand("bestesttool blacklist add inventory");
+
+        assertTrue(plugin.getPlayerSetting(player).getBlacklist().contains(Material.DIRT));
+        assertTrue(plugin.getPlayerSetting(player).getBlacklist().contains(Material.STONE));
+    }
+
+    @Test
+    void addHotbarAddsOnlyHotbarItems() {
+        PlayerMock player = opPlayer();
+        player.getInventory().setItem(0, new ItemStack(Material.DIRT));
+        player.getInventory().setItem(9, new ItemStack(Material.STONE));
+
+        player.performCommand("bestesttool blacklist add hotbar");
+
+        assertTrue(plugin.getPlayerSetting(player).getBlacklist().contains(Material.DIRT));
+        assertFalse(plugin.getPlayerSetting(player).getBlacklist().contains(Material.STONE));
+    }
+
+    @Test
+    void blIsNoLongerAValidAlias() {
+        PlayerMock player = opPlayer();
+
+        assertDoesNotThrow(() -> player.performCommand("bestesttool bl add DIRT"));
+
+        assertFalse(plugin.getPlayerSetting(player).getBlacklist().contains(Material.DIRT));
     }
 }

@@ -5,18 +5,21 @@ import net.kccricket.bestesttool.text.MessageUtil;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
 import org.bukkit.Material;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CommandBlacklist implements CommandExecutor {
+/**
+ * Plain action methods for {@code /bestesttool blacklist} (alias {@code bl}). Permission checks,
+ * sender-type checks, and argument/material parsing all live in the Brigadier tree built by
+ * {@link BestToolsCommands} — this class only performs the
+ * action once a call site has already established the sender is an authorized {@link Player}.
+ */
+public class CommandBlacklist {
 
     Main main;
 
@@ -41,132 +44,76 @@ public class CommandBlacklist implements CommandExecutor {
                 .collect(Collectors.joining(", "));
     }
 
-    @Override
-    public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
-
-        if (!(commandSender instanceof Player)) {
-            commandSender.sendMessage("This command is only available for players.");
-            return true;
-        }
-
-        Player p = (Player) commandSender;
-        Blacklist b = main.getPlayerSetting(p).getBlacklist();
-        ItemStack currentItem = p.getInventory().getItemInMainHand();
-
-        ArrayList<Material> candidates = new ArrayList<>();
-        ArrayList<String> errors = new ArrayList<>();
-        // ArrayList<Material> alreadyAdded = new ArrayList<>();
-        ArrayList<Material> successes = new ArrayList<>();
-
-        String option;
-
-        if (args.length == 0) {
-            option = "show";
-        } else {
-            option = args[0].toLowerCase();
-            args[0] = null;
-        }
-
-        switch (option) {
-            case "show":
-                b.print(p);
-                return true;
-            case "add":
-            case "remove":
-                if (args.length == 1) {
-                    if (currentItem.getType() == Material.AIR) {
-                        MessageUtil.send(p, "blacklistNothingSpecified");
-                        return true;
-                    }
-                    candidates.add(currentItem.getType());
-                } else if (args[1].equalsIgnoreCase("inv")
-                        || args[1].equalsIgnoreCase("inventory")
-                        || args[1].equalsIgnoreCase("hotbar")) {
-
-                    ArrayList<String> list = inv2stringlist(
-                            p.getInventory(),
-                            args[1].equalsIgnoreCase("hotbar") ? 0 : 9,
-                            args[1].equalsIgnoreCase("hotbar") ? 8 : 35);
-
-                    String[] newArgs = new String[1 + list.size()];
-                    newArgs[0] = args[0];
-                    for (int i = 1; i < list.size() + 1; i++) {
-                        newArgs[i] = list.get(i-1);
-                    }
-                    args = newArgs;
-                }
-
-
-                for (String s : args) {
-                    if (s == null) continue;
-                    Material m = Material.getMaterial(s.toUpperCase());
-                    if (m == Material.AIR) m = null;
-                    if (m == null) {
-                        errors.add(s);
-                        continue;
-                    }
-                    candidates.add(m);
-                }
-
-
-                for (Material mat : candidates) {
-                    successes.add(mat);
-                    if (option.equals("add")) {
-                        b.add(mat);
-                    } else {
-                        b.remove(mat);
-                    }
-                }
-
-                if (errors.size() > 0) {
-                    p.sendMessage(MessageUtil.get(p, "blacklistInvalid", Placeholder.unparsed("items", stringlist2string(errors))));
-                }
-                if (successes.size() > 0) {
-                    String key = option.equals("add") ? "blacklistAdded" : "blacklistRemoved";
-                    p.sendMessage(MessageUtil.get(p, key, Placeholder.unparsed("items", matlist2string(successes))));
-                }
-
-                return true;
-            case "reset":
-                p.sendMessage(MessageUtil.get(p, "blacklistRemoved", Placeholder.unparsed("items", matlist2string(b.mats))));
-                b.mats.clear();
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    /*@Override
-    public @Nullable List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] args) {
-
-        if (!(commandSender instanceof Player)) return null;
-
-        String commands[] = {"show", "add", "remove", "reset"};
-        if (args.length == 0) return Arrays.asList(commands);
-        ArrayList<String> list = new ArrayList<>();
-
-        if (args.length == 1) {
-            for (String string : commands) {
-                if (string.toLowerCase().startsWith(args[0])) list.add(string);
-            }
-            return list;
-        }
-
-        if (args.length >= 2 && args[0].equalsIgnoreCase("remove")) {
-            for (Material mat : main.getPlayerSetting((Player) commandSender).getBlacklist().mats) {
-                list.add(mat.name());
-            }
-            return list;
-        }
-
-        if (args.length >= 2 && args[0].equals("add")) {
-            return main.materialTabCompleter.onTabComplete(commandSender, command, s, args);
-        }
-
-        return null;
-    }
-*/
     private String stringlist2string(List<String> list) {
         return String.join(", ", list);
+    }
+
+    void show(Player p) {
+        main.getPlayerSetting(p).getBtcache().invalidated();
+        main.getPlayerSetting(p).getBlacklist().print(p);
+    }
+
+    void reset(Player p) {
+        main.getPlayerSetting(p).getBtcache().invalidated();
+        Blacklist b = main.getPlayerSetting(p).getBlacklist();
+        p.sendMessage(MessageUtil.get(p, "blacklistRemoved", Placeholder.unparsed("items", matlist2string(b.mats))));
+        b.mats.clear();
+    }
+
+    /**
+     * Adds/removes materials named on the command line. When {@code rawMaterials} is empty, falls
+     * back to the player's currently held item (mirrors the pre-Brigadier bare {@code bl add}/
+     * {@code bl remove} behavior).
+     */
+    void addOrRemove(Player p, boolean add, List<String> rawMaterials) {
+        main.getPlayerSetting(p).getBtcache().invalidated();
+        Blacklist b = main.getPlayerSetting(p).getBlacklist();
+
+        List<String> materialNames = rawMaterials;
+        if (materialNames.isEmpty()) {
+            ItemStack currentItem = p.getInventory().getItemInMainHand();
+            if (currentItem.getType() == Material.AIR) {
+                MessageUtil.send(p, "blacklistNothingSpecified");
+                return;
+            }
+            materialNames = List.of(currentItem.getType().name());
+        }
+
+        applyToMaterials(p, b, add, materialNames);
+    }
+
+    void addOrRemoveFromInventory(Player p, boolean add, boolean hotbarOnly) {
+        main.getPlayerSetting(p).getBtcache().invalidated();
+        Blacklist b = main.getPlayerSetting(p).getBlacklist();
+        List<String> materialNames = inv2stringlist(p.getInventory(), hotbarOnly ? 0 : 9, hotbarOnly ? 8 : 35);
+        applyToMaterials(p, b, add, materialNames);
+    }
+
+    private void applyToMaterials(Player p, Blacklist b, boolean add, List<String> materialNames) {
+        ArrayList<Material> successes = new ArrayList<>();
+        ArrayList<String> errors = new ArrayList<>();
+
+        for (String s : materialNames) {
+            Material m = Material.getMaterial(s.toUpperCase());
+            if (m == Material.AIR) m = null;
+            if (m == null) {
+                errors.add(s);
+                continue;
+            }
+            successes.add(m);
+            if (add) {
+                b.add(m);
+            } else {
+                b.remove(m);
+            }
+        }
+
+        if (!errors.isEmpty()) {
+            p.sendMessage(MessageUtil.get(p, "blacklistInvalid", Placeholder.unparsed("items", stringlist2string(errors))));
+        }
+        if (!successes.isEmpty()) {
+            String key = add ? "blacklistAdded" : "blacklistRemoved";
+            p.sendMessage(MessageUtil.get(p, key, Placeholder.unparsed("items", matlist2string(successes))));
+        }
     }
 }
