@@ -4,6 +4,8 @@ import net.kccricket.kcmclib.logging.Log;
 
 import org.bukkit.Material;
 import org.bukkit.Tag;
+import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -14,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * This will probably be a separate plugin called BestTool or something
@@ -51,9 +52,17 @@ public class BestToolsHandler {
 
     final ArrayList<Material> weapons = new ArrayList<>();
 
+    // Cached like BestToolsListener.useAxeAsWeapon: read once per load/reload (BestToolsHandler is
+    // reconstructed fresh in Main.load()), not on every candidate check.
+    boolean considerSwordsForLeaves;
+    boolean considerSwordsForCobwebs;
+
     BestToolsHandler(Main main) {
 
         this.main=Objects.requireNonNull(main,"Main must not be null");
+
+        considerSwordsForLeaves = main.configManager.main().getConsiderSwordsForLeaves();
+        considerSwordsForCobwebs = main.configManager.main().getConsiderSwordsForCobwebs();
 
         for(String name : main.configManager.main().getGlobalBlockBlacklist()) {
             Material mat = Material.getMaterial(name.toUpperCase());
@@ -146,28 +155,18 @@ public class BestToolsHandler {
 
     // TODO: Implement profitsFromFortune()
 
-    boolean isTool(Tool tool, ItemStack item) {
-        Material m = item.getType();
-        switch(tool) {
-            case PICKAXE:
-                return pickaxes.contains(m);
-            case AXE:
-                return axes.contains(m);
-            case SHOVEL:
-                return shovels.contains(m);
-            case HOE:
-                return hoes.contains(m);
-            case SHEARS:
-                return item.getType() == Material.SHEARS;
-            case NONE:
-                return !isDamageable(item);
-            case SWORD:
-                return swords.contains(m);
-            default:
-                // TODO: This might confuse the logic for NONE
-                return false;
-        }
-
+    /**
+     * Filters mining-tool candidates independent of live mining speed — currently just the config
+     * toggles that keep swords out of leaf/cobweb selection unless explicitly enabled. Everything
+     * else (is this item even fast at this block) is answered by {@link BlockData#getDestroySpeed}
+     * itself: an irrelevant item (e.g. a sword against stone) has no matching vanilla tool rule and
+     * scores no better than a bare hand, so it never needs an explicit category filter here.
+     */
+    boolean isCandidate(ItemStack item, Material target) {
+        if(!swords.contains(item.getType())) return true;
+        if(LeavesUtils.isLeaves(target)) return considerSwordsForLeaves;
+        if(target == Material.COBWEB) return considerSwordsForCobwebs;
+        return true;
     }
 
     static int getEmptyHotbarSlot(PlayerInventory inv) {
@@ -202,58 +201,53 @@ public class BestToolsHandler {
         return item.getItemMeta().hasEnchant(EnchantmentUtils.getEnchantment("silk_touch"));
     }
 
+    /**
+     * Ranks inventory items against a block's live mining data and returns the best one, or
+     * {@code null} if nothing beats a bare hand (speed {@code 1.0}).
+     * <p>
+     * Ranked by {@code (isPreferredTool desc, getDestroySpeed desc)} — drops beat speed. {@link
+     * BlockData#getDestroySpeed} alone is not enough: an Efficiency V iron pickaxe outscores a
+     * plain diamond pickaxe on obsidian, but iron doesn't drop obsidian. {@link
+     * BlockData#isPreferredTool} is only consulted when {@link BlockData#requiresCorrectToolForDrops()}
+     * is true, and only for a candidate that's already the fastest seen so far — for the common
+     * case (dirt, wood, leaves, wool) that's zero calls; for ores, typically one to three.
+     */
     @Nullable
-    ItemStack getBestItemStackFromArray(@NotNull Tool tool, @NotNull ItemStack[] items, boolean trySilktouch, ItemStack currentItem, Material target) {
+    ItemStack getBestItemStackFromArray(@NotNull BlockData data, @NotNull ItemStack[] items, boolean trySilktouch, @NotNull Material target) {
 
-        if(tool == Tool.NONE) {
-            Log.debug("getNonToolItemFromArray");
-            return getNonToolItemFromArray(items,currentItem,target);
-        }
+        boolean needsCorrect = data.requiresCorrectToolForDrops();
 
-        List<ItemStack> list = new ArrayList<>();
+        ItemStack bestAny = null;
+        float bestAnySpeed = 1.0f; // 1.0 == bare hand; a candidate must beat it to be worth switching to
+        ItemStack bestCorrect = null;
+        float bestCorrectSpeed = 1.0f;
+
         for(ItemStack item : items) {
-             if(item==null) continue; // IntelliJ says this is always false
+            if(item==null) continue; // IntelliJ says this is always false
             // TODO: Check if durability is 1
 
-            if(isTool(tool,item)) {
-                if(!trySilktouch) {
-                    list.add(item);
-                } else {
-                    if(hasSilktouch(item)) {
-                        list.add(item);
-                    }
-                }
+            if(trySilktouch && !hasSilktouch(item)) continue;
+            if(!isCandidate(item,target)) continue;
+
+            float speed = data.getDestroySpeed(item,true);
+            if(speed > bestAnySpeed) {
+                bestAny = item;
+                bestAnySpeed = speed;
+            }
+            if(needsCorrect && speed > bestCorrectSpeed && data.isPreferredTool(item)) {
+                bestCorrect = item;
+                bestCorrectSpeed = speed;
             }
         }
-        if(list.size()==0) {
+
+        if(bestAny == null) {
             if(trySilktouch) {
-                return getBestItemStackFromArray(tool,items,false,currentItem,target);
+                return getBestItemStackFromArray(data,items,false,target);
             } else {
                 return null;
             }
         }
-        list.sort(Comparator.comparingInt(EnchantmentUtils::getMultiplier).reversed());
-        if(target.name().endsWith("DIAMOND_ORE")) {
-            list = putIronPlusBeforeGoldPickaxes(list);
-        }
-        return list.get(0);
-    }
-
-    private List<ItemStack> putIronPlusBeforeGoldPickaxes(List<ItemStack> list) {
-        if(list == null || list.isEmpty()) return list;
-        if(main.toolHandler.isTool(Tool.PICKAXE,list.get(0))) {
-            List<ItemStack> newList = list.stream().filter(itemStack -> {
-                switch (itemStack.getType()) {
-                    case WOODEN_PICKAXE:
-                    case STONE_PICKAXE:
-                    case GOLDEN_PICKAXE:
-                        return false;
-                    default: return true;
-                }
-            }).collect(Collectors.toList());
-            if(!newList.isEmpty()) return newList;
-        }
-        return list;
+        return needsCorrect && bestCorrect != null ? bestCorrect : bestAny;
     }
 
     @Nullable
@@ -294,30 +288,21 @@ public class BestToolsHandler {
     }
 
     /**
-     * Tries to get the ItemStack that is the best for this block
-     * @param mat The block's material
+     * Tries to get the ItemStack that is the best for this block, ranked by live mining data
+     * ({@link BlockData#getDestroySpeed}/{@link BlockData#isPreferredTool}) rather than the static
+     * {@code toolMap} — see {@link #getBestItemStackFromArray}. This also covers leaves and cobweb
+     * natively (shears/hoe/sword are simply whichever candidate scores highest), replacing what
+     * used to be a separate {@code LeavesUtils}-driven branch here.
+     * @param block The block being mined
      * @param p Player
      * @return
      */
     @Nullable
-    ItemStack getBestToolFromInventory(@NotNull Material mat, Player p, boolean hotbarOnly,ItemStack currentItem) {
+    ItemStack getBestToolFromInventory(@NotNull Block block, Player p, boolean hotbarOnly,ItemStack currentItem) {
         ItemStack[] items = inventoryToArray(p,hotbarOnly);
+        Material mat = block.getType();
 
-        Tool bestType;
-        if(!LeavesUtils.isLeaves(mat) && mat != Material.COBWEB) {
-            bestType=getBestToolType(mat);
-        } else {
-            if(LeavesUtils.hasShears(hotbarOnly, p.getInventory().getStorageContents())) {
-                bestType = Tool.SHEARS;
-            }  else if(LeavesUtils.hasHoe(hotbarOnly,p.getInventory().getStorageContents()) && mat != Material.COBWEB) {
-                bestType = Tool.HOE;
-            } else if(((main.configManager.main().getConsiderSwordsForCobwebs() && mat == Material.COBWEB)||(mat != Material.COBWEB && main.configManager.main().getConsiderSwordsForLeaves())) && LeavesUtils.hasSword(hotbarOnly, p.getInventory().getStorageContents())) {
-                bestType = Tool.SWORD;
-            } else {
-                bestType = Tool.NONE;
-            }
-        }
-        ItemStack bestStack = getBestItemStackFromArray(bestType,items,profitsFromSilkTouch(mat),currentItem,mat);
+        ItemStack bestStack = getBestItemStackFromArray(block.getBlockData(),items,profitsFromSilkTouch(mat),mat);
         if(bestStack==null) {
             Log.debug("bestStack is null");
             return getNonToolItemFromArray(items,currentItem,mat);

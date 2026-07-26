@@ -1,6 +1,13 @@
 # Changelog
 
 ## Unreleased
+- Tool selection for mining now reads Paper's live per-item mining data
+  (`BlockData.getDestroySpeed`/`isPreferredTool`) instead of the plugin's own hand-maintained
+  tool-tier table, so new blocks, new tools, and datapack-defined tool components are picked up
+  automatically. Tools that would fail to drop the block correctly (e.g. an enchanted iron
+  pickaxe on obsidian) are now ranked below any tool that mines it correctly, even if slower.
+  Leaves and cobwebs are ranked by the same live logic rather than a separate hardcoded
+  shears/hoe/sword preference list
 - Added Folia support (`folia-supported: true`), switched the plugin descriptor from the legacy
   `plugin.yml` to `paper-plugin.yml`, and moved all scheduling off `Bukkit.getScheduler()` onto
   the per-entity scheduler so tool-switching, refills, and the settings GUI work correctly on

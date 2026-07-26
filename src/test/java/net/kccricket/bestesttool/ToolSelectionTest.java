@@ -11,9 +11,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockbukkit.mockbukkit.block.data.BlockDataMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -24,6 +28,14 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ToolSelectionTest extends BestToolsTestBase {
+
+    // Note on what's NOT tested here: BestToolsHandler.getBestToolFromInventory(Block, ...) itself
+    // isn't unit-tested. It calls block.getBlockData(), and MockBukkit's BlockDataMock throws
+    // UnimplementedOperationException from getDestroySpeed/isPreferredTool/requiresCorrectToolForDrops
+    // (confirmed by reading its source — there is no working mock block data in this harness). The
+    // ranking core (getBestItemStackFromArray) is unit-tested below against a hand-rolled fake that
+    // implements those three methods for real; the block-mining integration is covered by manual
+    // verification against a live Paper server instead (see the plan's Verification section).
 
     private static Stream<Arguments> toolTypeMatrix() {
         return Stream.of(
@@ -94,13 +106,100 @@ class ToolSelectionTest extends BestToolsTestBase {
         assertEquals(Material.IRON_SWORD, best.getType());
     }
 
+    // --- getBestItemStackFromArray: the live-speed ranking core ------------------------------
+
+    @Test
+    void getBestItemStackFromArray_picksFasterOfTwoCandidates() {
+        ItemStack wooden = new ItemStack(Material.WOODEN_PICKAXE);
+        ItemStack stone = new ItemStack(Material.STONE_PICKAXE);
+        ItemStack[] items = {wooden, stone};
+
+        FakeBlockData data = new FakeBlockData(Material.STONE, false,
+                Map.of(Material.WOODEN_PICKAXE, 2f, Material.STONE_PICKAXE, 4f), Set.of());
+
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE);
+
+        assertEquals(Material.STONE_PICKAXE, best.getType());
+    }
+
+    @Test
+    void getBestItemStackFromArray_preferredToolBeatsFasterButIncorrectTool() {
+        // The headline scenario this whole feature exists for: raw getDestroySpeed alone would
+        // pick the Efficiency V iron pickaxe (fast, but iron doesn't drop obsidian) over a plain
+        // diamond pickaxe. isPreferredTool is what makes drops win.
+        ItemStack fastWrongTool = new ItemStack(Material.IRON_PICKAXE);
+        ItemStack slowCorrectTool = new ItemStack(Material.DIAMOND_PICKAXE);
+        ItemStack[] items = {fastWrongTool, slowCorrectTool};
+
+        FakeBlockData obsidian = new FakeBlockData(Material.OBSIDIAN, true,
+                Map.of(Material.IRON_PICKAXE, 32f, Material.DIAMOND_PICKAXE, 8f),
+                Set.of(Material.DIAMOND_PICKAXE));
+
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(obsidian, items, false, Material.OBSIDIAN);
+
+        assertEquals(Material.DIAMOND_PICKAXE, best.getType());
+    }
+
+    @Test
+    void getBestItemStackFromArray_fallsBackToFastestWhenNothingIsPreferred() {
+        ItemStack wooden = new ItemStack(Material.WOODEN_PICKAXE);
+        ItemStack iron = new ItemStack(Material.IRON_PICKAXE);
+        ItemStack[] items = {wooden, iron};
+
+        FakeBlockData diamondOre = new FakeBlockData(Material.DIAMOND_ORE, true,
+                Map.of(Material.WOODEN_PICKAXE, 2f, Material.IRON_PICKAXE, 6f), Set.of());
+
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(diamondOre, items, false, Material.DIAMOND_ORE);
+
+        assertEquals(Material.IRON_PICKAXE, best.getType());
+    }
+
+    @Test
+    void getBestItemStackFromArray_skipsPreferredToolCheckWhenDropsDontRequireIt() {
+        ItemStack shovel = new ItemStack(Material.IRON_SHOVEL);
+        ItemStack[] items = {shovel};
+
+        FakeBlockData dirt = new FakeBlockData(Material.DIRT, false, Map.of(Material.IRON_SHOVEL, 6f), Set.of());
+
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(dirt, items, false, Material.DIRT);
+
+        assertEquals(Material.IRON_SHOVEL, best.getType());
+        assertTrue(dirt.preferredToolChecks.isEmpty());
+    }
+
+    @Test
+    void getBestItemStackFromArray_tiesKeepLowestSlotIndex() {
+        ItemStack first = new ItemStack(Material.IRON_PICKAXE);
+        ItemStack second = new ItemStack(Material.DIAMOND_PICKAXE);
+        ItemStack[] items = {first, second};
+
+        FakeBlockData data = new FakeBlockData(Material.STONE, false,
+                Map.of(Material.IRON_PICKAXE, 6f, Material.DIAMOND_PICKAXE, 6f), Set.of());
+
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE);
+
+        assertEquals(first, best);
+    }
+
+    @Test
+    void getBestItemStackFromArray_returnsNullWhenNothingBeatsBareHand() {
+        ItemStack sword = new ItemStack(Material.IRON_SWORD);
+        ItemStack[] items = {sword};
+
+        FakeBlockData data = new FakeBlockData(Material.STONE, false, Map.of(), Set.of());
+
+        assertNull(plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE));
+    }
+
     @Test
     void getBestItemStackFromArray_silkTouchPickaxePreferredWhenPresent() {
         ItemStack plainPick = new ItemStack(Material.IRON_PICKAXE);
         ItemStack silkPick = enchanted(Material.IRON_PICKAXE, "silk_touch", 1);
         ItemStack[] items = {plainPick, silkPick};
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(Tool.PICKAXE, items, true, null, Material.GLOWSTONE);
+        FakeBlockData glowstone = new FakeBlockData(Material.GLOWSTONE, false, Map.of(Material.IRON_PICKAXE, 6f), Set.of());
+
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(glowstone, items, true, Material.GLOWSTONE);
 
         assertEquals(silkPick, best);
     }
@@ -110,33 +209,53 @@ class ToolSelectionTest extends BestToolsTestBase {
         ItemStack plainPick = new ItemStack(Material.IRON_PICKAXE);
         ItemStack[] items = {plainPick};
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(Tool.PICKAXE, items, true, null, Material.GLOWSTONE);
+        FakeBlockData glowstone = new FakeBlockData(Material.GLOWSTONE, false, Map.of(Material.IRON_PICKAXE, 6f), Set.of());
+
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(glowstone, items, true, Material.GLOWSTONE);
 
         assertEquals(plainPick, best);
     }
 
+    // --- isCandidate: the only remaining category filter (sword-for-leaves/cobweb toggles) -------
+
     @Test
-    void getBestItemStackFromArray_efficiencyOrdering() {
-        ItemStack wooden = new ItemStack(Material.WOODEN_PICKAXE);
-        ItemStack stone = new ItemStack(Material.STONE_PICKAXE);
-        ItemStack[] items = {wooden, stone};
-
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(Tool.PICKAXE, items, false, null, Material.STONE);
-
-        assertEquals(Material.STONE_PICKAXE, best.getType());
+    void isCandidate_excludesSwordForLeavesWhenToggleOff() {
+        assertFalse(plugin.toolHandler.isCandidate(new ItemStack(Material.IRON_SWORD), Material.OAK_LEAVES));
     }
 
     @Test
-    void getBestItemStackFromArray_diamondOrePrefersIronPlusOverGoldPickaxe() {
-        ItemStack wooden = new ItemStack(Material.WOODEN_PICKAXE);
-        ItemStack golden = new ItemStack(Material.GOLDEN_PICKAXE);
-        ItemStack iron = new ItemStack(Material.IRON_PICKAXE);
-        ItemStack[] items = {wooden, golden, iron};
+    void isCandidate_includesSwordForLeavesWhenToggleOn() {
+        plugin.getConfig().set("consider_swords_for_leaves", true);
+        BestToolsHandler handler = new BestToolsHandler(plugin);
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(Tool.PICKAXE, items, false, null, Material.DIAMOND_ORE);
-
-        assertEquals(Material.IRON_PICKAXE, best.getType());
+        assertTrue(handler.isCandidate(new ItemStack(Material.IRON_SWORD), Material.OAK_LEAVES));
     }
+
+    @Test
+    void isCandidate_excludesSwordForCobwebWhenToggleOff() {
+        assertFalse(plugin.toolHandler.isCandidate(new ItemStack(Material.IRON_SWORD), Material.COBWEB));
+    }
+
+    @Test
+    void isCandidate_includesSwordForCobwebWhenToggleOn() {
+        plugin.getConfig().set("consider_swords_for_cobwebs", true);
+        BestToolsHandler handler = new BestToolsHandler(plugin);
+
+        assertTrue(handler.isCandidate(new ItemStack(Material.IRON_SWORD), Material.COBWEB));
+    }
+
+    @Test
+    void isCandidate_nonSwordAlwaysCandidate() {
+        assertTrue(plugin.toolHandler.isCandidate(new ItemStack(Material.SHEARS), Material.OAK_LEAVES));
+        assertTrue(plugin.toolHandler.isCandidate(new ItemStack(Material.IRON_HOE), Material.COBWEB));
+    }
+
+    @Test
+    void isCandidate_swordUnrestrictedAwayFromLeavesAndCobwebs() {
+        assertTrue(plugin.toolHandler.isCandidate(new ItemStack(Material.IRON_SWORD), Material.STONE));
+    }
+
+    // --- getNonToolItemFromArray: unaffected by the live-speed switch ----------------------------
 
     @Test
     void getNonToolItemFromArray_keepsCurrentItemForInstaBreakWithoutHoe() {
@@ -161,43 +280,6 @@ class ToolSelectionTest extends BestToolsTestBase {
 
         assertNotEquals(current, result);
         assertNull(result);
-    }
-
-    @Test
-    void getBestToolFromInventory_leavesPrefersShearsOverHoeOverSword() {
-        PlayerMock player = newPlayer();
-        PlayerInventory inv = player.getInventory();
-        inv.setItem(0, new ItemStack(Material.SHEARS));
-        inv.setItem(1, new ItemStack(Material.IRON_HOE));
-        inv.setItem(2, new ItemStack(Material.IRON_SWORD));
-
-        ItemStack best = plugin.toolHandler.getBestToolFromInventory(Material.OAK_LEAVES, player, true, null);
-
-        assertEquals(Material.SHEARS, best.getType());
-    }
-
-    @Test
-    void getBestToolFromInventory_leavesFallsBackToHoeWithoutShears() {
-        PlayerMock player = newPlayer();
-        PlayerInventory inv = player.getInventory();
-        inv.setItem(1, new ItemStack(Material.IRON_HOE));
-        inv.setItem(2, new ItemStack(Material.IRON_SWORD));
-
-        ItemStack best = plugin.toolHandler.getBestToolFromInventory(Material.OAK_LEAVES, player, true, null);
-
-        assertEquals(Material.IRON_HOE, best.getType());
-    }
-
-    @Test
-    void getBestToolFromInventory_leavesFallsBackToSwordWhenConfigured() {
-        plugin.getConfig().set("consider_swords_for_leaves", true);
-        PlayerMock player = newPlayer();
-        PlayerInventory inv = player.getInventory();
-        inv.setItem(2, new ItemStack(Material.IRON_SWORD));
-
-        ItemStack best = plugin.toolHandler.getBestToolFromInventory(Material.OAK_LEAVES, player, true, null);
-
-        assertEquals(Material.IRON_SWORD, best.getType());
     }
 
     @Test
@@ -312,6 +394,44 @@ class ToolSelectionTest extends BestToolsTestBase {
         meta.addEnchant(EnchantmentUtils.getEnchantment(enchantKey), level, true);
         item.setItemMeta(meta);
         return item;
+    }
+
+    /**
+     * Minimal live-mining-data double for {@link BestToolsHandler#getBestItemStackFromArray}.
+     * MockBukkit's own {@code BlockDataMock} throws {@code UnimplementedOperationException} for
+     * getDestroySpeed/isPreferredTool/requiresCorrectToolForDrops, so this fake overrides just
+     * those three real Paper API methods with canned per-Material answers. Extending BlockDataMock
+     * rather than implementing the (large) BlockData interface from scratch keeps everything else
+     * inherited — those extra methods are never called by the code under test.
+     */
+    private static final class FakeBlockData extends BlockDataMock {
+        private final boolean requiresCorrect;
+        private final Map<Material, Float> speeds;
+        private final Set<Material> preferred;
+        final List<ItemStack> preferredToolChecks = new ArrayList<>();
+
+        FakeBlockData(Material material, boolean requiresCorrect, Map<Material, Float> speeds, Set<Material> preferred) {
+            super(material);
+            this.requiresCorrect = requiresCorrect;
+            this.speeds = speeds;
+            this.preferred = preferred;
+        }
+
+        @Override
+        public boolean requiresCorrectToolForDrops() {
+            return requiresCorrect;
+        }
+
+        @Override
+        public float getDestroySpeed(ItemStack itemStack, boolean considerEnchants) {
+            return speeds.getOrDefault(itemStack.getType(), 1.0f);
+        }
+
+        @Override
+        public boolean isPreferredTool(ItemStack tool) {
+            preferredToolChecks.add(tool);
+            return preferred.contains(tool.getType());
+        }
     }
 
 }

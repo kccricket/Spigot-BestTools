@@ -157,7 +157,7 @@ public class BestToolsListener implements Listener {
         if (event.getAction() != Action.LEFT_CLICK_BLOCK) return;
         if (event.getHand() != EquipmentSlot.HAND) return;
 
-        ItemStack bestTool = handler.getBestToolFromInventory(block.getType(), p,playerSetting.isHotbarOnly(),inv.getItemInMainHand());
+        ItemStack bestTool = handler.getBestToolFromInventory(block, p,playerSetting.isHotbarOnly(),inv.getItemInMainHand());
 
         if(bestTool==null || bestTool.equals(inv.getItemInMainHand())) {
             main.meter.add(st,false);
