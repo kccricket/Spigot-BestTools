@@ -20,10 +20,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Main extends JavaPlugin {
 
@@ -58,7 +58,10 @@ public class Main extends JavaPlugin {
     boolean measurePerformance=false;
     PerformanceMeter meter;
 
-    HashMap<UUID,PlayerSetting> playerSettings;
+    // ConcurrentHashMap: mutated from per-region Folia threads (see getPlayerSetting and
+    // PlayerListener.onPlayerQuit) with no external synchronization, same hazard already guarded
+    // against by BestToolsHandler's silkMattersCache.
+    final Map<UUID,PlayerSetting> playerSettings = new ConcurrentHashMap<>();
 
 
     @Override
@@ -95,20 +98,15 @@ public class Main extends JavaPlugin {
     }
 
     public PlayerSetting getPlayerSetting(Player player) {
-
-        if(Objects.requireNonNull(playerSettings,"PlayerSettings must not be null").containsKey(player.getUniqueId())) {
-            return playerSettings.get(player.getUniqueId());
-        }
-
-        Log.debug("Creating new player setting for "+player.getName());
-        PlayerSetting setting = new PlayerSetting(player,
-                configManager.main().getDefaultBestToolsEnabled(),
-                configManager.main().getDefaultRefillEnabled(),
-                configManager.main().getDefaultHotbarOnly(),
-                configManager.main().getDefaultFavoriteSlot(),
-                configManager.main().getDefaultSwordOnMobs());
-        playerSettings.put(player.getUniqueId(),setting);
-        return setting;
+        return playerSettings.computeIfAbsent(player.getUniqueId(), id -> {
+            Log.debug("Creating new player setting for "+player.getName());
+            return new PlayerSetting(player,
+                    configManager.main().getDefaultBestToolsEnabled(),
+                    configManager.main().getDefaultRefillEnabled(),
+                    configManager.main().getDefaultHotbarOnly(),
+                    configManager.main().getDefaultFavoriteSlot(),
+                    configManager.main().getDefaultSwordOnMobs());
+        });
     }
 
     void load(boolean reload) {
@@ -147,7 +145,6 @@ public class Main extends JavaPlugin {
         commandBlacklist = new CommandBlacklist(this);
         refillUtils = new RefillUtils((this));
         fileUtils = new FileUtils(this);
-        playerSettings = new HashMap<>();
 
         meter = new PerformanceMeter(this);
 
