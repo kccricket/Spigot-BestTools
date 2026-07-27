@@ -2,7 +2,8 @@ package net.kccricket.bestesttool;
 
 import net.kccricket.bestesttool.security.Permissions;
 
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 
 import java.util.Locale;
@@ -32,7 +33,6 @@ public class PerformanceMeter {
         if(!main.measurePerformance) return;
         if(cached) { this.cached++; } else { uncached++; }
         if(start==0) start =t2;
-        //main.getLogger().info(String.format("Took %2.4f ms",(t2-t)/(double)nanoPerMilli));
         puffer+=t2-t;
         i++;
         if(i==max) printAndReset();
@@ -46,7 +46,6 @@ public class PerformanceMeter {
 
 
         main.getLogger().warning(String.format(Locale.US,
-                //"Took %5.2f ms on avg. ~%2.4f %%/default tick duration.",avgms,percentOnTick
                 "%10.2f ms elapsed, of which BestTools took %5.2f ms or %5.3f %% - %2d / %2d "
                 + " queries served by cache (%3d %%)",
 
@@ -58,28 +57,26 @@ public class PerformanceMeter {
                 (int) Math.ceil(cached / (double) (cached+uncached) * 100)
         ));
 
-        ChatColor color = ChatColor.GREEN;
-        if(calcTimePercent>=1) color = ChatColor.YELLOW;
-        if(calcTimePercent>=2) color = ChatColor.RED;
+        NamedTextColor color = NamedTextColor.GREEN;
+        if(calcTimePercent>=1) color = NamedTextColor.YELLOW;
+        if(calcTimePercent>=2) color = NamedTextColor.RED;
 
-        ChatColor color2 = ChatColor.GREEN;
-        if(calcTimePercent<=20) color2 = ChatColor.YELLOW;
-        if(calcTimePercent==0) color2 = ChatColor.RED;
+        NamedTextColor color2 = NamedTextColor.GREEN;
+        if(calcTimePercent<=20) color2 = NamedTextColor.YELLOW;
+        if(calcTimePercent==0) color2 = NamedTextColor.RED;
+
+        int cachePercent = (int) Math.ceil(cached / (double) (cached+uncached) * 100);
+        Component message = Component.text(String.format(Locale.US,
+                        "Elapsed: %.2f ms, BestTools: %3.2f ms or ", secondsBetween*1000, calcTime))
+                .append(Component.text(String.format(Locale.US, "%2.3f %%", calcTimePercent), color))
+                .append(Component.newline())
+                .append(Component.text(String.format(Locale.US,
+                        "%d / %d queries served by cache ", cached, cached+uncached)))
+                .append(Component.text(String.format(Locale.US, "(%3d %%)", cachePercent), color2));
 
         for(Player p : main.getServer().getOnlinePlayers()) {
             if(Permissions.isAllowedTo(p, Permissions.PERM_DEBUG))
-            p.sendMessage(String.format(
-                    "Elapsed: %.2f ms, BestTools: %3.2f ms or %s%2.3f %%§r\n"
-                    +"%d / %d queries served by cache %s(%3d %%)\n",
-                    secondsBetween*1000,
-                    calcTime,
-                    color,
-                    calcTimePercent,
-                    cached,
-                    cached+uncached,
-                    color2,
-                    (int) Math.ceil(cached / (double) (cached+uncached) * 100)
-            ));
+                p.sendMessage(message);
         }
 
         i=0;puffer=0;start=0;

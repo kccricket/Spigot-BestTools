@@ -20,10 +20,4 @@ public class PlayerListener implements Listener {
         main.playerSettings.remove(p.getUniqueId());
     }
 
-/*    @EventHandler
-    public void onJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-
-    }*/
-
 }

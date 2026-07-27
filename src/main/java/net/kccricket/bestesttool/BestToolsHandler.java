@@ -139,21 +139,6 @@ public class BestToolsHandler {
     }
 
     /**
-     * Returns the durability
-     * @param item
-     * @return Durability left, or -1 if not damageable
-     */
-    // private int getDurability(@Nullable ItemStack item) {
-    //     // TODO: Delete? Its unused
-    //     if(item==null) return -1;
-    //     if(!(item.getItemMeta() instanceof Damageable)) {
-    //         return -1;
-    //     }
-    //     Damageable damageable = (Damageable) item.getItemMeta();
-    //     return item.getType().getMaxDurability() - damageable.getDamage();
-    // }
-
-    /**
      * Gets the best tool type for a material
      * @param mat The block's material
      * @return Best tool type for that material
@@ -415,15 +400,6 @@ public class BestToolsHandler {
         return getBestRoscoeFromArray(items,currentItem,enemy,useAxe);
 
     }
-
-
-
-    /*@Nullable
-    ItemStack getBestToomFromInventory(Entity e, Player p) {
-        PlayerInventory inv = p.getPositionInInventory();
-        ItemStack[] items = inventoryToArray(p);
-    }*/
-
 
     /**
      * Gets the slot number of a given ItemStack

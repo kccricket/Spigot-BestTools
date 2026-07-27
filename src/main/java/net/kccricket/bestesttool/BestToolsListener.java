@@ -57,10 +57,7 @@ public class BestToolsListener implements Listener {
             return;
         }
 
-        if (!
-                (enemy instanceof Monster && playerSetting.isSwordOnMobs())
-            // || (enemy instanceof Player && playerSetting.swordOnPlayers)
-        ) return;
+        if (!(enemy instanceof Monster && playerSetting.isSwordOnMobs())) return;
 
         Log.debug("Getting the best roscoe for "+enemy.getType().name());
 
@@ -69,22 +66,17 @@ public class BestToolsListener implements Listener {
 
         if(bestRoscoe==null || bestRoscoe.equals(inv.getItemInMainHand())) {
             main.meter.add(st,false);
-            //playerSetting.getBtcache().validate(enemy.getType());
             return;
         }
         switchToBestRoscoe(p, bestRoscoe,playerSetting.getFavoriteSlot());
-        //playerSetting.getBtcache().validate(enemy.getType());
         main.meter.add(st,false);
 
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = false)
     public void onBreak(BlockBreakEvent event) {
-        //System.out.println("BlockBreakEvent LISTENER");
-        //System.out.println(event.getBlock());
         event.getPlayer().getScheduler().runDelayed(main, task -> {
             Bukkit.getPluginManager().callEvent(new BestToolsNotifyEvent(event.getPlayer(), event.getBlock()));
-            //Bukkit.getPluginManager().callEvent(new PlayerInteractEvent(event.getPlayer(), Action.LEFT_CLICK_BLOCK, event.getPlayer().getInventory().getItemInMainHand(),event.getBlock(),BlockFace.SELF,EquipmentSlot.HAND));
         }, null, 1);
     }
 
@@ -96,15 +88,6 @@ public class BestToolsListener implements Listener {
     @EventHandler
     public void onPlayerInteractWithBlock(PlayerInteractEvent event) {
 
-        // DEBUG
-        //for (RegisteredListener registeredListener : event.getHandlers().getRegisteredListeners()) {
-        //    Log.debug(registeredListener.getPlugin().getName()+": "+registeredListener.getListener().getClass().getName() + " @ "+registeredListener.getPriority().name());
-        //}
-//        if(main.debug && event.getAction() == Action.LEFT_CLICK_BLOCK) {
-//            main.getLogger().warning(event.getClickedBlock().getType().name());
-//        }
-        //
-
         long st= main.measurePerformance ? System.nanoTime() : 0;
 
         // Check the cache as soon as possible
@@ -113,21 +96,17 @@ public class BestToolsListener implements Listener {
                 && event.getClickedBlock()!=null
                 && event.getClickedBlock().getType() == playerSetting.getBtcache().lastMat) {
             main.meter.add(st,true);
-            //main.wtfdebug("Cache valid!");
             return;
         }
         Player p = event.getPlayer();
         if(!Permissions.isAllowedTo(p, Permissions.PERM_USE)) {
-            //main.meter.add(st);
             return;
         }
         if(!hasBestToolsEnabled(p, playerSetting)) {
-            //main.meter.add(st);
             return;
         }
         Block block = event.getClickedBlock();
         if (block == null) {
-            //main.meter.add(st);
             return;
         }
 
@@ -151,7 +130,6 @@ public class BestToolsListener implements Listener {
             return;
         }
 
-       //main.wtfdebug("Cache invalid, doing onPlayerInteractWithBlock");
         if(!PlayerUtils.isAllowedGamemode(p,main.configManager.main().getAllowInAdventureMode())) {
             return;
         }

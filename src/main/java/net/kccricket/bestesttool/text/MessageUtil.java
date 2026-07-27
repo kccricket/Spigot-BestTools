@@ -5,7 +5,6 @@ import net.kccricket.kcmclib.text.lang.Localized;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -36,16 +35,5 @@ public class MessageUtil {
     /** Resolves {@code key} and sends it to {@code sender}. */
     public static void send(CommandSender sender, String key, TagResolver... resolvers) {
         sender.sendMessage(get(sender, key, resolvers));
-    }
-
-    /**
-     * Renders {@code key} through the lang system down to a single legacy string (embedded
-     * {@code \n}s preserved), for the GUI's {@code ItemMeta.setDisplayName(String)}/lore call
-     * sites, which predate Adventure Components and already split lore on {@code \n} themselves
-     * ({@code GUIHandler.createGUIItem}/{@code addItem}). Keeps GUI item text translatable
-     * without a full GUI-to-Component rewrite.
-     */
-    public static String legacy(Player player, String key) {
-        return LegacyComponentSerializer.legacySection().serialize(get(player, key));
     }
 }

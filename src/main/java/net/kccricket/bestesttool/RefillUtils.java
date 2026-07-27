@@ -11,7 +11,6 @@ import org.bukkit.inventory.PlayerInventory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 public class RefillUtils {
 
@@ -101,12 +100,14 @@ public class RefillUtils {
 
         if(slots.size()==0) return -1;
 
+        // sortByValue orders ascending, so the last entry iterated holds the highest amount.
         Map<Integer,Integer> sortedSlots = MapUtils.sortByValue(slots);
-        Set<Entry<Integer,Integer>> entrySet = sortedSlots.entrySet();
-        @SuppressWarnings("unchecked")
-        Entry<Integer,Integer>[] entries = entrySet.toArray(new Entry[0]);
+        int bestSlot = -1;
+        for(Entry<Integer,Integer> entry : sortedSlots.entrySet()) {
+            bestSlot = entry.getKey();
+        }
 
-        return entries[entries.length-1].getKey();
+        return bestSlot;
 
     }
 }

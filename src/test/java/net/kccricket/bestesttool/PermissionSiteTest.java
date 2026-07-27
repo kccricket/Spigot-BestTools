@@ -4,14 +4,13 @@ import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Zombie;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.mockbukkit.mockbukkit.entity.LivingEntityMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -48,9 +47,14 @@ class PermissionSiteTest extends BestToolsTestBase {
         inv.setHeldItemSlot(0);
 
         Zombie zombie = player.getWorld().spawn(player.getLocation(), Zombie.class);
-        EntityDamageByEntityEvent event = new EntityDamageByEntityEvent(player, zombie,
-                EntityDamageEvent.DamageCause.ENTITY_ATTACK, 1.0);
-        plugin.bestToolsListener.onPlayerAttackEntity(event);
+        // Every EntityDamageByEntityEvent constructor other than the deprecated-for-removal
+        // (Entity,Entity,DamageCause,double) one requires a Map<DamageModifier,...>, and
+        // DamageModifier itself is deprecated — there is no way to build this event ourselves
+        // without touching a deprecated symbol. MockBukkit's simulateDamage(...) builds it
+        // internally instead (so the deprecated construction lives in its already-compiled code,
+        // not ours) and its callEvent() call delivers it to the real registered listener, so no
+        // manual dispatch to bestToolsListener is needed here.
+        ((LivingEntityMock) zombie).simulateDamage(1.0, player);
 
         // bestesttool.use defaults to true, so only an explicit DENIED actually withholds it.
         boolean granted = grantType != Grant.DENIED;

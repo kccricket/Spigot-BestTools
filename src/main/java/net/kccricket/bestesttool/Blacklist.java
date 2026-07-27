@@ -63,10 +63,6 @@ public class Blacklist {
 
         p.sendMessage(MessageUtil.get(p, "blacklistTitle"));
 
-        /*p.sendMessage("This list will be nicer in the next version :P");
-        p.sendMessage("Blacklist: ");
-        StringBuilder slist = new StringBuilder();
-        */
         for(Material mat : mats) {
             Component link = createLink("[X] ","/bestesttool blacklist remove "+mat.name());
             Component name = Component.text(mat.name(), NamedTextColor.GRAY);

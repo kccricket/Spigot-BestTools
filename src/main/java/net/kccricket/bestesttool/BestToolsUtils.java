@@ -63,7 +63,6 @@ public class BestToolsUtils {
     };
 
     final Main main;
-    //final Map<Material,Tool> uToolMap;
 
 
     // This is called AFTER BestToolsHandler, so the Utils can affect the Handler
@@ -97,8 +96,6 @@ public class BestToolsUtils {
         main.toolHandler.allTools.addAll(Arrays.asList(netheriteTools));
 
         this.initMap();
-
-        //uToolMap = Map.copyOf(main.toolHandler.toolMap); // Java 10+ only
     }
 
     private void tagToMap(@NotNull Tag<Material> tag, @NotNull Tool tool) {
@@ -119,12 +116,7 @@ public class BestToolsUtils {
                 }
             }
         }
-        //usedTags.add(tag);
     }
-
-    // private void printMap(HashMap<Material, Tool> toolMap) {
-    //     toolMap.forEach((mat, tool) -> System.out.println(String.format("%0$30s -> %s", mat.name(), tool.name())));
-    // }
 
     private void addToMap(@NotNull Material mat, @NotNull Tool tool) {
         Objects.requireNonNull(Objects.requireNonNull(main.toolHandler, "ToolHandler must not be null").
@@ -133,7 +125,7 @@ public class BestToolsUtils {
                         Objects.requireNonNull(tool, "Tool must not be null"));
     }
 
-    void initMap() {
+    private void initMap() {
         long startTime = System.nanoTime();
 
         tagToMap(Tag.ANVIL, Tool.PICKAXE);
