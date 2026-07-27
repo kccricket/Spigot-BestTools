@@ -55,6 +55,8 @@
 - Renamed the PlaceholderAPI expansion identifier from `besttools` to `bestesttool` to match the
   command and permission nodes above — `%besttools_btenabled%` etc. are now `%bestesttool_btenabled%`,
   `%bestesttool_rfenabled%`, `%bestesttool_hotbaronly%`, `%bestesttool_favoriteslot%`
+- Fixed bStats leaking a `Metrics` instance (and its scheduled submission task) on every
+  `/bestesttool reload` — it's now registered once, in `onEnable`, instead of every `load()`
 - Fixed a crash on plugin load when `global-block-blacklist` contained an invalid material name
 - Fixed `swordOnMobs` and the favorite-slot setting not surviving a server restart
 - Fixed `/bestesttool performance` (mixed case) not toggling the performance test

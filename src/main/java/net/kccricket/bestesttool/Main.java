@@ -69,6 +69,7 @@ public class Main extends JavaPlugin {
         Log.init(this);
 
         load(false);
+        registerMetrics();
 
         if(Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null){
             new BestToolsPlaceholders(this).register();
@@ -161,8 +162,6 @@ public class Main extends JavaPlugin {
             }
         }
 
-        registerMetrics();
-
         // "check_for_updates" is tri-state (true / on-startup / anything else = off), but
         // ModrinthUpdateChecker's `enabled` supplier only drives one binary gate shared by both the
         // immediate check and the recurring schedule. Preserve the tri-state in this wiring instead:
@@ -179,6 +178,13 @@ public class Main extends JavaPlugin {
 
     }
 
+    /**
+     * Called once from {@link #onEnable}, not from {@link #load}: unlike {@code updateChecker}
+     * (explicitly {@code stop()}'d before every reload) a bStats {@link Metrics} instance is never
+     * torn down anywhere, so constructing one from {@code load()} — which re-runs on every
+     * {@code /bestesttool reload} — leaked one live instance (and its scheduled submission task)
+     * per reload for the server's lifetime.
+     */
     private void registerMetrics() {
         @SuppressWarnings("unused")
         Metrics metrics = new Metrics(this,32836);
