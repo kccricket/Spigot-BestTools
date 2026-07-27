@@ -13,7 +13,11 @@ import java.util.Objects;
 
 public class BestToolsUtils {
 
-    final Material[] weapons = {Material.BOW, Material.CROSSBOW, Material.TRIDENT, Material.NETHERITE_SWORD, Material.DIAMOND_SWORD, Material.GOLDEN_SWORD, Material.IRON_SWORD, Material.STONE_SWORD, Material.WOODEN_SWORD, Material.MACE};
+    // Weapons that aren't swords: swords come from Tag.ITEMS_SWORDS instead (see the constructor
+    // below), so this plugin never has to hand-type a tool tier again the way it used to for the
+    // six legacy sword/pickaxe/axe/hoe/shovel tiers (a hand-typed array silently misses whatever
+    // tier Mojang adds next, the way it missed copper here until this was caught by review).
+    final Material[] extraWeapons = {Material.BOW, Material.CROSSBOW, Material.TRIDENT, Material.MACE};
     final Material[] instaBreakableByHand = {Material.COMPARATOR, Material.REPEATER, Material.REDSTONE_WIRE, Material.REDSTONE_TORCH, Material.REDSTONE_WALL_TORCH, Material.TORCH, Material.SOUL_TORCH, Material.WALL_TORCH, Material.SOUL_WALL_TORCH, Material.COPPER_TORCH, Material.COPPER_WALL_TORCH,
             Material.SCAFFOLDING, Material.SLIME_BLOCK, Material.HONEY_BLOCK, Material.TNT, Material.TRIPWIRE, Material.TRIPWIRE_HOOK, Material.SHORT_GRASS, Material.SUGAR_CANE, Material.LILY_PAD,
             Material.OAK_SAPLING, Material.SPRUCE_SAPLING, Material.BIRCH_SAPLING, Material.JUNGLE_SAPLING, Material.ACACIA_SAPLING, Material.DARK_OAK_SAPLING,
@@ -22,45 +26,6 @@ public class BestToolsUtils {
             Material.DANDELION, Material.POPPY, Material.BLUE_ORCHID, Material.ALLIUM, Material.AZURE_BLUET, Material.RED_TULIP, Material.ORANGE_TULIP, Material.WHITE_TULIP, Material.PINK_TULIP, Material.OXEYE_DAISY, Material.CORNFLOWER, Material.LILY_OF_THE_VALLEY, Material.WITHER_ROSE, Material.SUNFLOWER, Material.LILAC, Material.ROSE_BUSH, Material.PEONY,
             Material.POTTED_DANDELION, Material.POTTED_POPPY, Material.POTTED_BLUE_ORCHID, Material.POTTED_ALLIUM, Material.POTTED_AZURE_BLUET, Material.POTTED_RED_TULIP, Material.POTTED_ORANGE_TULIP, Material.POTTED_WHITE_TULIP, Material.POTTED_PINK_TULIP, Material.POTTED_OXEYE_DAISY, Material.POTTED_CORNFLOWER, Material.POTTED_LILY_OF_THE_VALLEY, Material.POTTED_WITHER_ROSE,
             Material.TUBE_CORAL, Material.BRAIN_CORAL, Material.BUBBLE_CORAL, Material.FIRE_CORAL, Material.HORN_CORAL, Material.DEAD_TUBE_CORAL, Material.DEAD_BRAIN_CORAL, Material.DEAD_BUBBLE_CORAL, Material.DEAD_FIRE_CORAL, Material.DEAD_HORN_CORAL};
-    final Material[] hoes = {Material.NETHERITE_HOE, Material.DIAMOND_HOE, Material.GOLDEN_HOE, Material.IRON_HOE, Material.STONE_HOE, Material.WOODEN_HOE};
-    final Material[] pickaxes = {Material.NETHERITE_PICKAXE, Material.DIAMOND_PICKAXE, Material.GOLDEN_PICKAXE, Material.IRON_PICKAXE, Material.STONE_PICKAXE, Material.WOODEN_PICKAXE};
-    final Material[] axes = {Material.NETHERITE_AXE, Material.DIAMOND_AXE, Material.GOLDEN_AXE, Material.IRON_AXE, Material.STONE_AXE, Material.WOODEN_AXE};
-    final Material[] shovels = {Material.NETHERITE_SHOVEL, Material.DIAMOND_SHOVEL, Material.GOLDEN_SHOVEL, Material.IRON_SHOVEL, Material.STONE_SHOVEL, Material.WOODEN_SHOVEL};
-    final Material[] swords = {Material.NETHERITE_SWORD, Material.DIAMOND_SWORD, Material.GOLDEN_SWORD, Material.IRON_SWORD, Material.STONE_SWORD, Material.WOODEN_SWORD};
-    final Material[] defaultMats = {
-            Material.DIAMOND_PICKAXE,
-            Material.DIAMOND_AXE,
-            Material.DIAMOND_HOE,
-            Material.DIAMOND_SHOVEL,
-
-            Material.GOLDEN_PICKAXE,
-            Material.GOLDEN_AXE,
-            Material.GOLDEN_HOE,
-            Material.GOLDEN_SHOVEL,
-
-            Material.IRON_PICKAXE,
-            Material.IRON_AXE,
-            Material.IRON_HOE,
-            Material.IRON_SHOVEL,
-
-            Material.STONE_PICKAXE,
-            Material.STONE_AXE,
-            Material.STONE_HOE,
-            Material.STONE_SHOVEL,
-
-            Material.WOODEN_PICKAXE,
-            Material.WOODEN_AXE,
-            Material.WOODEN_HOE,
-            Material.WOODEN_SHOVEL,
-
-            Material.SHEARS
-    };
-    final Material[] netheriteTools = {
-            Material.NETHERITE_PICKAXE,
-            Material.NETHERITE_AXE,
-            Material.NETHERITE_HOE,
-            Material.NETHERITE_SHOVEL
-    };
 
     final Main main;
 
@@ -71,29 +36,28 @@ public class BestToolsUtils {
         this.main = Objects.requireNonNull(main, "Main must not be null");
         Objects.requireNonNull(main.toolHandler, "BestToolsHandler must be instantiated before BestToolUtils!");
 
-        // Register valid weapons
-        main.toolHandler.weapons.addAll(Arrays.asList(weapons));
-
         // Register all InstaBreaksByHand
         main.toolHandler.instaBreakableByHand.addAll(Arrays.asList(instaBreakableByHand));
 
-        // Hoes
-        main.toolHandler.hoes.addAll(Arrays.asList(hoes));
+        // Tool-tier materials come straight from Paper's live item tags rather than a hand-typed
+        // array — Tag.ITEMS_PICKAXES/AXES/HOES/SHOVELS/SWORDS each contain exactly the real tiers
+        // (wood/stone/copper/gold/iron/diamond/netherite, verified against the vanilla tag data),
+        // so a newly-added tier is picked up automatically instead of silently missing.
+        main.toolHandler.pickaxes.addAll(Tag.ITEMS_PICKAXES.getValues());
+        main.toolHandler.axes.addAll(Tag.ITEMS_AXES.getValues());
+        main.toolHandler.hoes.addAll(Tag.ITEMS_HOES.getValues());
+        main.toolHandler.shovels.addAll(Tag.ITEMS_SHOVELS.getValues());
+        main.toolHandler.swords.addAll(Tag.ITEMS_SWORDS.getValues());
 
-        // Pickaxes
-        main.toolHandler.pickaxes.addAll(Arrays.asList(pickaxes));
+        // Register valid weapons: every sword tier plus the non-sword weapons.
+        main.toolHandler.weapons.addAll(main.toolHandler.swords);
+        main.toolHandler.weapons.addAll(Arrays.asList(extraWeapons));
 
-        // Axes
-        main.toolHandler.axes.addAll(Arrays.asList(axes));
-
-        // Shovels
-        main.toolHandler.shovels.addAll(Arrays.asList(shovels));
-
-        // Swords
-        main.toolHandler.swords.addAll(Arrays.asList(swords));
-
-        main.toolHandler.allTools.addAll(Arrays.asList(defaultMats));
-        main.toolHandler.allTools.addAll(Arrays.asList(netheriteTools));
+        main.toolHandler.allTools.addAll(main.toolHandler.pickaxes);
+        main.toolHandler.allTools.addAll(main.toolHandler.axes);
+        main.toolHandler.allTools.addAll(main.toolHandler.hoes);
+        main.toolHandler.allTools.addAll(main.toolHandler.shovels);
+        main.toolHandler.allTools.add(Material.SHEARS);
 
         this.initMap();
     }

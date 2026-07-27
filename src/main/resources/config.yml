@@ -66,8 +66,7 @@ defaults:
 
   # The preferred slot where BestTools should move the tool if it's not in the hotbar
   # and hotbar_only is set to false. Must be a number between 0 (leftmost hotbar slot)
-  # and 8 (rightmost hotbar slot)
-  # Set this to -1 to always use the player's current slot
+  # and 8 (rightmost hotbar slot), or -1 to always use the player's current slot.
   favorite_slot: 8
 
   # Allow /bestesttool to switch to your sword/axe (whatever is better) when attacking mobs?

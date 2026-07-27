@@ -107,6 +107,53 @@ class ToolSelectionTest extends BestToolsTestBase {
         assertEquals(Material.IRON_SWORD, best.getType());
     }
 
+    // --- Copper tools: regression coverage for the gap where copper tiers were absent from every
+    // hand-typed array, so the plugin never recognized them at all (mining, combat, or the
+    // Silk-Touch pass) --------------------------------------------------------------------------
+
+    @ParameterizedTest
+    @EnumSource(value = Material.class,
+            names = {"COPPER_PICKAXE", "COPPER_AXE", "COPPER_HOE", "COPPER_SHOVEL"})
+    void isTool_trueForCopperTools(Material mat) {
+        assertTrue(plugin.toolHandler.isTool(new ItemStack(mat)));
+    }
+
+    @Test
+    void isToolOrRoscoe_trueForCopperSword() {
+        assertTrue(plugin.toolHandler.isToolOrRoscoe(new ItemStack(Material.COPPER_SWORD)));
+    }
+
+    @Test
+    void weapons_containsCopperSword() {
+        // The dont_switch_during_battle guard (BestToolsListener#isWeapon) reads this list
+        // directly, so this is what actually protects a held copper sword during combat.
+        assertTrue(plugin.toolHandler.weapons.contains(Material.COPPER_SWORD));
+    }
+
+    @Test
+    void swordUtilsGetBaseDamage_knowsCopperTools() {
+        assertEquals(5, SwordUtils.getBaseDamage(Material.COPPER_SWORD),
+                "COPPER's ToolMaterial.attackDamageBonus (1.0) matches STONE's, so COPPER_SWORD "
+                        + "must score the same base damage as STONE_SWORD");
+        assertEquals(9, SwordUtils.getBaseDamage(Material.COPPER_AXE),
+                "COPPER_AXE must score the same base damage as STONE_AXE/IRON_AXE/DIAMOND_AXE");
+    }
+
+    @Test
+    void getBestRoscoeFromInventory_choosesCopperSwordOverWoodenSword() {
+        // Regression guard for the gap SwordUtils#getBaseDamage would otherwise leave: a copper
+        // sword being classified as a roscoe is meaningless if it still scores 0 damage and can
+        // never actually be chosen.
+        PlayerMock player = newPlayer();
+        PlayerInventory inv = player.getInventory();
+        inv.setItem(0, new ItemStack(Material.WOODEN_SWORD));
+        inv.setItem(1, new ItemStack(Material.COPPER_SWORD));
+
+        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, false);
+
+        assertEquals(Material.COPPER_SWORD, best.getType());
+    }
+
     // --- getBestItemStackFromArray: the live-speed ranking core ------------------------------
 
     @Test

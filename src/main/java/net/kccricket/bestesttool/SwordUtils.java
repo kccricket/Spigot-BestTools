@@ -51,12 +51,21 @@ public class SwordUtils {
         return base + getBonus(is,enemy);
     }
 
+    /**
+     * Vanilla melee damage = 1 (the player's base {@code generic.attack_damage}) + the item's
+     * baseline (3 for every sword, varies per tier for axes) + {@code ToolMaterial}'s per-tier
+     * {@code attackDamageBonus}. Verified against Paper's {@code net.minecraft.world.item.
+     * ToolMaterial}/{@code Items} — e.g. {@code NETHERITE_AXE}: 1 + 5 (baseline) + 4 (tier bonus)
+     * = 10, matching the value below. {@code COPPER}'s tier bonus (1.0) is the same as
+     * {@code STONE}'s, hence copper sharing a case with stone here.
+     */
     @SuppressWarnings("incomplete-switch")
     static double getBaseDamage(Material mat) {
         switch (mat) {
             case IRON_AXE:
             case STONE_AXE:
             case DIAMOND_AXE:
+            case COPPER_AXE:
                 return 9;
             case DIAMOND_SWORD:
             case WOODEN_AXE:
@@ -65,6 +74,7 @@ public class SwordUtils {
             case IRON_SWORD:
                 return 6;
             case STONE_SWORD:
+            case COPPER_SWORD:
                 return 5;
             case GOLDEN_SWORD:
             case WOODEN_SWORD:

@@ -68,6 +68,46 @@ class MainConfigTest extends BestToolsTestBase {
     }
 
     /**
+     * Regression test: {@code normalizeValues} used to clamp only {@code favoriteSlot > 8},
+     * leaving a value below {@code -1} to flow straight through to
+     * {@code inv.setHeldItemSlot(-5)} and throw {@code IllegalArgumentException} on every
+     * mining interaction. {@code -1} itself is the documented "use the player's held slot"
+     * sentinel (see {@code config.yml}'s comment and {@code PlayerSetting#getFavoriteSlot}) and
+     * must survive untouched.
+     */
+    @Test
+    void tooLowFavoriteSlotIsClampedToDefault() throws IOException {
+        setFavoriteSlotOnDisk(-5);
+        plugin.configManager.reloadAll();
+        assertEquals(8, plugin.configManager.main().getDefaultFavoriteSlot(),
+                "A favorite_slot below -1 must be clamped back to the default (8)");
+    }
+
+    @Test
+    void tooHighFavoriteSlotIsClampedToDefault() throws IOException {
+        setFavoriteSlotOnDisk(9);
+        plugin.configManager.reloadAll();
+        assertEquals(8, plugin.configManager.main().getDefaultFavoriteSlot(),
+                "A favorite_slot above 8 must be clamped back to the default (8)");
+    }
+
+    @Test
+    void negativeOneFavoriteSlotSentinelIsPreserved() throws IOException {
+        setFavoriteSlotOnDisk(-1);
+        plugin.configManager.reloadAll();
+        assertEquals(-1, plugin.configManager.main().getDefaultFavoriteSlot(),
+                "-1 is a valid sentinel (\"use the player's held slot\") and must not be clamped");
+    }
+
+    /** Rewrites the on-disk {@code defaults.favorite_slot} value, as if an admin had edited it. */
+    private void setFavoriteSlotOnDisk(int value) throws IOException {
+        File configFile = new File(plugin.getDataFolder(), "config.yml");
+        String edited = Files.readString(configFile.toPath())
+                .replace("favorite_slot: 8", "favorite_slot: " + value);
+        Files.writeString(configFile.toPath(), edited);
+    }
+
+    /**
      * Regression test: YAML 1.1 parses the bundled default's bare {@code debug_level: OFF} as the
      * boolean {@code false}, which {@code getString("debug_level")} then auto-converts to the
      * string {@code "false"} — not a valid {@link DebugLevel} name. Caught by manually reading a

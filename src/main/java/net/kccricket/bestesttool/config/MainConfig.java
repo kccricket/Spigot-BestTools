@@ -79,9 +79,9 @@ public class MainConfig implements ManagedConfig {
      */
     private void normalizeValues() {
         int favoriteSlot = plugin.getConfig().getInt("defaults.favorite_slot");
-        if (favoriteSlot > 8) {
+        if (favoriteSlot > 8 || favoriteSlot < -1) {
             Log.warning(String.format(
-                    "defaults.favorite_slot was set to %d, but it must not be higher than 8. Using default value 8",
+                    "defaults.favorite_slot was set to %d, but it must be -1, or between 0 and 8. Using default value 8",
                     favoriteSlot));
             plugin.getConfig().set("defaults.favorite_slot", 8);
         }
