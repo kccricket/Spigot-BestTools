@@ -31,7 +31,7 @@
 # ----- Permissions -----
 
 # bestesttool.use:      (default: true)  Allows using /bestesttool (or /bt), including hotbar,
-#                        gui/settings, and the blacklist subcommands
+#                        favoriteslot, and the blacklist subcommands
 # bestesttool.refill:   (default: true)  Allows using /bestesttool refill (or /refill, /rf)
 # bestesttool.reload:   (default: op)    Allows using /bestesttool reload
 # bestesttool.debug:    (default: op)    Allows enabling debug mode via /bestesttool debug and
@@ -152,6 +152,3 @@ dump: false
 
 # You can enable performance test using /bt performance (permission: bestesttool.debug)
 measure_performance: false
-
-# Do you like bad puns?
-puns: false

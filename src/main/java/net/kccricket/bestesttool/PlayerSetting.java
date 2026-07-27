@@ -140,18 +140,10 @@ public class PlayerSetting {
                 return bestToolsEnabled;
         }
 
-        boolean toggleRefillEnabled() {
-                return setRefillEnabled(!refillEnabled);
-        }
-
         boolean setRefillEnabled(boolean enabled) {
                 refillEnabled = enabled;
                 save();
                 return refillEnabled;
-        }
-
-        boolean toggleHotbarOnly() {
-                return setHotbarOnly(!hotbarOnly);
         }
 
         boolean setHotbarOnly(boolean enabled) {

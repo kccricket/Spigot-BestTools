@@ -34,6 +34,11 @@ refillUsage: "<gray>Hint: Type <gold>/refill</gold> or <gold>/rf</gold> to autom
 hotbarOnlyEnabled: "<gray>BestTools will only use tools from your hotbar.</gray>"
 hotbarOnlyDisabled: "<gray>BestTools will use all tools from your inventory.</gray>"
 
+# Command feedback — /bestesttool favoriteslot
+# Placeholder: <slot>
+favoriteSlotSet: "<gray>BestTools will place tools in hotbar slot <gold><slot></gold>.</gray>"
+favoriteSlotHeld: "<gray>BestTools will place tools in whichever slot you're holding.</gray>"
+
 # Blacklist command feedback
 blacklistEmpty: "<gray>Your blacklist is empty.</gray>"
 # Placeholder: <items>
@@ -61,10 +66,3 @@ debugEnabled: "<red><plugin> debug mode has been enabled.</red>"
 debugDisabled: "<green><plugin> debug mode has been disabled.</green>"
 performanceEnabled: "<red><plugin> performance test has been enabled.</red>"
 performanceDisabled: "<green><plugin> performance test has been disabled.</green>"
-
-# Settings GUI item names/lore
-guiFavoriteSlot: "Set as favorite slot"
-guiFavoriteSlotLore: "If your hotbar is full and BestTools uses\na tool from your inventory, it will be\nplaced in this slot."
-guiBesttoolsLore: "Automatically chooses the best tools\nwhen breaking blocks."
-guiHotbarLore: "When enabled, BestTools will only use\ntools from your hotbar instead of from\nyour whole inventory."
-guiRefillLore: "Automatically refills empty hotbar slots."

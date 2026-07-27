@@ -2,6 +2,8 @@ package net.kccricket.bestesttool;
 
 import net.kccricket.bestesttool.text.MessageUtil;
 
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+
 import org.bukkit.entity.Player;
 
 /**
@@ -39,10 +41,22 @@ public class CommandBestTools {
         MessageUtil.send(p, enabled ? "hotbarOnlyEnabled" : "hotbarOnlyDisabled");
     }
 
-    void openGui(Player p) {
+    /** Reports the effective favorite slot (already resolved to the held slot if unset/out-of-range). */
+    void reportFavoriteSlot(Player p) {
+        int slot = main.getPlayerSetting(p).getFavoriteSlot();
+        MessageUtil.send(p, "favoriteSlotSet", Placeholder.unparsed("slot", Integer.toString(slot)));
+    }
+
+    /** {@code slot} of {@code -1} means "use whatever slot I'm currently holding" — see {@link PlayerSetting#getFavoriteSlot()}. */
+    void setFavoriteSlot(Player p, int slot) {
         PlayerSetting setting = main.getPlayerSetting(p);
         setting.getBtcache().invalidated();
         setting.setHasSeenBestToolsMessage(true);
-        main.guiHandler.open(p);
+        setting.setFavoriteSlot(slot);
+        if (slot < 0 || slot > 8) {
+            MessageUtil.send(p, "favoriteSlotHeld");
+        } else {
+            MessageUtil.send(p, "favoriteSlotSet", Placeholder.unparsed("slot", Integer.toString(slot)));
+        }
     }
 }

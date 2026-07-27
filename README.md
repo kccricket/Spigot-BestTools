@@ -16,7 +16,7 @@ depleted stacks from the rest of your inventory.
 - Per-player block blacklist — never auto-switch for specific blocks
 - Optional hotbar-only mode, and a favorite slot for when the best tool isn't already in your hotbar
 - Optional automatic hotbar refill
-- A settings GUI (`/bestesttool gui`), plus PlaceholderAPI placeholders
+- PlaceholderAPI placeholders
 - Full command autosuggestions and client-side argument validation
 - Folia-supported
 
@@ -47,7 +47,7 @@ explicitly instead of flipping it; the bare form (no argument) still toggles. Th
 | --- | --- | --- |
 | `/bestesttool` | Toggle automatic best-tool switching for yourself | `bestesttool.use` |
 | `/bestesttool hotbaronly [<state>]` | Toggle (or set) whether BestestTool only uses tools from your hotbar | `bestesttool.use` |
-| `/bestesttool gui` (alias `settings`) | Open the settings GUI | `bestesttool.use` |
+| `/bestesttool favoriteslot [<-1-8>]` | Report (or set) which hotbar slot to place a tool in when it has to make room; `-1` means "whatever slot I'm holding" | `bestesttool.use` |
 | `/bestesttool refill [<state>]` (aliases `/refill`, `/rf`) | Toggle (or set) automatic hotbar refill | `bestesttool.refill` |
 | `/bestesttool reload` | Reload `config.yml` and the language files | `bestesttool.reload` |
 | `/bestesttool debug [<state>]` | Toggle (or set) debug logging | `bestesttool.debug` |
@@ -67,7 +67,7 @@ out of the box. `bestesttool.reload` and `bestesttool.debug` default to server o
 | Node | Default | Grants |
 | --- | --- | --- |
 | `bestesttool` | `true` | Umbrella node for `use` and `refill` (does not cascade to admin nodes) |
-| `bestesttool.use` | `true` | Automatic best-tool switching itself, plus `/bestesttool` and its `hotbar`/`gui`/`blacklist` subcommands |
+| `bestesttool.use` | `true` | Automatic best-tool switching itself, plus `/bestesttool` and its `hotbaronly`/`favoriteslot`/`blacklist` subcommands |
 | `bestesttool.refill` | `true` | Automatic hotbar refilling itself, plus `/bestesttool refill` (`/refill`, `/rf`) |
 | `bestesttool.admin` | `op` | Umbrella node for `reload` and `debug` |
 | `bestesttool.reload` | `op` | `/bestesttool reload` |

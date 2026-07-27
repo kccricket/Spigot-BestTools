@@ -1,6 +1,16 @@
 # Changelog
 
 ## Unreleased
+- Removed the settings GUI (`/bestesttool gui`/`settings`) entirely — a shift-click or drag from
+  the player's own inventory while it was open could silently destroy the shifted/dragged item,
+  since only same-inventory clicks were cancelled. Its favorite-slot picker is replaced by
+  `/bestesttool favoriteslot [<-1 to 8>]`; its other toggles (`hotbaronly`, `refill`) already had
+  chat-command equivalents. The now-unused `puns` config key is also removed
+- Fixed `/bestesttool refill` (and `/refill`, `/rf`) permanently destroying the empty bowl/bottle
+  it was supposed to relocate out of the refill destination slot: the fallback relocation loop
+  re-cleared the destination slot on every iteration, which could make it "find" its own
+  just-cleared slot and place the item right back into it, immediately before the refill
+  overwrote that slot
 - Fixed BestTools switching to a diamond pickaxe on blocks no tool can break or drop (bedrock,
   reinforced deepslate, barrier, portals, ...) and on "any tool" blocks (glass, sea lantern, wool
   carpet) instead of leaving the hand alone — a regression from the live-mining-data switch above

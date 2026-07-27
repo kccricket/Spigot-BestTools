@@ -179,11 +179,7 @@ public class BestToolsListener implements Listener {
     }
 
     private int getFavoriteSlot(Player player) {
-        if(main.configManager.main().getDefaultFavoriteSlot()==-1) {
-            return player.getInventory().getHeldItemSlot();
-        } else {
-            return main.configManager.main().getDefaultFavoriteSlot();
-        }
+        return main.getPlayerSetting(player).getFavoriteSlot();
     }
 
     private void switchToBestTool(Player p, @NotNull ItemStack bestTool) {

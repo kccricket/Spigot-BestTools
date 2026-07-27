@@ -53,7 +53,6 @@ public class Main extends JavaPlugin {
     CommandBestTools commandBestTools;
     CommandRefill commandRefill;
     CommandBlacklist commandBlacklist;
-    GUIHandler guiHandler;
     ModrinthUpdateChecker updateChecker;
 
     boolean measurePerformance=false;
@@ -149,7 +148,6 @@ public class Main extends JavaPlugin {
         refillUtils = new RefillUtils((this));
         fileUtils = new FileUtils(this);
         playerSettings = new HashMap<>();
-        guiHandler = new GUIHandler(this);
 
         meter = new PerformanceMeter(this);
 
@@ -157,7 +155,6 @@ public class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(bestToolsListener,this);
         getServer().getPluginManager().registerEvents(playerListener, this);
         getServer().getPluginManager().registerEvents(bestToolsCacheListener,this);
-        getServer().getPluginManager().registerEvents(guiHandler,this);
 
         if(configManager.main().getDump()) {
             try {

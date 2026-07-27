@@ -124,9 +124,6 @@ using direct, compile-time references — no more per-version compatibility scaf
 - **`RefillListener`/`RefillUtils`** implement the separate `/bestesttool refill` feature (aliases
   `/refill`, `/rf`; auto-refilling hotbar stacks from the rest of the inventory) — largely independent
   of the tool-switching logic above.
-- **`GUIHandler`/`GUIHolder`** implement an inventory-based settings GUI. Item names/lore route through
-  `MessageUtil.legacy(player, key)` (renders a lang key down to a single legacy string, embedded `\n`
-  preserved) since the GUI predates Adventure Components and already splits lore on `\n` itself.
 - **`config.ConfigManager`** owns the plugin's config files and provides a single load/reload lifecycle,
   mirroring ClickSorted's `ConfigManager`:
   - **`config.MainConfig`** wraps `config.yml` via vanilla `JavaPlugin.getConfig()` +

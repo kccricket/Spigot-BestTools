@@ -28,12 +28,13 @@ class MainConfigTest extends BestToolsTestBase {
         File configFile = new File(plugin.getDataFolder(), "config.yml");
         assertTrue(configFile.exists(), "config.yml must exist on disk after the first load");
 
-        // Simulate an old on-disk file predating the "puns" key: remove it (and any trailing
-        // blank/comment lines) and reload, as if a user manually edited an old version.
+        // Simulate an old on-disk file predating the "measure_performance" key (the bundled
+        // default's last key): remove it (and any trailing blank/comment lines) and reload, as if
+        // a user manually edited an old version.
         String content = Files.readString(configFile.toPath());
-        int punsCommentIdx = content.indexOf("# Do you like bad puns?");
-        assertTrue(punsCommentIdx >= 0, "test fixture assumption: puns' comment must be present pre-edit");
-        String edited = content.substring(0, punsCommentIdx);
+        int commentIdx = content.indexOf("# You can enable performance test using /bt performance");
+        assertTrue(commentIdx >= 0, "test fixture assumption: measure_performance's comment must be present pre-edit");
+        String edited = content.substring(0, commentIdx);
         Files.writeString(configFile.toPath(), edited);
 
         plugin.configManager.reloadAll();
@@ -41,11 +42,12 @@ class MainConfigTest extends BestToolsTestBase {
         String reloadedContent = Files.readString(configFile.toPath());
         YamlConfiguration reloaded = YamlConfiguration.loadConfiguration(configFile);
 
-        assertEquals(false, reloaded.getBoolean("puns"),
+        assertEquals(false, reloaded.getBoolean("measure_performance"),
                 "Missing key's value must be restored from the bundled default on reload");
-        assertEquals(Arrays.asList(null, "Do you like bad puns?"), reloaded.getComments("puns"),
+        assertEquals(Arrays.asList(null, "You can enable performance test using /bt performance (permission: bestesttool.debug)"),
+                reloaded.getComments("measure_performance"),
                 "Missing key's comment from the bundled default must be carried over on reload");
-        assertTrue(reloadedContent.contains("# Do you like bad puns?"),
+        assertTrue(reloadedContent.contains("# You can enable performance test using /bt performance"),
                 "The comment must actually appear in the saved file text, not just be recoverable via the API");
     }
 
@@ -54,13 +56,14 @@ class MainConfigTest extends BestToolsTestBase {
         File configFile = new File(plugin.getDataFolder(), "config.yml");
 
         String edited = Files.readString(configFile.toPath())
-                .replace("# Do you like bad puns?", "# my own custom comment");
+                .replace("# You can enable performance test using /bt performance (permission: bestesttool.debug)",
+                        "# my own custom comment");
         Files.writeString(configFile.toPath(), edited);
 
         plugin.configManager.reloadAll();
 
         YamlConfiguration reloaded = YamlConfiguration.loadConfiguration(configFile);
-        assertEquals(Arrays.asList(null, "my own custom comment"), reloaded.getComments("puns"),
+        assertEquals(Arrays.asList(null, "my own custom comment"), reloaded.getComments("measure_performance"),
                 "A user's own comment on an existing key must survive reload unchanged");
     }
 

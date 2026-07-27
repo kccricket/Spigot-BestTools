@@ -188,10 +188,6 @@ public class MainConfig implements ManagedConfig {
         return plugin.getConfig().getBoolean("measure_performance", false);
     }
 
-    public boolean getPuns() {
-        return plugin.getConfig().getBoolean("puns", false);
-    }
-
     /**
      * The fallback locale ({@code default_locale}) used for console output and for any player
      * locale with no matching lang file. Parsed and cached on load/reload.

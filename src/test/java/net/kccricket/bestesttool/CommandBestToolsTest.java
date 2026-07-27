@@ -91,13 +91,14 @@ class CommandBestToolsTest extends BestToolsTestBase {
     }
 
     @Test
-    void settingsOpensGuiHolder() {
+    void favoriteslotReportsAndSetsExplicitValue() {
         PlayerMock player = opPlayer();
 
-        player.performCommand("bestesttool settings");
-        server.getScheduler().performOneTick();
+        player.performCommand("bestesttool favoriteslot 3");
+        assertEquals(3, plugin.getPlayerSetting(player).getFavoriteSlot());
 
-        assertTrue(player.getOpenInventory().getTopInventory().getHolder() instanceof GUIHolder);
+        player.performCommand("bestesttool favoriteslot -1");
+        assertEquals(player.getInventory().getHeldItemSlot(), plugin.getPlayerSetting(player).getFavoriteSlot());
     }
 
     @Test

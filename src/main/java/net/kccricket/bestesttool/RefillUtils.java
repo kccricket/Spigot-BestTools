@@ -29,7 +29,9 @@ public class RefillUtils {
 
     boolean moveBowlsAndBottles(Inventory inv, int slot) {
         if(!isBowlOrBottle(inv.getItem(slot).getType())) return false;
-        ItemStack toBeMoved = inv.getItem(slot);
+        // Clone: getItem() can return a live mirror of the backing stack, so the clear() below
+        // (and the one in the fallback loop) must not be able to zero out toBeMoved itself.
+        ItemStack toBeMoved = inv.getItem(slot).clone();
         inv.clear(slot);
         HashMap<Integer, ItemStack> leftovers = inv.addItem(toBeMoved);
         if(inv.getItem(slot)==null || inv.getItem(slot).getAmount()==0 || inv.getItem(slot).getType() == Material.AIR) {
@@ -47,8 +49,12 @@ public class RefillUtils {
             }
             return false;
         }
-        for(int i = 35;i>=0;i--) {
-            inv.clear(slot);
+        // slot was already cleared above. The old version of this loop re-cleared it on every
+        // iteration too, which made i == slot (reachable whenever slot is a main-inventory/hotbar
+        // index, i.e. every case but the offhand) "find" the destination's own just-cleared slot
+        // and put the bowl right back into it — skip it outright instead.
+        for(int i = inventorySize - 1; i >= 0; i--) {
+            if(i == slot) continue;
             if(inv.getItem(i)==null || inv.getItem(i).getAmount()==0 || inv.getItem(i).getType()==Material.AIR) {
                 inv.setItem(i,toBeMoved);
                 return true;

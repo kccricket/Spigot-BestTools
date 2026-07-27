@@ -1,6 +1,7 @@
 package net.kccricket.bestesttool;
 
 import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -75,8 +76,7 @@ public final class BestToolsCommands {
                     return Command.SINGLE_SUCCESS;
                 })
                 .then(buildToggleHotbarOnly(main))
-                .then(buildOpenGui(main, "gui"))
-                .then(buildOpenGui(main, "settings"))
+                .then(buildFavoriteSlot(main))
                 .then(buildRefill(main))
                 .then(buildReload(main))
                 .then(buildDebug(main))
@@ -122,19 +122,38 @@ public final class BestToolsCommands {
     }
 
     // -------------------------------------------------------------------------
-    // /bestesttool gui | settings
+    // /bestesttool favoriteslot
     // -------------------------------------------------------------------------
 
-    private static LiteralArgumentBuilder<CommandSourceStack> buildOpenGui(Main main, String literal) {
-        return Commands.literal(literal)
+    /**
+     * Reports (bare) or sets (with a {@code <slot>} argument) the hotbar slot BestTools should
+     * place a tool in when it has to make room. {@code -1} carries the same "use whatever slot
+     * I'm currently holding" meaning as {@code defaults.favorite_slot: -1} in {@code config.yml}
+     * (see {@link net.kccricket.bestesttool.config.MainConfig#getDefaultFavoriteSlot}) — reusing
+     * that sentinel keeps the per-player and server-wide settings semantically identical, so no
+     * separate "unset" state is needed. The {@code -1..8} range is enforced client-side by
+     * {@link IntegerArgumentType}, unlike the string-based {@link #boolStateArg}.
+     */
+    private static LiteralArgumentBuilder<CommandSourceStack> buildFavoriteSlot(Main main) {
+        return Commands.literal("favoriteslot")
                 .executes(ctx -> {
                     Player player = requirePlayer(ctx);
                     if (player == null || !checkPermission(main, player, Permissions.PERM_USE)) {
                         return Command.SINGLE_SUCCESS;
                     }
-                    main.commandBestTools.openGui(player);
+                    main.commandBestTools.reportFavoriteSlot(player);
                     return Command.SINGLE_SUCCESS;
-                });
+                })
+                .then(Commands.argument("slot", IntegerArgumentType.integer(-1, 8))
+                        .executes(ctx -> {
+                            Player player = requirePlayer(ctx);
+                            if (player == null || !checkPermission(main, player, Permissions.PERM_USE)) {
+                                return Command.SINGLE_SUCCESS;
+                            }
+                            int slot = IntegerArgumentType.getInteger(ctx, "slot");
+                            main.commandBestTools.setFavoriteSlot(player, slot);
+                            return Command.SINGLE_SUCCESS;
+                        }));
     }
 
     // -------------------------------------------------------------------------
