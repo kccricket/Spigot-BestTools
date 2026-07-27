@@ -42,12 +42,10 @@
 
 # When using PlaceholderAPI, you can use the following placeholders:
 
-# %besttools_btenabled%    - true if this player has BestTools enabled, otherwise false
-# %besttools_rfenabled%    - true if this player has Refill enabled, otherwise false
-# %besttools_hotbaronly%   - true if this player has set BestTools to hotbar-only
-# %besttools_favoriteslot% - the slot number this player chose as favorite slot
-#
-# (Placeholder prefix stays "besttools" — unrelated to the /bestesttool command name.)
+# %bestesttool_btenabled%    - true if this player has BestTools enabled, otherwise false
+# %bestesttool_rfenabled%    - true if this player has Refill enabled, otherwise false
+# %bestesttool_hotbaronly%   - true if this player has set BestTools to hotbar-only
+# %bestesttool_favoriteslot% - the slot number this player chose as favorite slot
 
 
 # ----- Default settings -----

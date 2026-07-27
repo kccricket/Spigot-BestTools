@@ -74,8 +74,11 @@ class CommandRefillTest extends BestToolsTestBase {
     }
 
     /**
-     * The {@code /refill} alias is a bare leaf node with no subcommands of its own — unlike
-     * {@code /bestesttool hotbaronly}, {@code /refill hotbar} must not resolve to anything.
+     * The {@code /refill} alias has no {@code hotbar} subcommand of its own — unlike
+     * {@code /bestesttool hotbaronly}. {@code hotbar} still parses, though: it's consumed by the
+     * alias's own {@code [<state>]} child (see {@link BestToolsCommands#buildRefillAlias}) as an
+     * unrecognized state word, so it's rejected with the {@code invalidValue} message rather than
+     * failing to resolve at all.
      */
     @Test
     void refillHotbarIsNotAValidSubcommand() {
@@ -86,6 +89,25 @@ class CommandRefillTest extends BestToolsTestBase {
         assertDoesNotThrow(() -> player.performCommand("refill hotbar"));
 
         assertEquals(before, plugin.getPlayerSetting(player).isHotbarOnly());
+        assertTrue(player.nextMessage().contains("Invalid value"));
+    }
+
+    /**
+     * {@code /refill} and {@code /rf} are root aliases (see
+     * {@link BestToolsCommands#buildRefillAlias}) that must accept the same {@code [<state>]}
+     * argument as the canonical {@code /bestesttool refill} — regression coverage for the alias
+     * previously being built as a bare leaf node with no argument child at all.
+     */
+    @Test
+    void refillStateArgumentOnBothRootAliases() {
+        PlayerMock player = newPlayer();
+        player.setOp(true);
+
+        player.performCommand("refill no");
+        assertFalse(plugin.getPlayerSetting(player).isRefillEnabled());
+
+        player.performCommand("rf yes");
+        assertTrue(plugin.getPlayerSetting(player).isRefillEnabled());
     }
 
     /**

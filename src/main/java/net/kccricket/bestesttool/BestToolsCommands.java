@@ -91,15 +91,18 @@ public final class BestToolsCommands {
      * {@link Command}. Deliberately does <em>not</em> {@code .redirect(...)} at the canonical
      * node: a node that is both executable and a redirect is a valid Brigadier tree to build, but
      * the vanilla client rejects it when synced, disconnecting with "Server sent an impossible
-     * command tree". {@code refill} has no subcommands to redirect into anyway, so a plain
-     * {@code .executes(...)} of the same {@link Command} instance is sufficient — {@code /refill}
-     * and {@code /rf} behave identically to {@code /bestesttool refill} with no shared tree node.
+     * command tree". A plain {@code .executes(...)} of the same {@link Command} instance is
+     * sufficient — {@code /refill} and {@code /rf} behave identically to
+     * {@code /bestesttool refill}, each with its own copy of the {@code [<state>]} child
+     * ({@link #refillStateArg}) rather than sharing the canonical node's {@code CommandNode}
+     * instance, since a single node can't be attached under two different roots.
      */
     public static LiteralCommandNode<CommandSourceStack> buildRefillAlias(
             Main main, LiteralCommandNode<CommandSourceStack> bestToolsRoot) {
         var canonicalRefill = bestToolsRoot.getChild("refill");
         return Commands.literal("refill")
                 .executes(canonicalRefill.getCommand())
+                .then(refillStateArg(main))
                 .build();
     }
 
@@ -170,8 +173,17 @@ public final class BestToolsCommands {
                     main.commandRefill.toggleRefill(player);
                     return Command.SINGLE_SUCCESS;
                 })
-                .then(boolStateArg(main, Permissions.PERM_REFILL,
-                        (player, state) -> main.commandRefill.setRefill(player, state)));
+                .then(refillStateArg(main));
+    }
+
+    /**
+     * The shared {@code [<state>]} child for {@code /bestesttool refill} and its {@code /refill},
+     * {@code /rf} root aliases (see {@link #buildRefillAlias}) — built fresh per call site since a
+     * single {@code CommandNode} instance can't be attached under two different roots.
+     */
+    private static RequiredArgumentBuilder<CommandSourceStack, String> refillStateArg(Main main) {
+        return boolStateArg(main, Permissions.PERM_REFILL,
+                (player, state) -> main.commandRefill.setRefill(player, state));
     }
 
     // -------------------------------------------------------------------------

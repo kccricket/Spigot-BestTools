@@ -81,8 +81,8 @@ out of the box. `bestesttool.reload` and `bestesttool.debug` default to server o
 - User-facing text lives in `plugins/BestestTool/lang/<locale>.yml` (MiniMessage format) as sparse
   overrides — only `en_us` is bundled, and anything you don't override keeps resolving to the
   plugin's built-in default, so a future wording improvement reaches you automatically.
-- PlaceholderAPI (optional, soft-depend): `%besttools_btenabled%`, `%besttools_rfenabled%`,
-  `%besttools_hotbaronly%`, `%besttools_favoriteslot%`.
+- PlaceholderAPI (optional, soft-depend): `%bestesttool_btenabled%`, `%bestesttool_rfenabled%`,
+  `%bestesttool_hotbaronly%`, `%bestesttool_favoriteslot%`.
 
 ## Requirements
 

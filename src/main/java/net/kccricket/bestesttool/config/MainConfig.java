@@ -8,6 +8,8 @@ import net.kccricket.kcmclib.logging.Log;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Wraps {@code config.yml} via Bukkit's built-in {@code JavaPlugin} config machinery, mirroring
@@ -37,6 +39,7 @@ public class MainConfig implements ManagedConfig {
     @Override
     public void load() {
         applyDefaults();
+        warnUnknownKeys();
         normalizeValues();
         plugin.saveConfig();
         applyToRuntime();
@@ -67,6 +70,21 @@ public class MainConfig implements ManagedConfig {
         plugin.reloadConfig();
         plugin.getConfig().options().copyDefaults(true);
         ResourceUpdater.copyMissingKeyComments(plugin.getConfig(), plugin.getConfig().getDefaults());
+    }
+
+    /**
+     * Warns (once, in a single line) about any on-disk {@code config.yml} key not present in the
+     * bundled default — e.g. a leftover key from an old config scheme, or a plain typo. Neither
+     * {@code copyDefaults(true)} nor {@code copyMissingKeyComments} ever removes or flags an
+     * unrecognized key, so without this an admin gets no signal that a key they set is being
+     * silently ignored.
+     */
+    private void warnUnknownKeys() {
+        Set<String> onDisk = new TreeSet<>(plugin.getConfig().getKeys(true));
+        onDisk.removeAll(plugin.getConfig().getDefaults().getKeys(true));
+        if (!onDisk.isEmpty()) {
+            Log.warning("Unknown key(s) in config.yml — these are ignored: " + String.join(", ", onDisk));
+        }
     }
 
     /**

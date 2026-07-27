@@ -9,9 +9,14 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -125,5 +130,54 @@ class MainConfigTest extends BestToolsTestBase {
         assertTrue(onDisk.isString("debug_level"),
                 "debug_level must be normalized to a real string on disk, not left as the YAML-1.1-parsed boolean false");
         assertEquals("OFF", onDisk.getString("debug_level"));
+    }
+
+    /**
+     * Regression test: an on-disk key not present in the bundled default (a leftover from an old
+     * config scheme, or a plain typo) used to be silently ignored — {@code copyDefaults(true)}
+     * never removes or flags it. {@code MainConfig#warnUnknownKeys} now names it in a console
+     * warning on every load/reload.
+     */
+    @Test
+    void reloadWarnsAboutAnUnrecognizedKey() throws IOException {
+        File configFile = new File(plugin.getDataFolder(), "config.yml");
+        String edited = Files.readString(configFile.toPath()) + "\nmessage-blacklist-add: some stale text\n";
+        Files.writeString(configFile.toPath(), edited);
+
+        List<String> warnings = captureWarnings(() -> plugin.configManager.reloadAll());
+
+        assertTrue(warnings.stream().anyMatch(w -> w.contains("message-blacklist-add")),
+                "An unrecognized key must be named in a warning");
+    }
+
+    @Test
+    void reloadDoesNotWarnWhenConfigHasNoUnrecognizedKeys() {
+        List<String> warnings = captureWarnings(() -> plugin.configManager.reloadAll());
+
+        assertTrue(warnings.isEmpty(), "A clean config.yml must not produce an unknown-key warning: " + warnings);
+    }
+
+    /** Runs {@code action}, returning every message logged at WARNING or above by the plugin logger. */
+    private List<String> captureWarnings(Runnable action) {
+        List<String> messages = new ArrayList<>();
+        Handler handler = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                messages.add(record.getMessage());
+            }
+
+            @Override
+            public void flush() {}
+
+            @Override
+            public void close() {}
+        };
+        plugin.getLogger().addHandler(handler);
+        try {
+            action.run();
+        } finally {
+            plugin.getLogger().removeHandler(handler);
+        }
+        return messages;
     }
 }
