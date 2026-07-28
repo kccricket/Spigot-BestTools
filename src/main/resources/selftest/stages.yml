@@ -1,0 +1,89 @@
+# BestestTool self-test stages (see /bestesttool selftest).
+#
+# Each stage hands the tester a fresh hotbar kit and a line of labelled blocks (or, for a "combat"
+# stage, docile mobs). Cases run in order; the tester interacts with each subject once and the
+# plugin's actual choice is compared against "expect".
+#
+# This bundled file can be overridden wholesale by plugins/BestestTool/selftest.yml — that file, if
+# present, replaces this one entirely rather than being merged with it.
+#
+# kit: a list of hotbar items. Each entry needs "slot" (0-8) and "material"; "amount" defaults to 1
+#      and "enchantments" (registry keys -> level, e.g. silk_touch: 1) defaults to none. A slot with
+#      no entry stays empty on purpose, so the bare-hand fallback has a real empty slot to use.
+#
+# expect (blocks/combat cases): a Material name, a list of Material names (any one is a pass),
+#      "BARE_HAND" (an empty hand or a non-damageable item), or "UNCHANGED" (the plugin must not
+#      switch away from whatever was already held).
+# silk: true (blocks cases only) marks a case whose expected tool must additionally carry Silk Touch.
+
+pedestal: SMOOTH_STONE
+
+stages:
+  - name: core-mining
+    kind: blocks
+    kit:
+      - { slot: 0, material: NETHERITE_PICKAXE }
+      - { slot: 1, material: DIAMOND_AXE }
+      - { slot: 2, material: IRON_SHOVEL }
+      - { slot: 3, material: DIAMOND_HOE }
+      - { slot: 4, material: SHEARS }
+      - { slot: 5, material: DIAMOND_SWORD }
+      - slot: 6
+        material: DIAMOND_PICKAXE
+        enchantments: { silk_touch: 1 }
+      - { slot: 7, material: DIRT }
+      # slot 8 intentionally left empty
+    cases:
+      - { block: STONE, expect: NETHERITE_PICKAXE }
+      - { block: OBSIDIAN, expect: NETHERITE_PICKAXE }
+      - { block: OAK_LOG, expect: DIAMOND_AXE }
+      - { block: DIRT, expect: IRON_SHOVEL }
+      - { block: OAK_LEAVES, expect: [SHEARS, DIAMOND_HOE] }
+      - { block: GLASS, expect: DIAMOND_PICKAXE, silk: true }
+      - { block: TORCH, expect: UNCHANGED }
+      - { block: BEDROCK, expect: UNCHANGED }
+      # Crops are insta-breakable by hand (see BestToolsUtils.instaBreakableByHand), so the plugin
+      # deliberately keeps whatever's already held rather than churning the hotbar for no benefit —
+      # same treatment as TORCH above, not a bare-hand switch.
+      - { block: WHEAT, expect: UNCHANGED }
+      # Cake has no preferred tool at all (not in any mineable/* tag, unlike sponge/moss which are
+      # mineable by hoe) and isn't Silk Touch-sensitive, so nothing beats a bare hand.
+      - { block: CAKE, expect: BARE_HAND }
+
+  - name: fallbacks
+    kind: blocks
+    kit:
+      - { slot: 0, material: DIAMOND_SHOVEL }
+      - { slot: 1, material: SHEARS }
+      - { slot: 2, material: DIAMOND_HOE }
+      - { slot: 3, material: DIAMOND_SWORD }
+      - slot: 4
+        material: DIAMOND_PICKAXE
+        enchantments: { silk_touch: 1 }
+      - { slot: 5, material: DIRT }
+      # slots 6-8 intentionally left empty
+    cases:
+      - { block: SEA_LANTERN, expect: DIAMOND_PICKAXE, silk: true }
+      - { block: COBWEB, expect: SHEARS }
+      - { block: SAND, expect: DIAMOND_SHOVEL }
+      - { block: DECORATED_POT, expect: UNCHANGED }
+      - { block: REINFORCED_DEEPSLATE, expect: UNCHANGED }
+
+  - name: combat
+    kind: combat
+    kit:
+      - { slot: 0, material: DIAMOND_SWORD }
+      - { slot: 1, material: DIAMOND_AXE }
+      # slots 2-8 intentionally left empty
+    cases:
+      - { entity: ZOMBIE, expect: DIAMOND_SWORD }
+      - { entity: SPIDER, expect: DIAMOND_SWORD }
+
+  - name: refill
+    kind: refill
+    kit:
+      - { slot: 0, material: DIRT, amount: 1 }
+      - { slot: 1, material: DIRT, amount: 64 }
+      # slots 2-8 intentionally left empty
+    cases:
+      - { block: DIRT, expect: DIRT }

@@ -53,7 +53,13 @@ public class Main extends JavaPlugin {
     CommandBestTools commandBestTools;
     CommandRefill commandRefill;
     CommandBlacklist commandBlacklist;
+    CommandSelfTest commandSelfTest;
     ModrinthUpdateChecker updateChecker;
+
+    // Unlike the fields above, constructed exactly once in onEnable rather than on every
+    // load()/reload — an in-progress /bestesttool selftest run must survive a reload, not be
+    // silently dropped by it.
+    SelfTestManager selfTestManager;
 
     boolean measurePerformance=false;
     PerformanceMeter meter;
@@ -68,6 +74,10 @@ public class Main extends JavaPlugin {
     public void onEnable() {
         Log.init(this);
 
+        // Constructed before load() so load()'s (re)registration of selfTestManager.listener() can
+        // rely on it unconditionally, on both the initial enable and every later reload.
+        selfTestManager = new SelfTestManager(this);
+
         load(false);
         registerMetrics();
 
@@ -76,6 +86,19 @@ public class Main extends JavaPlugin {
         }
 
         registerCommands();
+    }
+
+    /**
+     * Restores every in-progress {@code /bestesttool selftest} run (if any) before the server goes
+     * down, so a tester doesn't lose their real inventory to an interrupted test. There is no
+     * matching {@code onEnable} counterpart for this beyond what {@link SelfTestSession}'s own
+     * on-disk backup file (restored on the tester's next {@code PlayerJoinEvent}) already covers.
+     */
+    @Override
+    public void onDisable() {
+        if (selfTestManager != null) {
+            selfTestManager.abortAll("disable");
+        }
     }
 
     /**
@@ -114,6 +137,9 @@ public class Main extends JavaPlugin {
 
         if(reload) {
             updateChecker.stop();
+            // Put any in-progress self-test's tester back the way they were before the listener
+            // that was watching them gets torn down below.
+            selfTestManager.abortAll("reload");
             HandlerList.unregisterAll(this);
             configManager.reloadAll();
         } else {
@@ -144,6 +170,7 @@ public class Main extends JavaPlugin {
         commandBestTools = new CommandBestTools(this);
         commandRefill = new CommandRefill(this);
         commandBlacklist = new CommandBlacklist(this);
+        commandSelfTest = new CommandSelfTest(this);
         refillUtils = new RefillUtils((this));
         fileUtils = new FileUtils(this);
 
@@ -153,6 +180,8 @@ public class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(bestToolsListener,this);
         getServer().getPluginManager().registerEvents(playerListener, this);
         getServer().getPluginManager().registerEvents(bestToolsCacheListener,this);
+        selfTestManager.reloadSpec();
+        getServer().getPluginManager().registerEvents(selfTestManager.listener(), this);
 
         if(configManager.main().getDump()) {
             try {

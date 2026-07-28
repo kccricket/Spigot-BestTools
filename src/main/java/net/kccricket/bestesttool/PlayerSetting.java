@@ -82,6 +82,16 @@ public class PlayerSetting {
                 return player.getInventory().getHeldItemSlot();
         }
 
+        /**
+         * The raw stored value, unlike {@link #getFavoriteSlot()} — {@code -1} stays {@code -1}
+         * here instead of resolving to the current held slot. Used by the self-test
+         * (see {@link SelfTestSession}) to snapshot/restore the tester's actual preference rather
+         * than whatever slot they happened to be holding when the test started.
+         */
+        int getRawFavoriteSlot() {
+                return favoriteSlot;
+        }
+
         /** Reads a BYTE-encoded (1/0) boolean leaf, falling back to {@code def} if absent. */
         private static boolean getBoolean(PersistentDataContainer pdc, NamespacedKey key, boolean def) {
                 return pdc.getOrDefault(key, PersistentDataType.BYTE, (byte) (def ? 1 : 0)) != 0;
@@ -150,6 +160,13 @@ public class PlayerSetting {
                 hotbarOnly = enabled;
                 save();
                 return hotbarOnly;
+        }
+
+        /** Package-private setter used by {@link SelfTestSession} to force/restore this preference around a test run. */
+        boolean setSwordOnMobs(boolean enabled) {
+                swordOnMobs = enabled;
+                save();
+                return swordOnMobs;
         }
 
         void setHasSeenBestToolsMessage(boolean seen) {

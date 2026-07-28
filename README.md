@@ -58,20 +58,56 @@ explicitly instead of flipping it; the bare form (no argument) still toggles. Th
 | `/bestesttool blacklist add hotbar` | Blacklist every block type currently in your hotbar | `bestesttool.use` |
 | `/bestesttool blacklist remove [<blocks...>]` / `remove inventory` / `remove hotbar` | Same shapes as `add`, but removes | `bestesttool.use` |
 | `/bestesttool blacklist reset` | Clear your blacklist | `bestesttool.use` |
+| `/bestesttool selftest start [<stage>]` | Start (or jump to a named stage of) the live in-game self-test | `bestesttool.selftest` |
+| `/bestesttool selftest next` | Skip to the next self-test stage | `bestesttool.selftest` |
+| `/bestesttool selftest status` | Show the current self-test stage and how many cases remain | `bestesttool.selftest` |
+| `/bestesttool selftest stop` | Abort the self-test and restore everything | `bestesttool.selftest` |
+
+`selftest` is additionally hidden entirely (not just permission-gated) unless `enable_selftest: true`
+is set in `config.yml` — see [Self-test](#self-test) below.
 
 ## Permissions
 
 `bestesttool.use` and `bestesttool.refill` default to `true` — the plugin works for every player
-out of the box. `bestesttool.reload` and `bestesttool.debug` default to server operators only.
+out of the box. `bestesttool.reload`, `bestesttool.debug`, and `bestesttool.selftest` default to
+server operators only.
 
 | Node | Default | Grants |
 | --- | --- | --- |
 | `bestesttool` | `true` | Umbrella node for `use` and `refill` (does not cascade to admin nodes) |
 | `bestesttool.use` | `true` | Automatic best-tool switching itself, plus `/bestesttool` and its `hotbaronly`/`favoriteslot`/`blacklist` subcommands |
 | `bestesttool.refill` | `true` | Automatic hotbar refilling itself, plus `/bestesttool refill` (`/refill`, `/rf`) |
-| `bestesttool.admin` | `op` | Umbrella node for `reload` and `debug` |
+| `bestesttool.admin` | `op` | Umbrella node for `reload`, `debug`, and `selftest` |
 | `bestesttool.reload` | `op` | `/bestesttool reload` |
 | `bestesttool.debug` | `op` | `/bestesttool debug` and `/bestesttool performance` |
+| `bestesttool.selftest` | `op` | `/bestesttool selftest` (also needs `enable_selftest: true` in `config.yml`) |
+
+## Self-test
+
+`/bestesttool selftest` runs a live, in-game correctness test against the real server — the plugin's
+own automated tests can't drive this part, since MockBukkit doesn't implement the live per-item
+mining data (`BlockData.getDestroySpeed`/`isPreferredTool`) tool selection actually reads. The
+self-test builds a small labelled arena of blocks (and, for the combat/refill stages, docile mobs)
+next to you, hands you a known hotbar kit, and reports pass/fail in chat as you interact with each
+one in turn.
+
+It's off by default and gated behind two things at once:
+
+1. `enable_selftest: true` in `config.yml` (default `false`) — the command doesn't exist at all
+   otherwise, not even for an op.
+2. The `bestesttool.selftest` permission (default `op`).
+
+Running it forces you into survival mode for the duration (the plugin does nothing in creative —
+see [Requirements](#requirements) below for why) and replaces your hotbar with each stage's kit;
+your original inventory, game mode, and BestestTool settings (hotbar-only, favorite slot, sword-on-
+mobs, refill, blacklist) are all restored the moment the test ends, whether it finishes normally,
+is stopped early, or the server reloads/restarts mid-test. A crash-safety backup is also written to
+disk for the duration and restored automatically the next time you join if the server goes down
+before it gets to restore things itself.
+
+The block/mob/expectation list lives in the bundled `selftest/stages.yml`; drop a
+`plugins/BestestTool/selftest.yml` alongside your other config to replace it wholesale with your
+own stages.
 
 ## Configuration and localization
 

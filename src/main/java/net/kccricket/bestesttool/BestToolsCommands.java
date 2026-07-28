@@ -82,6 +82,7 @@ public final class BestToolsCommands {
                 .then(buildDebug(main))
                 .then(buildPerformance(main))
                 .then(buildBlacklist(main))
+                .then(buildSelfTest(main))
                 .build();
     }
 
@@ -235,6 +236,48 @@ public final class BestToolsCommands {
                     CommandDebug.debug(sender, main, arg, state);
                     return Command.SINGLE_SUCCESS;
                 });
+    }
+
+    // -------------------------------------------------------------------------
+    // /bestesttool selftest — needs both the enable_selftest config flag and the permission node,
+    // gated with .requires(...) like reload/debug/performance so it's hidden from tab completion
+    // (and unparseable) rather than answered with a noPermission message.
+    // -------------------------------------------------------------------------
+
+    private static LiteralArgumentBuilder<CommandSourceStack> buildSelfTest(Main main) {
+        return Commands.literal("selftest")
+                .requires(src -> main.getConfigManager().main().getEnableSelfTest()
+                        && Permissions.isAllowedTo(src.getSender(), Permissions.PERM_SELFTEST))
+                .then(Commands.literal("start")
+                        .executes(ctx -> runSelfTestStart(main, ctx, null))
+                        .then(Commands.argument("stage", StringArgumentType.word())
+                                .suggests((ctx, b) -> suggestToken(b, main.selfTestManager.stageNames()))
+                                .executes(ctx -> runSelfTestStart(main, ctx, StringArgumentType.getString(ctx, "stage")))))
+                .then(Commands.literal("next").executes(ctx -> {
+                    Player player = requirePlayer(ctx);
+                    if (player == null) return Command.SINGLE_SUCCESS;
+                    main.commandSelfTest.next(player);
+                    return Command.SINGLE_SUCCESS;
+                }))
+                .then(Commands.literal("status").executes(ctx -> {
+                    Player player = requirePlayer(ctx);
+                    if (player == null) return Command.SINGLE_SUCCESS;
+                    main.commandSelfTest.status(player);
+                    return Command.SINGLE_SUCCESS;
+                }))
+                .then(Commands.literal("stop").executes(ctx -> {
+                    Player player = requirePlayer(ctx);
+                    if (player == null) return Command.SINGLE_SUCCESS;
+                    main.commandSelfTest.stop(player);
+                    return Command.SINGLE_SUCCESS;
+                }));
+    }
+
+    private static int runSelfTestStart(Main main, CommandContext<CommandSourceStack> ctx, @Nullable String stageName) {
+        Player player = requirePlayer(ctx);
+        if (player == null) return Command.SINGLE_SUCCESS;
+        main.commandSelfTest.start(player, stageName);
+        return Command.SINGLE_SUCCESS;
     }
 
     // -------------------------------------------------------------------------

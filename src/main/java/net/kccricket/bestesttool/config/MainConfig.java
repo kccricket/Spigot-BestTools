@@ -207,6 +207,15 @@ public class MainConfig implements ManagedConfig {
     }
 
     /**
+     * Master switch for {@code /bestesttool selftest} — off by default even for an op, since the
+     * self-test forces the tester into survival, wipes their held/inventory state, and rebuilds
+     * terrain around them. An admin has to opt in on top of holding {@code bestesttool.selftest}.
+     */
+    public boolean getEnableSelfTest() {
+        return plugin.getConfig().getBoolean("enable_selftest", false);
+    }
+
+    /**
      * The fallback locale ({@code default_locale}) used for console output and for any player
      * locale with no matching lang file. Parsed and cached on load/reload.
      */

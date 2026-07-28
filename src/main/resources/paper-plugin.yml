@@ -33,9 +33,13 @@ permissions:
     children:
       bestesttool.reload: true
       bestesttool.debug: true
+      bestesttool.selftest: true
   bestesttool.reload:
     description: Reload the config via /bestesttool reload
     default: op
   bestesttool.debug:
     description: Toggle debug mode (/bestesttool debug) and the performance meter (/bestesttool performance)
+    default: op
+  bestesttool.selftest:
+    description: Run the in-game self-test via /bestesttool selftest (also requires enable_selftest in config.yml)
     default: op

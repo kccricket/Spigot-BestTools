@@ -66,3 +66,29 @@ debugEnabled: "<red><plugin> debug mode has been enabled.</red>"
 debugDisabled: "<green><plugin> debug mode has been disabled.</green>"
 performanceEnabled: "<red><plugin> performance test has been enabled.</red>"
 performanceDisabled: "<green><plugin> performance test has been disabled.</green>"
+
+# /bestesttool selftest
+# Note: there's no "disabled"/"noPermission" message for selftest itself — like reload/debug, it's
+# gated with .requires(...) in BestToolsCommands so the subcommand is hidden entirely (and fails to
+# parse) rather than answered with a chat message, for anyone lacking enable_selftest/the permission.
+selfTestNoStagesConfigured: "<red>No self-test stages are configured (selftest/stages.yml is empty or failed to load).</red>"
+selfTestBackupRestored: "<yellow>Your inventory from an interrupted self-test run has been restored.</yellow>"
+selfTestAlreadyRunning: "<yellow>You already have a self-test running. Use <gold>/bestesttool selftest stop</gold> to end it.</yellow>"
+selfTestNoneRunning: "<gray>You don't have a self-test running.</gray>"
+# Placeholder: <n>
+selfTestNeedsSpace: "<red>Not enough clear space ahead of you to build the test arena (need <n> blocks in a line). Move somewhere more open and try again.</red>"
+# Placeholders: <stage>, <total>
+selfTestStarted: "<green>Self-test started</green> <gray>(stage <gold><stage></gold>, <total> case(s)). Break the marked blocks in order. Your inventory and game mode will be restored when you're done.</gray>"
+# Placeholder: <stage>
+selfTestUnknownStage: "<red>Unknown stage '<stage>'.</red>"
+# Placeholders: <block>, <expected>
+selfTestCasePass: "<green>✔ <block></green> <gray>— correct (<expected>).</gray>"
+# Placeholders: <block>, <expected>, <actual>
+selfTestCaseFail: "<red>✘ <block></red> <gray>— expected <expected>, but you're holding <actual>.</gray>"
+# Placeholders: <stage>, <passed>, <total>
+selfTestStageComplete: "<gray>Stage <gold><stage></gold> complete: <passed>/<total> passed.</gray>"
+# Placeholders: <passed>, <total>
+selfTestFinished: "<green>Self-test finished:</green> <gray><passed>/<total> case(s) passed. Everything has been restored.</gray>"
+selfTestStopped: "<gray>Self-test stopped. Everything has been restored.</gray>"
+# Placeholders: <stage>, <remaining>
+selfTestStatus: "<gray>Stage <gold><stage></gold>: <remaining> case(s) remaining.</gray>"

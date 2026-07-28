@@ -13,6 +13,8 @@
 # /bestesttool reload:            Reloads the config file
 # /bestesttool debug [<state>]:   Toggle (or set) debug mode
 # /bestesttool performance [<state>]: Toggle (or set) the performance meter
+# /bestesttool selftest start|next|status|stop: Run the live in-game self-test (needs
+#                                  enable_selftest below, plus the bestesttool.selftest permission)
 #
 # Boolean toggles above accept an optional state argument: yes/no, true/false, on/off, enable/disable
 
@@ -36,6 +38,8 @@
 # bestesttool.reload:   (default: op)    Allows using /bestesttool reload
 # bestesttool.debug:    (default: op)    Allows enabling debug mode via /bestesttool debug and
 #                        the performance test via /bestesttool performance
+# bestesttool.selftest: (default: op)    Allows running /bestesttool selftest (also needs
+#                        enable_selftest below)
 
 
 # ----- Placeholders -----
@@ -149,3 +153,9 @@ dump: false
 
 # You can enable performance test using /bt performance (permission: bestesttool.debug)
 measure_performance: false
+
+# Master switch for /bestesttool selftest, a live in-game correctness test: it forces the tester
+# into survival mode, replaces their held item/inventory/blacklist with a fixed test kit, and
+# builds (then removes) a small block arena next to them. Requires bestesttool.selftest as well.
+# Leave this false on production servers; turn it on only when you intend to run the test yourself.
+enable_selftest: false

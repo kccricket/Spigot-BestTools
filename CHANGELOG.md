@@ -1,6 +1,22 @@
 # Changelog
 
 ## Unreleased
+- Fixed the per-player best-tool cache going stale after a player rearranged their own inventory
+  (e.g. dragging a tool out of the hotbar via the inventory screen) — only dropping, picking up,
+  switching held slot, or breaking a tool invalidated it, so BestTools could keep reusing a
+  decision made against inventory contents that no longer existed until one of those four
+  unrelated events happened to fire. `BestToolsCacheListener` now also invalidates on
+  `InventoryClickEvent`/`InventoryDragEvent`
+- Added `/bestesttool selftest` (`start [<stage>]`/`next`/`status`/`stop`), a live in-game
+  correctness test: it builds a labelled arena of blocks (and, for the combat/refill stages, mobs)
+  next to the tester, hands them a known hotbar kit, and reports pass/fail as they interact with
+  each one — comparing the plugin's actual choice against a declared expectation
+  (`selftest/stages.yml`, overridable via `plugins/BestestTool/selftest.yml`). Forces the tester
+  into survival for the run (the plugin does nothing in creative) and restores their inventory,
+  game mode, and BestestTool settings afterward, including a crash-safety backup restored on next
+  join if the server goes down mid-test. Gated behind both the `bestesttool.selftest` permission
+  (default `op`) and a new `enable_selftest` config key (default `false`) — an op has to opt in
+  explicitly, since it forces survival mode and replaces the tester's inventory for the duration
 - Removed the settings GUI (`/bestesttool gui`/`settings`) entirely — a shift-click or drag from
   the player's own inventory while it was open could silently destroy the shifted/dragged item,
   since only same-inventory clicks were cancelled. Its favorite-slot picker is replaced by
