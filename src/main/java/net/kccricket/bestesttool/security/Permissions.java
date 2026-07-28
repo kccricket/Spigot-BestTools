@@ -18,6 +18,7 @@ public final class Permissions {
     public static final String PERM_RELOAD = "bestesttool.reload";
     public static final String PERM_DEBUG = "bestesttool.debug";
     public static final String PERM_SELFTEST = "bestesttool.selftest";
+    public static final String PERM_BENCHMARK = "bestesttool.benchmark";
 
     /**
      * Check if the sender has the specified permission node.

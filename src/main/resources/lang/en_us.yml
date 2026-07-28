@@ -60,12 +60,10 @@ reloaded: "<green><plugin> has been reloaded.</green>"
 # (e.g. /bestesttool refill <state>) isn't one of the recognized yes/no words.
 invalidValue: "<red>Invalid value '<value>'. Valid values: <valid>.</red>"
 
-# /bestesttool debug and /bestesttool performance toggles
+# /bestesttool debug toggle
 # Placeholder: <plugin>
 debugEnabled: "<red><plugin> debug mode has been enabled.</red>"
 debugDisabled: "<green><plugin> debug mode has been disabled.</green>"
-performanceEnabled: "<red><plugin> performance test has been enabled.</red>"
-performanceDisabled: "<green><plugin> performance test has been disabled.</green>"
 
 # /bestesttool selftest
 # Note: there's no "disabled"/"noPermission" message for selftest itself — like reload/debug, it's
@@ -92,3 +90,19 @@ selfTestFinished: "<green>Self-test finished:</green> <gray><passed>/<total> cas
 selfTestStopped: "<gray>Self-test stopped. Everything has been restored.</gray>"
 # Placeholders: <stage>, <remaining>
 selfTestStatus: "<gray>Stage <gold><stage></gold>: <remaining> case(s) remaining.</gray>"
+
+# /bestesttool benchmark
+# Note: there's no "disabled"/"noPermission" message for benchmark itself — like reload/debug, it's
+# gated with .requires(...) in BestToolsCommands so the subcommand is hidden entirely (and fails to
+# parse) rather than answered with a chat message, for anyone lacking enable_benchmark/the permission.
+# Placeholder: <kit>
+benchmarkStarted: "<green>Benchmark started</green> <gray>(kit: <gold><kit></gold>). Ramping tool selections per tick until a batch exceeds the 50ms tick budget.</gray>"
+# Placeholders: <n>, <ms>, <nspersel>
+benchmarkTick: "<gray>batch <gold><n></gold>: <ms>ms (<nspersel> ns/selection)</gray>"
+benchmarkAlreadyRunning: "<yellow>A benchmark is already running. Use <gold>/bestesttool benchmark stop</gold> to end it.</yellow>"
+benchmarkNoneRunning: "<gray>No benchmark is currently running.</gray>"
+benchmarkStopped: "<gray>Benchmark stopped.</gray>"
+# Placeholders: <n>, <ms>
+benchmarkStatus: "<gray>Benchmark running: last completed batch <gold><n></gold> in <ms>ms.</gray>"
+# Placeholders: <kit>, <peak>, <nspersel>, <pertick>
+benchmarkFinished: "<green>Benchmark finished</green> <gray>(kit: <gold><kit></gold>). Peak batch under 50ms: <gold><peak></gold> selections (<nspersel> ns/selection) — sustainable rate: <gold>~<pertick></gold> selections/tick.</gray>"

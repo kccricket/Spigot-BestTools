@@ -1,6 +1,16 @@
 # Changelog
 
 ## Unreleased
+- Replaced `/bestesttool performance` (and its `measure_performance` config key) with
+  `/bestesttool benchmark` (`start [full|hotbar]`/`status`/`stop`) — the old command passively
+  sampled real event-handler wall time and its numbers depended entirely on how fast a player
+  happened to be clicking, so they weren't comparable between runs or versions. The new benchmark
+  instead ramps a fixed, hardcoded synthetic workload (not the real world or a real inventory)
+  against the tool-selection routine, doubling the batch size each tick until one exceeds the 50ms
+  tick budget, then reports the peak sustainable rate and the measured cost per selection. Works
+  from console as well as in-game, and is gated the same way as `/bestesttool selftest`: a new
+  `enable_benchmark` config key (default `false`) plus the `bestesttool.benchmark` permission
+  (default `op`)
 - Fixed the per-player best-tool cache going stale after a player rearranged their own inventory
   (e.g. dragging a tool out of the hotbar via the inventory screen) — only dropping, picking up,
   switching held slot, or breaking a tool invalidated it, so BestTools could keep reusing a

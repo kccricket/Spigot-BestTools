@@ -9,7 +9,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CommandDebugTest extends BestToolsTestBase {
@@ -28,17 +27,6 @@ class CommandDebugTest extends BestToolsTestBase {
     }
 
     @Test
-    void performanceArgumentIsCaseInsensitive() {
-        PlayerMock player = newPlayer();
-        player.setOp(true);
-        boolean before = plugin.measurePerformance;
-
-        CommandDebug.debug(player, plugin, "Performance");
-
-        assertEquals(!before, plugin.measurePerformance);
-    }
-
-    @Test
     void explicitStateSetsDebugRegardlessOfCurrentValue() {
         PlayerMock player = newPlayer();
         player.setOp(true);
@@ -52,22 +40,6 @@ class CommandDebugTest extends BestToolsTestBase {
 
         CommandDebug.debug(player, plugin, "debug", false);
         assertEquals(DebugLevel.OFF, Log.getDebugLevel());
-    }
-
-    @Test
-    void explicitStateSetsPerformanceRegardlessOfCurrentValue() {
-        PlayerMock player = newPlayer();
-        player.setOp(true);
-        plugin.measurePerformance = false;
-
-        CommandDebug.debug(player, plugin, "performance", true);
-        assertTrue(plugin.measurePerformance);
-
-        CommandDebug.debug(player, plugin, "performance", true);
-        assertTrue(plugin.measurePerformance);
-
-        CommandDebug.debug(player, plugin, "performance", false);
-        assertFalse(plugin.measurePerformance);
     }
 
     @Test

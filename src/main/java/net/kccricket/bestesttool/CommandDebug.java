@@ -19,8 +19,6 @@ public class CommandDebug {
         }
         if (arg.equalsIgnoreCase("debug")) {
             setDebug(sender, main, Log.getDebugLevel() == DebugLevel.OFF);
-        } else if (arg.equalsIgnoreCase("performance")) {
-            setPerformance(sender, main, !main.measurePerformance);
         }
     }
 
@@ -31,8 +29,6 @@ public class CommandDebug {
         }
         if (arg.equalsIgnoreCase("debug")) {
             setDebug(sender, main, enabled);
-        } else if (arg.equalsIgnoreCase("performance")) {
-            setPerformance(sender, main, enabled);
         }
     }
 
@@ -40,10 +36,5 @@ public class CommandDebug {
     private static void setDebug(CommandSender sender, Main main, boolean enabled) {
         Log.setDebugLevel(enabled ? DebugLevel.DEBUG : DebugLevel.OFF);
         MessageUtil.send(sender, enabled ? "debugEnabled" : "debugDisabled", Placeholder.unparsed("plugin", main.getName()));
-    }
-
-    private static void setPerformance(CommandSender sender, Main main, boolean enabled) {
-        main.measurePerformance = enabled;
-        MessageUtil.send(sender, enabled ? "performanceEnabled" : "performanceDisabled", Placeholder.unparsed("plugin", main.getName()));
     }
 }

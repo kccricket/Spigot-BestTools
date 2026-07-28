@@ -80,9 +80,9 @@ public final class BestToolsCommands {
                 .then(buildRefill(main))
                 .then(buildReload(main))
                 .then(buildDebug(main))
-                .then(buildPerformance(main))
                 .then(buildBlacklist(main))
                 .then(buildSelfTest(main))
+                .then(buildBenchmark(main))
                 .build();
     }
 
@@ -188,7 +188,7 @@ public final class BestToolsCommands {
     }
 
     // -------------------------------------------------------------------------
-    // /bestesttool reload | debug | performance — admin-only, hidden from tab completion
+    // /bestesttool reload | debug — admin-only, hidden from tab completion
     // for senders lacking the node (via .requires), rather than answered with noPermission.
     // -------------------------------------------------------------------------
 
@@ -211,17 +211,7 @@ public final class BestToolsCommands {
                 .then(debugStateArg(main, "debug"));
     }
 
-    private static LiteralArgumentBuilder<CommandSourceStack> buildPerformance(Main main) {
-        return Commands.literal("performance")
-                .requires(src -> Permissions.isAllowedTo(src.getSender(), Permissions.PERM_DEBUG))
-                .executes(ctx -> {
-                    CommandDebug.debug(ctx.getSource().getSender(), main, "performance");
-                    return Command.SINGLE_SUCCESS;
-                })
-                .then(debugStateArg(main, "performance"));
-    }
-
-    /** A {@code <state>} child for {@code debug}/{@code performance}, matching their own sender type (no player requirement). */
+    /** A {@code <state>} child for {@code debug}, matching its own sender type (no player requirement). */
     private static RequiredArgumentBuilder<CommandSourceStack, String> debugStateArg(Main main, String arg) {
         return Commands.argument("state", StringArgumentType.word())
                 .suggests((ctx, b) -> suggestYesNo(b))
@@ -240,8 +230,8 @@ public final class BestToolsCommands {
 
     // -------------------------------------------------------------------------
     // /bestesttool selftest — needs both the enable_selftest config flag and the permission node,
-    // gated with .requires(...) like reload/debug/performance so it's hidden from tab completion
-    // (and unparseable) rather than answered with a noPermission message.
+    // gated with .requires(...) like reload/debug so it's hidden from tab completion (and
+    // unparseable) rather than answered with a noPermission message.
     // -------------------------------------------------------------------------
 
     private static LiteralArgumentBuilder<CommandSourceStack> buildSelfTest(Main main) {
@@ -277,6 +267,38 @@ public final class BestToolsCommands {
         Player player = requirePlayer(ctx);
         if (player == null) return Command.SINGLE_SUCCESS;
         main.commandSelfTest.start(player, stageName);
+        return Command.SINGLE_SUCCESS;
+    }
+
+    // -------------------------------------------------------------------------
+    // /bestesttool benchmark — needs both the enable_benchmark config flag and the permission
+    // node, gated the same way as selftest. Unlike selftest's subcommands, these take a plain
+    // CommandSender (no requirePlayer(ctx)): the workload is synthetic, so the command works from
+    // console too.
+    // -------------------------------------------------------------------------
+
+    private static LiteralArgumentBuilder<CommandSourceStack> buildBenchmark(Main main) {
+        return Commands.literal("benchmark")
+                .requires(src -> main.getConfigManager().main().getEnableBenchmark()
+                        && Permissions.isAllowedTo(src.getSender(), Permissions.PERM_BENCHMARK))
+                .then(Commands.literal("start")
+                        .executes(ctx -> runBenchmarkStart(main, ctx, BenchmarkWorkload.KitSize.FULL))
+                        .then(Commands.literal("full")
+                                .executes(ctx -> runBenchmarkStart(main, ctx, BenchmarkWorkload.KitSize.FULL)))
+                        .then(Commands.literal("hotbar")
+                                .executes(ctx -> runBenchmarkStart(main, ctx, BenchmarkWorkload.KitSize.HOTBAR))))
+                .then(Commands.literal("status").executes(ctx -> {
+                    main.commandBenchmark.status(ctx.getSource().getSender());
+                    return Command.SINGLE_SUCCESS;
+                }))
+                .then(Commands.literal("stop").executes(ctx -> {
+                    main.commandBenchmark.stop(ctx.getSource().getSender());
+                    return Command.SINGLE_SUCCESS;
+                }));
+    }
+
+    private static int runBenchmarkStart(Main main, CommandContext<CommandSourceStack> ctx, BenchmarkWorkload.KitSize kitSize) {
+        main.commandBenchmark.start(ctx.getSource().getSender(), kitSize);
         return Command.SINGLE_SUCCESS;
     }
 

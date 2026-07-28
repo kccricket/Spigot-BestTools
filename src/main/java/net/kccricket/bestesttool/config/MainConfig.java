@@ -202,10 +202,6 @@ public class MainConfig implements ManagedConfig {
         return plugin.getConfig().getBoolean("dump", false);
     }
 
-    public boolean getMeasurePerformance() {
-        return plugin.getConfig().getBoolean("measure_performance", false);
-    }
-
     /**
      * Master switch for {@code /bestesttool selftest} — off by default even for an op, since the
      * self-test forces the tester into survival, wipes their held/inventory state, and rebuilds
@@ -213,6 +209,15 @@ public class MainConfig implements ManagedConfig {
      */
     public boolean getEnableSelfTest() {
         return plugin.getConfig().getBoolean("enable_selftest", false);
+    }
+
+    /**
+     * Master switch for {@code /bestesttool benchmark} — off by default even for an op, since a
+     * run deliberately ramps synthetic work until a tick blows its 50 ms budget. An admin has to
+     * opt in on top of holding {@code bestesttool.benchmark}.
+     */
+    public boolean getEnableBenchmark() {
+        return plugin.getConfig().getBoolean("enable_benchmark", false);
     }
 
     /**

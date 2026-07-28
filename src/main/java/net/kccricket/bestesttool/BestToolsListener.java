@@ -40,7 +40,6 @@ public class BestToolsListener implements Listener {
 
     @EventHandler
     public void onPlayerAttackEntity(EntityDamageByEntityEvent e) {
-        long st= main.measurePerformance ? System.nanoTime() : 0;
         Log.debug("EntityDamageByEntity 1");
 
         if (!(e.getDamager() instanceof Player)) return;
@@ -65,11 +64,9 @@ public class BestToolsListener implements Listener {
         ItemStack bestRoscoe = handler.getBestRoscoeFromInventory(enemy.getType(), p,playerSetting.isHotbarOnly(),inv.getItemInMainHand(),useAxeAsWeapon);
 
         if(bestRoscoe==null || bestRoscoe.equals(inv.getItemInMainHand())) {
-            main.meter.add(st,false);
             return;
         }
         switchToBestRoscoe(p, bestRoscoe,playerSetting.getFavoriteSlot());
-        main.meter.add(st,false);
 
     }
 
@@ -88,14 +85,11 @@ public class BestToolsListener implements Listener {
     @EventHandler
     public void onPlayerInteractWithBlock(PlayerInteractEvent event) {
 
-        long st= main.measurePerformance ? System.nanoTime() : 0;
-
         // Check the cache as soon as possible
         PlayerSetting playerSetting = main.getPlayerSetting(event.getPlayer());
         if(playerSetting.getBtcache().valid
                 && event.getClickedBlock()!=null
                 && event.getClickedBlock().getType() == playerSetting.getBtcache().lastMat) {
-            main.meter.add(st,true);
             return;
         }
         Player p = event.getPlayer();
@@ -106,54 +100,25 @@ public class BestToolsListener implements Listener {
             return;
         }
         Block block = event.getClickedBlock();
-        if (block == null) {
-            return;
-        }
 
-        if(block.getType() == Material.AIR) {
-            return;
-        }
+        BestToolsSelector.ToolDecision decision = BestToolsSelector.decide(
+                main, handler, p, playerSetting, block, event.getAction(), event.getHand());
 
-        if(main.toolHandler.globalBlacklist.contains(block.getType())) {
-            return;
-        }
-
-        // Blacklist
-        if(playerSetting.getBlacklist().contains(block.getType()))
-            return;
-
-        if(main.toolHandler.isNeverSwitch(block.getType())) {
-            // No tool can break/drop this (bedrock, reinforced deepslate, ...), or the held item
-            // is the player's own choice to make (decorated pots) — leave the hand alone.
-            playerSetting.getBtcache().validate(block.getType());
-            main.meter.add(st,false);
-            return;
-        }
-
-        if(!PlayerUtils.isAllowedGamemode(p,main.configManager.main().getAllowInAdventureMode())) {
-            return;
-        }
-        PlayerInventory inv = p.getInventory();
-
-        if(main.configManager.main().getDontSwitchDuringBattle() && handler.isWeapon(inv.getItemInMainHand())) {
-            Log.debug("Return: It's a gun^^");
-            return;
-        }
-
-        if (event.getAction() != Action.LEFT_CLICK_BLOCK) return;
-        if (event.getHand() != EquipmentSlot.HAND) return;
-
-        ItemStack bestTool = handler.getBestToolFromInventory(block, p,playerSetting.isHotbarOnly());
-
-        if(bestTool!=null) {
-            if(!bestTool.equals(inv.getItemInMainHand())) {
-                switchToBestTool(p, bestTool);
+        switch (decision.outcome()) {
+            case SWITCH -> {
+                PlayerInventory inv = p.getInventory();
+                if(!decision.tool().equals(inv.getItemInMainHand())) {
+                    switchToBestTool(p, decision.tool());
+                }
+                playerSetting.getBtcache().validate(block.getType());
             }
-        } else {
-            switchToBareHand(p, playerSetting, block.getType());
+            case BARE_HAND -> {
+                switchToBareHand(p, playerSetting, block.getType());
+                playerSetting.getBtcache().validate(block.getType());
+            }
+            case NO_CHANGE -> playerSetting.getBtcache().validate(block.getType());
+            case NOT_APPLICABLE -> { /* nothing to do */ }
         }
-        playerSetting.getBtcache().validate(block.getType());
-        main.meter.add(st,false);
     }
 
     private int getFavoriteSlot(Player player) {

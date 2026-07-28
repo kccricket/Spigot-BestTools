@@ -12,9 +12,10 @@
 # /bestesttool refill [<state>]:  Toggle (or set) automatic hotbar refill per player (aliases /refill, /rf)
 # /bestesttool reload:            Reloads the config file
 # /bestesttool debug [<state>]:   Toggle (or set) debug mode
-# /bestesttool performance [<state>]: Toggle (or set) the performance meter
 # /bestesttool selftest start|next|status|stop: Run the live in-game self-test (needs
 #                                  enable_selftest below, plus the bestesttool.selftest permission)
+# /bestesttool benchmark start|stop|status: Run the synthetic tool-selection benchmark (needs
+#                                  enable_benchmark below, plus the bestesttool.benchmark permission)
 #
 # Boolean toggles above accept an optional state argument: yes/no, true/false, on/off, enable/disable
 
@@ -36,10 +37,11 @@
 #                        favoriteslot, and the blacklist subcommands
 # bestesttool.refill:   (default: true)  Allows using /bestesttool refill (or /refill, /rf)
 # bestesttool.reload:   (default: op)    Allows using /bestesttool reload
-# bestesttool.debug:    (default: op)    Allows enabling debug mode via /bestesttool debug and
-#                        the performance test via /bestesttool performance
+# bestesttool.debug:    (default: op)    Allows enabling debug mode via /bestesttool debug
 # bestesttool.selftest: (default: op)    Allows running /bestesttool selftest (also needs
 #                        enable_selftest below)
+# bestesttool.benchmark:(default: op)    Allows running /bestesttool benchmark (also needs
+#                        enable_benchmark below)
 
 
 # ----- Placeholders -----
@@ -151,11 +153,14 @@ debug_level: 'OFF'
 # Prints the Material<>Tool map to a csv file
 dump: false
 
-# You can enable performance test using /bt performance (permission: bestesttool.debug)
-measure_performance: false
-
 # Master switch for /bestesttool selftest, a live in-game correctness test: it forces the tester
 # into survival mode, replaces their held item/inventory/blacklist with a fixed test kit, and
 # builds (then removes) a small block arena next to them. Requires bestesttool.selftest as well.
 # Leave this false on production servers; turn it on only when you intend to run the test yourself.
 enable_selftest: false
+
+# Master switch for /bestesttool benchmark, a synthetic tool-selection speed test: it ramps a
+# fixed, hardcoded workload against the selection routine until a tick blows its 50ms budget, then
+# reports how many selections/tick the server can sustain. Requires bestesttool.benchmark as well.
+# Leave this false on production servers — a run deliberately blows the tick budget on purpose.
+enable_benchmark: false

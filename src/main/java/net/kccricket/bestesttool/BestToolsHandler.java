@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BooleanSupplier;
 
 /**
  * This will probably be a separate plugin called BestTool or something
@@ -369,16 +370,32 @@ public class BestToolsHandler {
     @Nullable
     ItemStack getBestToolFromInventory(@NotNull Block block, Player p, boolean hotbarOnly) {
         ItemStack[] items = inventoryToArray(p,hotbarOnly);
-        Material mat = block.getType();
-        BlockData data = block.getBlockData();
+        return selectBestTool(block.getBlockData(), block.getType(), items, () -> silkChangesDrops(block));
+    }
 
+    /**
+     * The pure ranking core of {@link #getBestToolFromInventory}: no {@link Player}, no
+     * {@link Block}, no world access — just {@code data}/{@code mat} (both readable off a
+     * {@link Block} up front) and an inventory snapshot. Split out so it can be driven directly by
+     * a synthetic workload (see {@code BenchmarkWorkload}/{@code BenchmarkManager}), which has no
+     * real block or inventory to read from.
+     * <p>
+     * {@code silkChangesDrops} stays lazy (a supplier, not a precomputed {@code boolean}) because
+     * it is only ever evaluated on the fallback path, once nothing has already beaten a bare hand —
+     * evaluating it eagerly would call {@link Block#getDrops(ItemStack)} on every block interaction.
+     * In production this is {@link #silkChangesDrops(Block)}, already memoized per {@link Material}
+     * by {@link #silkMattersCache}; the benchmark instead passes a constant.
+     */
+    @Nullable
+    ItemStack selectBestTool(@NotNull BlockData data, @NotNull Material mat, @NotNull ItemStack[] items,
+                              @NotNull BooleanSupplier silkChangesDrops) {
         ItemStack bestStack = getBestItemStackFromArray(data,items,profitsFromSilkTouch(mat),mat,1.0f);
         if(bestStack!=null) {
             Log.debug("bestStack is "+bestStack.toString());
             return bestStack;
         }
         Log.debug("bestStack is null");
-        if(silkChangesDrops(block)) {
+        if(silkChangesDrops.getAsBoolean()) {
             ItemStack silkStack = getBestItemStackFromArray(data,items,true,mat,0.0f);
             if(silkStack!=null) {
                 Log.debug("silkStack is "+silkStack.toString());

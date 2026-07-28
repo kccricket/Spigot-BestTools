@@ -54,6 +54,7 @@ public class Main extends JavaPlugin {
     CommandRefill commandRefill;
     CommandBlacklist commandBlacklist;
     CommandSelfTest commandSelfTest;
+    CommandBenchmark commandBenchmark;
     ModrinthUpdateChecker updateChecker;
 
     // Unlike the fields above, constructed exactly once in onEnable rather than on every
@@ -61,8 +62,12 @@ public class Main extends JavaPlugin {
     // silently dropped by it.
     SelfTestManager selfTestManager;
 
-    boolean measurePerformance=false;
-    PerformanceMeter meter;
+    // Like selfTestManager, constructed exactly once in onEnable rather than on every load()/
+    // reload. Unlike selfTestManager's in-progress run, a running /bestesttool benchmark is
+    // explicitly stopped (not carried across) on reload/disable, since it holds a live
+    // GlobalRegionScheduler task — see BenchmarkManager.abortAll, called from load()'s reload
+    // branch and from onDisable().
+    BenchmarkManager benchmarkManager;
 
     // ConcurrentHashMap: mutated from per-region Folia threads (see getPlayerSetting and
     // PlayerListener.onPlayerQuit) with no external synchronization, same hazard already guarded
@@ -77,6 +82,7 @@ public class Main extends JavaPlugin {
         // Constructed before load() so load()'s (re)registration of selfTestManager.listener() can
         // rely on it unconditionally, on both the initial enable and every later reload.
         selfTestManager = new SelfTestManager(this);
+        benchmarkManager = new BenchmarkManager(this);
 
         load(false);
         registerMetrics();
@@ -93,11 +99,16 @@ public class Main extends JavaPlugin {
      * down, so a tester doesn't lose their real inventory to an interrupted test. There is no
      * matching {@code onEnable} counterpart for this beyond what {@link SelfTestSession}'s own
      * on-disk backup file (restored on the tester's next {@code PlayerJoinEvent}) already covers.
+     * Also stops any in-progress {@code /bestesttool benchmark} run, so its
+     * {@code GlobalRegionScheduler} task doesn't keep firing against a disabled plugin.
      */
     @Override
     public void onDisable() {
         if (selfTestManager != null) {
             selfTestManager.abortAll("disable");
+        }
+        if (benchmarkManager != null) {
+            benchmarkManager.abortAll("disable");
         }
     }
 
@@ -140,6 +151,9 @@ public class Main extends JavaPlugin {
             // Put any in-progress self-test's tester back the way they were before the listener
             // that was watching them gets torn down below.
             selfTestManager.abortAll("reload");
+            // A running benchmark holds a live GlobalRegionScheduler task, not a Listener — it
+            // survives HandlerList.unregisterAll below on its own, so it needs its own stop.
+            benchmarkManager.abortAll("reload");
             HandlerList.unregisterAll(this);
             configManager.reloadAll();
         } else {
@@ -147,8 +161,6 @@ public class Main extends JavaPlugin {
             configManager.loadAll();
         }
         MessageUtil.init(configManager);
-
-        measurePerformance = configManager.main().getMeasurePerformance();
 
         updateChecker = new ModrinthUpdateChecker(
                 this,
@@ -171,10 +183,9 @@ public class Main extends JavaPlugin {
         commandRefill = new CommandRefill(this);
         commandBlacklist = new CommandBlacklist(this);
         commandSelfTest = new CommandSelfTest(this);
+        commandBenchmark = new CommandBenchmark(this);
         refillUtils = new RefillUtils((this));
         fileUtils = new FileUtils(this);
-
-        meter = new PerformanceMeter(this);
 
         getServer().getPluginManager().registerEvents(refillListener,this);
         getServer().getPluginManager().registerEvents(bestToolsListener,this);

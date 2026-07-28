@@ -33,12 +33,12 @@ class MainConfigTest extends BestToolsTestBase {
         File configFile = new File(plugin.getDataFolder(), "config.yml");
         assertTrue(configFile.exists(), "config.yml must exist on disk after the first load");
 
-        // Simulate an old on-disk file predating the "measure_performance" key (the bundled
+        // Simulate an old on-disk file predating the "enable_benchmark" key (the bundled
         // default's last key): remove it (and any trailing blank/comment lines) and reload, as if
         // a user manually edited an old version.
         String content = Files.readString(configFile.toPath());
-        int commentIdx = content.indexOf("# You can enable performance test using /bt performance");
-        assertTrue(commentIdx >= 0, "test fixture assumption: measure_performance's comment must be present pre-edit");
+        int commentIdx = content.indexOf("# Master switch for /bestesttool benchmark");
+        assertTrue(commentIdx >= 0, "test fixture assumption: enable_benchmark's comment must be present pre-edit");
         String edited = content.substring(0, commentIdx);
         Files.writeString(configFile.toPath(), edited);
 
@@ -47,12 +47,16 @@ class MainConfigTest extends BestToolsTestBase {
         String reloadedContent = Files.readString(configFile.toPath());
         YamlConfiguration reloaded = YamlConfiguration.loadConfiguration(configFile);
 
-        assertEquals(false, reloaded.getBoolean("measure_performance"),
+        assertEquals(false, reloaded.getBoolean("enable_benchmark"),
                 "Missing key's value must be restored from the bundled default on reload");
-        assertEquals(Arrays.asList(null, "You can enable performance test using /bt performance (permission: bestesttool.debug)"),
-                reloaded.getComments("measure_performance"),
+        assertEquals(Arrays.asList(null,
+                        "Master switch for /bestesttool benchmark, a synthetic tool-selection speed test: it ramps a",
+                        "fixed, hardcoded workload against the selection routine until a tick blows its 50ms budget, then",
+                        "reports how many selections/tick the server can sustain. Requires bestesttool.benchmark as well.",
+                        "Leave this false on production servers — a run deliberately blows the tick budget on purpose."),
+                reloaded.getComments("enable_benchmark"),
                 "Missing key's comment from the bundled default must be carried over on reload");
-        assertTrue(reloadedContent.contains("# You can enable performance test using /bt performance"),
+        assertTrue(reloadedContent.contains("# Master switch for /bestesttool benchmark"),
                 "The comment must actually appear in the saved file text, not just be recoverable via the API");
     }
 
@@ -61,14 +65,20 @@ class MainConfigTest extends BestToolsTestBase {
         File configFile = new File(plugin.getDataFolder(), "config.yml");
 
         String edited = Files.readString(configFile.toPath())
-                .replace("# You can enable performance test using /bt performance (permission: bestesttool.debug)",
+                .replace("# Leave this false on production servers — a run deliberately blows the tick budget on purpose.",
                         "# my own custom comment");
         Files.writeString(configFile.toPath(), edited);
 
         plugin.configManager.reloadAll();
 
         YamlConfiguration reloaded = YamlConfiguration.loadConfiguration(configFile);
-        assertEquals(Arrays.asList(null, "my own custom comment"), reloaded.getComments("measure_performance"),
+        assertEquals(Arrays.asList(
+                        null,
+                        "Master switch for /bestesttool benchmark, a synthetic tool-selection speed test: it ramps a",
+                        "fixed, hardcoded workload against the selection routine until a tick blows its 50ms budget, then",
+                        "reports how many selections/tick the server can sustain. Requires bestesttool.benchmark as well.",
+                        "my own custom comment"),
+                reloaded.getComments("enable_benchmark"),
                 "A user's own comment on an existing key must survive reload unchanged");
     }
 

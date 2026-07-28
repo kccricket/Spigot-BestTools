@@ -32,7 +32,7 @@ class CommandBestToolsTest extends BestToolsTestBase {
     }
 
     /**
-     * Unlike {@code hotbaronly}/{@code refill}/{@code debug}/{@code performance}, the bare root
+     * Unlike {@code hotbaronly}/{@code refill}/{@code debug}, the bare root
      * toggle does not take a {@code [<state>]} argument — it's the entry point to the whole
      * subcommand tree, so a trailing word is rejected rather than interpreted as a boolean.
      */

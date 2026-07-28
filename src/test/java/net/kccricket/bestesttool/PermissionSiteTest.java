@@ -14,8 +14,6 @@ import org.mockbukkit.mockbukkit.entity.LivingEntityMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 class PermissionSiteTest extends BestToolsTestBase {
 
@@ -77,25 +75,5 @@ class PermissionSiteTest extends BestToolsTestBase {
         // bestesttool.refill defaults to true, so only an explicit DENIED actually withholds it.
         boolean granted = grantType != Grant.DENIED;
         assertEquals(granted, plugin.getPlayerSetting(player).isHasSeenRefillMessage());
-    }
-
-    @ParameterizedTest
-    @EnumSource(Grant.class)
-    void performanceMeter_broadcastGatesOnDebugPermission(Grant grantType) {
-        PlayerMock player = newPlayer();
-        grant(player, "debug", grantType);
-        plugin.measurePerformance = true;
-
-        for (int i = 0; i < 50; i++) {
-            plugin.meter.add(System.nanoTime(), false);
-        }
-
-        // bestesttool.debug defaults to op, so only an explicit grant is allowed here.
-        boolean granted = grantType == Grant.NEW;
-        if (granted) {
-            assertNotNull(player.nextComponentMessage());
-        } else {
-            assertNull(player.nextComponentMessage());
-        }
     }
 }

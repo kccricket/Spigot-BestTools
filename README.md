@@ -38,7 +38,7 @@ All commands live under `/bestesttool` (alias `/bt`). `/bestesttool refill` also
 aliases, `/refill` and `/rf`, that go straight to the same toggle — they don't expose the rest of
 the `/bestesttool` tree.
 
-The `hotbaronly`/`refill`/`debug`/`performance` toggles below also take an optional `[<state>]`
+The `hotbaronly`/`refill`/`debug` toggles below also take an optional `[<state>]`
 argument — `yes`/`no`, `true`/`false`, `on`/`off`, or `enable`/`disable` — to set the value
 explicitly instead of flipping it; the bare form (no argument) still toggles. The root
 `/bestesttool` toggle does not, since it's the entry point to the rest of the subcommand tree.
@@ -51,7 +51,6 @@ explicitly instead of flipping it; the bare form (no argument) still toggles. Th
 | `/bestesttool refill [<state>]` (aliases `/refill`, `/rf`) | Toggle (or set) automatic hotbar refill | `bestesttool.refill` |
 | `/bestesttool reload` | Reload `config.yml` and the language files | `bestesttool.reload` |
 | `/bestesttool debug [<state>]` | Toggle (or set) debug logging | `bestesttool.debug` |
-| `/bestesttool performance [<state>]` | Toggle (or set) the performance meter | `bestesttool.debug` |
 | `/bestesttool blacklist`, or `blacklist show` | Show your block blacklist | `bestesttool.use` |
 | `/bestesttool blacklist add [<blocks...>]` | Blacklist the block you're holding, or the named blocks | `bestesttool.use` |
 | `/bestesttool blacklist add inventory` | Blacklist every block type currently in your inventory | `bestesttool.use` |
@@ -62,25 +61,30 @@ explicitly instead of flipping it; the bare form (no argument) still toggles. Th
 | `/bestesttool selftest next` | Skip to the next self-test stage | `bestesttool.selftest` |
 | `/bestesttool selftest status` | Show the current self-test stage and how many cases remain | `bestesttool.selftest` |
 | `/bestesttool selftest stop` | Abort the self-test and restore everything | `bestesttool.selftest` |
+| `/bestesttool benchmark start [full\|hotbar]` | Start the synthetic tool-selection speed benchmark | `bestesttool.benchmark` |
+| `/bestesttool benchmark status` | Show the currently-running benchmark's progress | `bestesttool.benchmark` |
+| `/bestesttool benchmark stop` | Abort a running benchmark | `bestesttool.benchmark` |
 
 `selftest` is additionally hidden entirely (not just permission-gated) unless `enable_selftest: true`
-is set in `config.yml` — see [Self-test](#self-test) below.
+is set in `config.yml` — see [Self-test](#self-test) below. `benchmark` is gated the same way behind
+`enable_benchmark: true` — see [Benchmark](#benchmark) below.
 
 ## Permissions
 
 `bestesttool.use` and `bestesttool.refill` default to `true` — the plugin works for every player
-out of the box. `bestesttool.reload`, `bestesttool.debug`, and `bestesttool.selftest` default to
-server operators only.
+out of the box. `bestesttool.reload`, `bestesttool.debug`, `bestesttool.selftest`, and
+`bestesttool.benchmark` default to server operators only.
 
 | Node | Default | Grants |
 | --- | --- | --- |
 | `bestesttool` | `true` | Umbrella node for `use` and `refill` (does not cascade to admin nodes) |
 | `bestesttool.use` | `true` | Automatic best-tool switching itself, plus `/bestesttool` and its `hotbaronly`/`favoriteslot`/`blacklist` subcommands |
 | `bestesttool.refill` | `true` | Automatic hotbar refilling itself, plus `/bestesttool refill` (`/refill`, `/rf`) |
-| `bestesttool.admin` | `op` | Umbrella node for `reload`, `debug`, and `selftest` |
+| `bestesttool.admin` | `op` | Umbrella node for `reload`, `debug`, `selftest`, and `benchmark` |
 | `bestesttool.reload` | `op` | `/bestesttool reload` |
-| `bestesttool.debug` | `op` | `/bestesttool debug` and `/bestesttool performance` |
+| `bestesttool.debug` | `op` | `/bestesttool debug` |
 | `bestesttool.selftest` | `op` | `/bestesttool selftest` (also needs `enable_selftest: true` in `config.yml`) |
+| `bestesttool.benchmark` | `op` | `/bestesttool benchmark` (also needs `enable_benchmark: true` in `config.yml`) |
 
 ## Self-test
 
@@ -108,6 +112,28 @@ before it gets to restore things itself.
 The block/mob/expectation list lives in the bundled `selftest/stages.yml`; drop a
 `plugins/BestestTool/selftest.yml` alongside your other config to replace it wholesale with your
 own stages.
+
+## Benchmark
+
+`/bestesttool benchmark` answers a concrete performance question: how many tool selections can the
+plugin run in a single tick before that tick blows the server's 50ms budget? It ramps a fixed,
+hardcoded workload (a spread of block materials and a synthetic inventory kit — not your real
+inventory or the world around you, so results are reproducible run to run and version to version)
+against the selection routine, doubling the batch size each tick, until a batch takes 50ms or more.
+It then reports the peak batch that stayed under budget, the measured cost per selection, and the
+derived sustainable selections/tick.
+
+It's off by default and gated behind two things at once, same as self-test:
+
+1. `enable_benchmark: true` in `config.yml` (default `false`) — the command doesn't exist at all
+   otherwise, not even for an op. Leave it off on production servers; a run deliberately blows the
+   tick budget on purpose.
+2. The `bestesttool.benchmark` permission (default `op`).
+
+`/bestesttool benchmark start [full|hotbar]` picks the inventory size to test against (`full`, 36
+slots, is the default and the worst case; `hotbar` is 9 slots). It works from console as well as
+in-game, and only one run is active server-wide at a time. `/bestesttool benchmark stop` aborts it
+early; a `/bestesttool reload` or server shutdown aborts an in-progress run automatically.
 
 ## Configuration and localization
 
