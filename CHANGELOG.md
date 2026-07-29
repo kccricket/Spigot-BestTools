@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- Every chat message is now prefixed (`[BestestTool]`, new `prefix` lang key), and a message sent to
+  the console now goes through the plugin's own logger instead of a raw component send, matching
+  ClickSorted's `MessageUtil`
 - Fixed `consider_swords_for_leaves`/`consider_swords_for_cobwebs`/`use_axe_as_sword`/
   `global_block_blacklist` not taking effect on `/bestesttool admin reload` — these were cached at
   construction time in `BestToolsHandler`/`BestToolsListener`, which are now (see below) only ever

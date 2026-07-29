@@ -17,6 +17,9 @@
 # Placeholder tags are listed in comments above each message that accepts one.
 # Do not remove a placeholder from a message that requires it.
 
+# Prepended to every message sent to a player or the console (see MessageUtil).
+prefix: "<gray>[<aqua>BestestTool<gray>] "
+
 # Command feedback — /bestesttool toggle
 besttoolsEnabled: "<gray>BestTools has been <green>enabled</green>.</gray>"
 besttoolsDisabled: "<gray>BestTools has been <red>disabled</red>.</gray>"

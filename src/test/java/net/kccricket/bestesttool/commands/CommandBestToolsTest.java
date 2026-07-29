@@ -104,9 +104,8 @@ class CommandBestToolsTest extends BestToolsTestBase {
 
     @Test
     void nonPlayerSenderIsRejected() {
-        server.dispatchCommand(server.getConsoleSender(), "bestesttool");
-
-        assertEquals("You must be a player to run this command.", server.getConsoleSender().nextMessage());
+        assertLogMessageContains("You must be a player to run this command.",
+                () -> server.dispatchCommand(server.getConsoleSender(), "bestesttool"));
     }
 
     @Test
