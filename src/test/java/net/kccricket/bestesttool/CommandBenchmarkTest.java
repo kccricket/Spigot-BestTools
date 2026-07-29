@@ -27,12 +27,12 @@ class CommandBenchmarkTest extends BestToolsTestBase {
     @Test
     void benchmarkIsHiddenWhenEnableBenchmarkIsFalse() {
         PlayerMock player = opPlayer();
-        // bestesttool.benchmark defaults to op, so the player already holds it — the config flag
+        // bestesttool.admin.benchmark defaults to op, so the player already holds it — the config flag
         // (default false) is the only thing gating the node here. Brigadier hides a
         // .requires-failing node from parsing entirely, so the observable effect is "nothing
         // benchmark-shaped happened" (possibly a generic Brigadier syntax-error message), not a
         // noPermission chat message — same pattern as CommandBestToolsTest's reload gating test.
-        assertDoesNotThrow(() -> player.performCommand("bestesttool benchmark status"));
+        assertDoesNotThrow(() -> player.performCommand("bestesttool admin benchmark status"));
 
         String message = player.nextMessage();
         assertTrue(message == null || !message.contains("benchmark"), message);
@@ -42,10 +42,10 @@ class CommandBenchmarkTest extends BestToolsTestBase {
     @Test
     void benchmarkRequiresBenchmarkPermissionEvenWhenEnabled() {
         PlayerMock player = newPlayer();
-        grant(player, "benchmark", Grant.DENIED);
+        grant(player, "admin.benchmark", Grant.DENIED);
         plugin.getConfig().set("enable_benchmark", true);
 
-        assertDoesNotThrow(() -> player.performCommand("bestesttool benchmark status"));
+        assertDoesNotThrow(() -> player.performCommand("bestesttool admin benchmark status"));
 
         String message = player.nextMessage();
         assertTrue(message == null || !message.contains("benchmark"), message);
@@ -56,13 +56,13 @@ class CommandBenchmarkTest extends BestToolsTestBase {
         PlayerMock player = opPlayer();
         plugin.getConfig().set("enable_benchmark", true);
 
-        player.performCommand("bestesttool benchmark start");
+        player.performCommand("bestesttool admin benchmark start");
         String started = player.nextMessage();
         assertNotNull(started);
         assertTrue(started.contains("full"), "default kit is 'full': " + started);
         assertTrue(plugin.benchmarkManager.isRunning());
 
-        player.performCommand("bestesttool benchmark start");
+        player.performCommand("bestesttool admin benchmark start");
         String again = player.nextMessage();
         assertNotNull(again);
         assertTrue(again.contains("already running"), again);
@@ -75,7 +75,7 @@ class CommandBenchmarkTest extends BestToolsTestBase {
         PlayerMock player = opPlayer();
         plugin.getConfig().set("enable_benchmark", true);
 
-        player.performCommand("bestesttool benchmark start hotbar");
+        player.performCommand("bestesttool admin benchmark start hotbar");
         String started = player.nextMessage();
         assertNotNull(started);
         assertTrue(started.contains("hotbar"), started);
@@ -88,14 +88,14 @@ class CommandBenchmarkTest extends BestToolsTestBase {
         PlayerMock player = opPlayer();
         plugin.getConfig().set("enable_benchmark", true);
 
-        player.performCommand("bestesttool benchmark start");
+        player.performCommand("bestesttool admin benchmark start");
         player.nextMessage(); // started
 
-        player.performCommand("bestesttool benchmark stop");
+        player.performCommand("bestesttool admin benchmark stop");
         assertNotNull(player.nextMessage());
         assertFalse(plugin.benchmarkManager.isRunning());
 
-        player.performCommand("bestesttool benchmark stop");
+        player.performCommand("bestesttool admin benchmark stop");
         String noneRunning = player.nextMessage();
         assertNotNull(noneRunning);
         assertTrue(noneRunning.contains("No benchmark"), noneRunning);
@@ -106,7 +106,7 @@ class CommandBenchmarkTest extends BestToolsTestBase {
         PlayerMock player = opPlayer();
         plugin.getConfig().set("enable_benchmark", true);
 
-        player.performCommand("bestesttool benchmark status");
+        player.performCommand("bestesttool admin benchmark status");
 
         String status = player.nextMessage();
         assertNotNull(status);

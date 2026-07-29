@@ -12,7 +12,7 @@ class CommandReloadTest extends BestToolsTestBase {
     @EnumSource(Grant.class)
     void reloadGatesOnReloadPermission(Grant grantType) {
         PlayerMock player = newPlayer();
-        grant(player, "reload", grantType);
+        grant(player, "admin.reload", grantType);
 
         CommandReload.reload(player, plugin);
 

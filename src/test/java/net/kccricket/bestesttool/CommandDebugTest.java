@@ -17,7 +17,7 @@ class CommandDebugTest extends BestToolsTestBase {
     @EnumSource(Grant.class)
     void debugGatesOnDebugPermission(Grant grantType) {
         PlayerMock player = newPlayer();
-        grant(player, "debug", grantType);
+        grant(player, "admin.debug", grantType);
         boolean before = Log.getDebugLevel() != DebugLevel.OFF;
 
         CommandDebug.debug(player, plugin, "debug");
@@ -48,10 +48,10 @@ class CommandDebugTest extends BestToolsTestBase {
         player.setOp(true);
         Log.setDebugLevel(DebugLevel.OFF);
 
-        player.performCommand("bestesttool debug yes");
+        player.performCommand("bestesttool admin debug yes");
         assertTrue(Log.getDebugLevel() != DebugLevel.OFF);
 
-        player.performCommand("bestesttool debug no");
+        player.performCommand("bestesttool admin debug no");
         assertEquals(DebugLevel.OFF, Log.getDebugLevel());
     }
 }

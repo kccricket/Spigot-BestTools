@@ -35,7 +35,7 @@ class BestToolsCommandsTest extends BestToolsTestBase {
 
     // LEGACY_STONE is deprecated for removal; using it here is the point of the test.
     @Test
-    @SuppressWarnings({"deprecation", "removal"})
+    @SuppressWarnings({"removal"})
     void suggestableMaterialExcludesLegacyMaterials() {
         assertFalse(BestToolsCommands.SUGGESTABLE_MATERIAL.test(Material.LEGACY_STONE));
     }

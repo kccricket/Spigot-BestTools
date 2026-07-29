@@ -15,10 +15,10 @@ public final class Permissions {
 
     public static final String PERM_USE = "bestesttool.use";
     public static final String PERM_REFILL = "bestesttool.refill";
-    public static final String PERM_RELOAD = "bestesttool.reload";
-    public static final String PERM_DEBUG = "bestesttool.debug";
-    public static final String PERM_SELFTEST = "bestesttool.selftest";
-    public static final String PERM_BENCHMARK = "bestesttool.benchmark";
+    public static final String PERM_RELOAD = "bestesttool.admin.reload";
+    public static final String PERM_DEBUG = "bestesttool.admin.debug";
+    public static final String PERM_SELFTEST = "bestesttool.admin.selftest";
+    public static final String PERM_BENCHMARK = "bestesttool.admin.benchmark";
 
     /**
      * Check if the sender has the specified permission node.

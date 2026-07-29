@@ -3,22 +3,46 @@ package net.kccricket.bestesttool;
 import net.kccricket.bestesttool.text.MessageUtil;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Verifies the lang system end-to-end against BestestTool's actual bundled lang/en_us.yml and a
- * real MockBukkit-loaded plugin — placeholder substitution, and that an on-disk override actually
- * overrides the bundled default (the whole point of the sparse-override lang mechanism).
+ * Verifies the lang system end-to-end via a real MockBukkit-loaded plugin: placeholder
+ * substitution, and that an on-disk override actually overrides the bundled default (the whole
+ * point of the sparse-override lang mechanism). Uses a dedicated test-only lang fixture
+ * ({@code src/test/resources/lang/test-lang.yml}, installed as the {@code lang/en_us.yml} on-disk
+ * override before each test) rather than the real bundled {@code lang/en_us.yml} prose, so these
+ * tests don't depend on production wording.
  */
 class MessageUtilTest extends BestToolsTestBase {
+
+    /**
+     * Installs the test-only lang fixture as the {@code lang/en_us.yml} on-disk override before
+     * every test, then reloads so {@code LangConfig} picks it up. The directory/file already exist
+     * after {@code setUpBase()}'s initial load (see {@link #onDiskOverrideWinsOverBundledDefault}),
+     * so this just overwrites it. {@link #onDiskOverrideWinsOverBundledDefault} overwrites it again
+     * itself mid-test, same as before this fixture existed.
+     */
+    @BeforeEach
+    void installTestLangFixture() throws IOException {
+        Path overrideFile = plugin.getDataFolder().toPath().resolve("lang").resolve("en_us.yml");
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream("lang/test-lang.yml")) {
+            assertNotNull(in, "test fixture lang/test-lang.yml must be on the test classpath");
+            Files.copy(in, overrideFile, StandardCopyOption.REPLACE_EXISTING);
+        }
+        plugin.configManager.reloadAll();
+    }
 
     private static String plain(net.kyori.adventure.text.Component component) {
         return PlainTextComponentSerializer.plainText().serialize(component);
@@ -31,7 +55,7 @@ class MessageUtilTest extends BestToolsTestBase {
         String rendered = plain(MessageUtil.get(player, "blacklistAdded", Placeholder.unparsed("items", "STONE, DIRT")));
 
         assertTrue(rendered.contains("STONE, DIRT"), "Placeholder <items> must be substituted: " + rendered);
-        assertTrue(rendered.contains("Added to blacklist"), "Bundled default text must render: " + rendered);
+        assertTrue(rendered.contains("TEST-BLACKLIST-ADDED"), "Fixture override text must render: " + rendered);
     }
 
     @Test

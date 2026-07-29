@@ -3,25 +3,47 @@ package net.kccricket.bestesttool;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Verifies {@link SelfTestStages} parses the real bundled {@code selftest/stages.yml} (not a
- * synthetic fixture) into the expected {@link SelfTestSpec}, and that a malformed on-disk override
- * skips bad entries instead of throwing — mirroring how {@code MainConfigTest} tests against the
- * real bundled {@code config.yml} rather than a fixture.
+ * Verifies {@link SelfTestStages} parses a dedicated test-only stages fixture
+ * ({@code src/test/resources/selftest/test-stages.yml}, installed as the {@code selftest.yml}
+ * on-disk override before each test) into the expected {@link SelfTestSpec}, and that a malformed
+ * on-disk override skips bad entries instead of throwing. The fixture started as a copy of the
+ * bundled production file's structure but is independent of it — production prose/values can
+ * change freely without touching this test.
  */
 class SelfTestStagesTest extends BestToolsTestBase {
 
+    /**
+     * Installs the test-only stages fixture as the {@code selftest.yml} on-disk override before
+     * every test, so {@link SelfTestStages#load} (which prefers an on-disk override over the
+     * bundled resource) never touches the real {@code selftest/stages.yml}. Tests that write their
+     * own bespoke override content (e.g. {@link #onDiskOverrideFullyReplacesTheBundledFile}) simply
+     * overwrite this before calling {@code load()}.
+     */
+    @BeforeEach
+    void installTestStagesFixture() throws IOException {
+        File override = new File(plugin.getDataFolder(), "selftest.yml");
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream("selftest/test-stages.yml")) {
+            assertNotNull(in, "test fixture selftest/test-stages.yml must be on the test classpath");
+            Files.copy(in, override.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
     @Test
-    void loadsTheBundledStagesFile() {
+    void loadsTheFixtureStagesFile() {
         SelfTestSpec spec = SelfTestStages.load(plugin);
 
         assertEquals(Material.SMOOTH_STONE, spec.pedestal);

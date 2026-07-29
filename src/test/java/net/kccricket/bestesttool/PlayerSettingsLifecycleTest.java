@@ -37,7 +37,7 @@ class PlayerSettingsLifecycleTest extends BestToolsTestBase {
         PlayerMock player = opPlayer();
         PlayerSetting before = plugin.getPlayerSetting(player);
 
-        player.performCommand("bestesttool reload");
+        player.performCommand("bestesttool admin reload");
 
         assertSame(before, plugin.getPlayerSetting(player),
                 "reload must not discard an online player's PlayerSetting instance");

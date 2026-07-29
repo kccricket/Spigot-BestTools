@@ -31,19 +31,19 @@ permissions:
     description: Full admin control for BestestTool
     default: op
     children:
-      bestesttool.reload: true
-      bestesttool.debug: true
-      bestesttool.selftest: true
-      bestesttool.benchmark: true
-  bestesttool.reload:
-    description: Reload the config via /bestesttool reload
+      bestesttool.admin.reload: true
+      bestesttool.admin.debug: true
+      bestesttool.admin.selftest: true
+      bestesttool.admin.benchmark: true
+  bestesttool.admin.reload:
+    description: Reload the config via /bestesttool admin reload
     default: op
-  bestesttool.debug:
-    description: Toggle debug mode via /bestesttool debug
+  bestesttool.admin.debug:
+    description: Toggle debug mode via /bestesttool admin debug
     default: op
-  bestesttool.selftest:
-    description: Run the in-game self-test via /bestesttool selftest (also requires enable_selftest in config.yml)
+  bestesttool.admin.selftest:
+    description: Run the in-game self-test via /bestesttool admin selftest (also requires enable_selftest in config.yml)
     default: op
-  bestesttool.benchmark:
-    description: Run the tool-selection benchmark via /bestesttool benchmark (also requires enable_benchmark in config.yml)
+  bestesttool.admin.benchmark:
+    description: Run the tool-selection benchmark via /bestesttool admin benchmark (also requires enable_benchmark in config.yml)
     default: op

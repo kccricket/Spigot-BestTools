@@ -184,7 +184,6 @@ final class SelfTestStages {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private static List<Map<?, ?>> asMapList(Object raw) {
         if (!(raw instanceof List<?> list)) return List.of();
         List<Map<?, ?>> result = new ArrayList<>();

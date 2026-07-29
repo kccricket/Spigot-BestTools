@@ -112,7 +112,7 @@ class CommandBestToolsTest extends BestToolsTestBase {
     void reloadSubcommandDelegatesToCommandReload() {
         PlayerMock player = opPlayer();
 
-        player.performCommand("bestesttool reload");
+        player.performCommand("bestesttool admin reload");
 
         assertTrue(player.nextMessage().contains("reloaded"));
     }
@@ -122,10 +122,10 @@ class CommandBestToolsTest extends BestToolsTestBase {
         PlayerMock player = newPlayer();
         grant(player, "use", Grant.NEW);
 
-        // The "reload" node is gated by its own .requires(bestesttool.reload) — bestesttool.use
+        // The "reload" node is gated by its own .requires(bestesttool.admin.reload) — bestesttool.use
         // alone does not open it. Brigadier hides a .requires-failing node from parsing entirely,
         // so the observable effect is "no reload happened", not a noPermission chat message.
-        assertDoesNotThrow(() -> player.performCommand("bestesttool reload"));
+        assertDoesNotThrow(() -> player.performCommand("bestesttool admin reload"));
 
         String message = player.nextMessage();
         assertTrue(message == null || !message.contains("reloaded"));
@@ -136,7 +136,7 @@ class CommandBestToolsTest extends BestToolsTestBase {
         PlayerMock player = opPlayer();
         boolean before = Log.getDebugLevel() != DebugLevel.OFF;
 
-        player.performCommand("bestesttool debug");
+        player.performCommand("bestesttool admin debug");
 
         assertEquals(!before, Log.getDebugLevel() != DebugLevel.OFF);
     }

@@ -1,0 +1,4 @@
+# Test-only fixture for MessageUtilTest — installed as the lang/en_us.yml on-disk override before
+# each test, so tests never depend on the real bundled lang/en_us.yml prose. Sentinel values only:
+# distinctive enough that a real bundled message could never accidentally match one.
+blacklistAdded: "TEST-BLACKLIST-ADDED <items>"

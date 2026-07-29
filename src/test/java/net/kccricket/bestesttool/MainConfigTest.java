@@ -10,19 +10,21 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Verifies MainConfig's comment-carrying behavior against BestestTool's actual bundled
- * config.yml (not a synthetic fixture) — proving the real deliverable, not just KcMcLib's
- * isolated ResourceUpdater unit test.
+ * Verifies MainConfig's comment-carrying <em>wiring</em> (saveDefaultConfig + reloadConfig +
+ * copyDefaults + {@code ResourceUpdater.copyMissingKeyComments}) against the real bundled
+ * config.yml. The comment-carrying mechanism itself is already covered generically, against
+ * synthetic fixtures, by KcMcLib's {@code ResourceUpdaterTest} — these tests deliberately never
+ * hardcode config.yml's actual prose, reading whatever comment is currently on disk instead, so
+ * they verify the wiring still works without re-asserting that the resource's wording hasn't
+ * changed.
  */
 class MainConfigTest extends BestToolsTestBase {
 
@@ -33,30 +35,30 @@ class MainConfigTest extends BestToolsTestBase {
         File configFile = new File(plugin.getDataFolder(), "config.yml");
         assertTrue(configFile.exists(), "config.yml must exist on disk after the first load");
 
-        // Simulate an old on-disk file predating the "enable_benchmark" key (the bundled
-        // default's last key): remove it (and any trailing blank/comment lines) and reload, as if
-        // a user manually edited an old version.
+        YamlConfiguration before = YamlConfiguration.loadConfiguration(configFile);
+        List<String> originalComments = before.getComments("enable_benchmark");
+        String firstCommentLine = originalComments.stream().filter(java.util.Objects::nonNull).findFirst()
+                .orElseThrow(() -> new AssertionError(
+                        "test fixture assumption: enable_benchmark must carry a comment in the bundled default"));
+        boolean originalValue = before.getBoolean("enable_benchmark");
+
+        // Simulate an old on-disk file predating the "enable_benchmark" key: truncate the file
+        // right before its comment block, as if a user's file was written before this key existed.
         String content = Files.readString(configFile.toPath());
-        int commentIdx = content.indexOf("# Master switch for /bestesttool benchmark");
+        int commentIdx = content.indexOf("# " + firstCommentLine);
         assertTrue(commentIdx >= 0, "test fixture assumption: enable_benchmark's comment must be present pre-edit");
-        String edited = content.substring(0, commentIdx);
-        Files.writeString(configFile.toPath(), edited);
+        Files.writeString(configFile.toPath(), content.substring(0, commentIdx));
 
         plugin.configManager.reloadAll();
 
         String reloadedContent = Files.readString(configFile.toPath());
         YamlConfiguration reloaded = YamlConfiguration.loadConfiguration(configFile);
 
-        assertEquals(false, reloaded.getBoolean("enable_benchmark"),
+        assertEquals(originalValue, reloaded.getBoolean("enable_benchmark"),
                 "Missing key's value must be restored from the bundled default on reload");
-        assertEquals(Arrays.asList(null,
-                        "Master switch for /bestesttool benchmark, a synthetic tool-selection speed test: it ramps a",
-                        "fixed, hardcoded workload against the selection routine until a tick blows its 50ms budget, then",
-                        "reports how many selections/tick the server can sustain. Requires bestesttool.benchmark as well.",
-                        "Leave this false on production servers — a run deliberately blows the tick budget on purpose."),
-                reloaded.getComments("enable_benchmark"),
+        assertEquals(originalComments, reloaded.getComments("enable_benchmark"),
                 "Missing key's comment from the bundled default must be carried over on reload");
-        assertTrue(reloadedContent.contains("# Master switch for /bestesttool benchmark"),
+        assertTrue(reloadedContent.contains("# " + firstCommentLine),
                 "The comment must actually appear in the saved file text, not just be recoverable via the API");
     }
 
@@ -64,21 +66,20 @@ class MainConfigTest extends BestToolsTestBase {
     void existingKeysCommentIsNeverOverwrittenOnReload() throws IOException {
         File configFile = new File(plugin.getDataFolder(), "config.yml");
 
+        YamlConfiguration before = YamlConfiguration.loadConfiguration(configFile);
+        List<String> originalComments = before.getComments("enable_benchmark");
+        String lastCommentLine = originalComments.get(originalComments.size() - 1);
+
         String edited = Files.readString(configFile.toPath())
-                .replace("# Leave this false on production servers — a run deliberately blows the tick budget on purpose.",
-                        "# my own custom comment");
+                .replace("# " + lastCommentLine, "# my own custom comment");
         Files.writeString(configFile.toPath(), edited);
 
         plugin.configManager.reloadAll();
 
+        List<String> expected = new ArrayList<>(originalComments);
+        expected.set(expected.size() - 1, "my own custom comment");
         YamlConfiguration reloaded = YamlConfiguration.loadConfiguration(configFile);
-        assertEquals(Arrays.asList(
-                        null,
-                        "Master switch for /bestesttool benchmark, a synthetic tool-selection speed test: it ramps a",
-                        "fixed, hardcoded workload against the selection routine until a tick blows its 50ms budget, then",
-                        "reports how many selections/tick the server can sustain. Requires bestesttool.benchmark as well.",
-                        "my own custom comment"),
-                reloaded.getComments("enable_benchmark"),
+        assertEquals(expected, reloaded.getComments("enable_benchmark"),
                 "A user's own comment on an existing key must survive reload unchanged");
     }
 

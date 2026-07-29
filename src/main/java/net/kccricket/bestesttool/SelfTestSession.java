@@ -3,7 +3,6 @@ package net.kccricket.bestesttool;
 import net.kccricket.kcmclib.logging.Log;
 
 import org.bukkit.GameMode;
-import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;

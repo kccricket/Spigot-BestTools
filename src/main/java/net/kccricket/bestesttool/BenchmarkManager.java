@@ -49,6 +49,7 @@ final class BenchmarkManager {
         ScheduledTask task;
 
         // Consumes the selection result so the JIT can't prove the call is dead code and elide it.
+        @SuppressWarnings("unused")
         int sink;
 
         Session(CommandSender sender, BenchmarkWorkload.KitSize kitSize) {

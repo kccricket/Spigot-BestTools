@@ -78,12 +78,25 @@ public final class BestToolsCommands {
                 .then(buildToggleHotbarOnly(main))
                 .then(buildFavoriteSlot(main))
                 .then(buildRefill(main))
+                .then(buildBlacklist(main))
+                .then(buildAdmin(main))
+                .build();
+    }
+
+    // -------------------------------------------------------------------------
+    // /bestesttool admin — groups the admin-only subcommands (reload, debug, selftest,
+    // benchmark) under a single node, mirroring the bestesttool.admin permission's children in
+    // paper-plugin.yml. The "admin" node itself carries no .requires: a sender granted only one
+    // child permission (e.g. bestesttool.admin.reload, without bestesttool.admin) must still be able to
+    // reach that child, so visibility is left to each child's own .requires, same as before.
+    // -------------------------------------------------------------------------
+
+    private static LiteralArgumentBuilder<CommandSourceStack> buildAdmin(Main main) {
+        return Commands.literal("admin")
                 .then(buildReload(main))
                 .then(buildDebug(main))
-                .then(buildBlacklist(main))
                 .then(buildSelfTest(main))
-                .then(buildBenchmark(main))
-                .build();
+                .then(buildBenchmark(main));
     }
 
     /**
@@ -188,8 +201,8 @@ public final class BestToolsCommands {
     }
 
     // -------------------------------------------------------------------------
-    // /bestesttool reload | debug — admin-only, hidden from tab completion
-    // for senders lacking the node (via .requires), rather than answered with noPermission.
+    // /bestesttool admin reload | debug — hidden from tab completion for senders lacking the
+    // node (via .requires), rather than answered with noPermission.
     // -------------------------------------------------------------------------
 
     private static LiteralArgumentBuilder<CommandSourceStack> buildReload(Main main) {
@@ -229,9 +242,9 @@ public final class BestToolsCommands {
     }
 
     // -------------------------------------------------------------------------
-    // /bestesttool selftest — needs both the enable_selftest config flag and the permission node,
-    // gated with .requires(...) like reload/debug so it's hidden from tab completion (and
-    // unparseable) rather than answered with a noPermission message.
+    // /bestesttool admin selftest — needs both the enable_selftest config flag and the
+    // permission node, gated with .requires(...) like reload/debug so it's hidden from tab
+    // completion (and unparseable) rather than answered with a noPermission message.
     // -------------------------------------------------------------------------
 
     private static LiteralArgumentBuilder<CommandSourceStack> buildSelfTest(Main main) {
@@ -271,10 +284,10 @@ public final class BestToolsCommands {
     }
 
     // -------------------------------------------------------------------------
-    // /bestesttool benchmark — needs both the enable_benchmark config flag and the permission
-    // node, gated the same way as selftest. Unlike selftest's subcommands, these take a plain
-    // CommandSender (no requirePlayer(ctx)): the workload is synthetic, so the command works from
-    // console too.
+    // /bestesttool admin benchmark — needs both the enable_benchmark config flag and the
+    // permission node, gated the same way as selftest. Unlike selftest's subcommands, these take
+    // a plain CommandSender (no requirePlayer(ctx)): the workload is synthetic, so the command
+    // works from console too.
     // -------------------------------------------------------------------------
 
     private static LiteralArgumentBuilder<CommandSourceStack> buildBenchmark(Main main) {

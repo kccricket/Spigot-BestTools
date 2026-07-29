@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- Moved `reload`, `debug`, `selftest`, and `benchmark` under a new `/bestesttool admin` subcommand
+  (e.g. `/bestesttool admin reload`). Their permission nodes are renamed to match —
+  `bestesttool.admin.reload`/`.debug`/`.selftest`/`.benchmark` — as children of the existing
+  `bestesttool.admin` umbrella node
 - Replaced `/bestesttool performance` (and its `measure_performance` config key) with
   `/bestesttool benchmark` (`start [full|hotbar]`/`status`/`stop`) — the old command passively
   sampled real event-handler wall time and its numbers depended entirely on how fast a player
@@ -8,23 +12,23 @@
   instead ramps a fixed, hardcoded synthetic workload (not the real world or a real inventory)
   against the tool-selection routine, doubling the batch size each tick until one exceeds the 50ms
   tick budget, then reports the peak sustainable rate and the measured cost per selection. Works
-  from console as well as in-game, and is gated the same way as `/bestesttool selftest`: a new
-  `enable_benchmark` config key (default `false`) plus the `bestesttool.benchmark` permission
-  (default `op`)
+  from console as well as in-game, and is gated the same way as `/bestesttool admin selftest`: a
+  new `enable_benchmark` config key (default `false`) plus the `bestesttool.admin.benchmark`
+  permission (default `op`)
 - Fixed the per-player best-tool cache going stale after a player rearranged their own inventory
   (e.g. dragging a tool out of the hotbar via the inventory screen) — only dropping, picking up,
   switching held slot, or breaking a tool invalidated it, so BestTools could keep reusing a
   decision made against inventory contents that no longer existed until one of those four
   unrelated events happened to fire. `BestToolsCacheListener` now also invalidates on
   `InventoryClickEvent`/`InventoryDragEvent`
-- Added `/bestesttool selftest` (`start [<stage>]`/`next`/`status`/`stop`), a live in-game
+- Added `/bestesttool admin selftest` (`start [<stage>]`/`next`/`status`/`stop`), a live in-game
   correctness test: it builds a labelled arena of blocks (and, for the combat/refill stages, mobs)
   next to the tester, hands them a known hotbar kit, and reports pass/fail as they interact with
   each one — comparing the plugin's actual choice against a declared expectation
   (`selftest/stages.yml`, overridable via `plugins/BestestTool/selftest.yml`). Forces the tester
   into survival for the run (the plugin does nothing in creative) and restores their inventory,
   game mode, and BestestTool settings afterward, including a crash-safety backup restored on next
-  join if the server goes down mid-test. Gated behind both the `bestesttool.selftest` permission
+  join if the server goes down mid-test. Gated behind both the `bestesttool.admin.selftest` permission
   (default `op`) and a new `enable_selftest` config key (default `false`) — an op has to opt in
   explicitly, since it forces survival mode and replaces the tester's inventory for the duration
 - Removed the settings GUI (`/bestesttool gui`/`settings`) entirely — a shift-click or drag from
