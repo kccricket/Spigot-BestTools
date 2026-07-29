@@ -146,6 +146,10 @@ default_locale: en_us
 
 # ----- Technical stuff! -----
 
+# Minimum milliseconds between a player's successive commands/blacklist edits. A value <= 0
+# disables throttling. Players holding bestesttool.throttle.bypass are never throttled.
+action_cooldown_ms: 150
+
 # Send anonymous usage statistics to bStats (https://bstats.org).
 # Set to false to opt out.
 enable_metrics: true

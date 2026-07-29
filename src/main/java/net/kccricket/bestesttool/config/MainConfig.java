@@ -234,6 +234,14 @@ public class MainConfig implements ManagedConfig {
     }
 
     /**
+     * Minimum milliseconds between a player's successive actions ({@code action_cooldown_ms}). A
+     * value &le; 0 disables the {@link net.kccricket.bestesttool.security.ActionThrottle}.
+     */
+    public int getActionCooldownMs() {
+        return plugin.getConfig().getInt("action_cooldown_ms", 150);
+    }
+
+    /**
      * Master switch for {@code /bestesttool admin selftest} — off by default even for an op, since
      * the self-test forces the tester into survival, wipes their held/inventory state, and rebuilds
      * terrain around them. An admin has to opt in on top of holding {@code bestesttool.admin.selftest}.

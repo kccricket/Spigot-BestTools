@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- Added a new `action_cooldown_ms` config key (default 150ms) that throttles repeated
+  `/bestesttool` command use and blacklist edits per player, mirroring ClickSorted's
+  `ActionThrottle` — a rate-limited `actionTooFast` notice is shown on denial. Players holding
+  `bestesttool.throttle.bypass` are exempt
 - Routed the plugin's two remaining `getLogger()` call sites (the `dump.csv` failure warning and the
   per-batch `/bestesttool admin benchmark` progress line) through the shared `Log` facade instead,
   so debug-level gating and future logging changes apply uniformly

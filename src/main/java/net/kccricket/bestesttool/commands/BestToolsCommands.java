@@ -43,10 +43,9 @@ import net.kccricket.bestesttool.listeners.BestToolsListener;
  * {@link BestestToolPlugin#onEnable}) supersedes that workaround and adds real per-argument suggestions and
  * client-side validation.
  *
- * <p>Every {@code executes} body dereferences {@code main.command*} fields rather than closing
- * over a local reference, because {@link BestestToolPlugin#load} reassigns all of them on
- * {@code /bestesttool reload} while this tree is built and registered exactly once, in
- * {@code onEnable}.
+ * <p>Built and registered exactly once, in {@link BestestToolPlugin#onEnable} — {@code /bestesttool
+ * admin reload} ({@link BestestToolPlugin#reload}) only re-reads config, it does not rebuild this
+ * tree or the {@code main.command*} fields it dereferences.
  */
 public final class BestToolsCommands {
 
@@ -72,7 +71,8 @@ public final class BestToolsCommands {
         return Commands.literal("bestesttool")
                 .executes(ctx -> {
                     Player player = requirePlayer(ctx);
-                    if (player == null || !checkPermission(main, player, Permissions.PERM_USE)) {
+                    if (player == null || throttled(main, player)
+                            || !checkPermission(main, player, Permissions.PERM_USE)) {
                         return Command.SINGLE_SUCCESS;
                     }
                     main.commandBestTools.toggleBestTools(player);
@@ -353,7 +353,8 @@ public final class BestToolsCommands {
         return Commands.literal(literal)
                 .executes(ctx -> {
                     Player player = requirePlayer(ctx);
-                    if (player == null || !checkPermission(main, player, Permissions.PERM_USE)) {
+                    if (player == null || throttled(main, player)
+                            || !checkPermission(main, player, Permissions.PERM_USE)) {
                         return Command.SINGLE_SUCCESS;
                     }
                     main.commandBlacklist.addOrRemove(player, add, List.of());
@@ -369,7 +370,8 @@ public final class BestToolsCommands {
                                 : suggestBlacklistedMaterialToken(main, ctx, builder))
                         .executes(ctx -> {
                             Player player = requirePlayer(ctx);
-                            if (player == null || !checkPermission(main, player, Permissions.PERM_USE)) {
+                            if (player == null || throttled(main, player)
+                                    || !checkPermission(main, player, Permissions.PERM_USE)) {
                                 return Command.SINGLE_SUCCESS;
                             }
                             String raw = StringArgumentType.getString(ctx, "materials");
@@ -384,7 +386,8 @@ public final class BestToolsCommands {
     private static int runBlacklistFromInventory(
             BestestToolPlugin main, CommandContext<CommandSourceStack> ctx, boolean add, boolean hotbarOnly) {
         Player player = requirePlayer(ctx);
-        if (player == null || !checkPermission(main, player, Permissions.PERM_USE)) {
+        if (player == null || throttled(main, player)
+                || !checkPermission(main, player, Permissions.PERM_USE)) {
             return Command.SINGLE_SUCCESS;
         }
         main.commandBlacklist.addOrRemoveFromInventory(player, add, hotbarOnly);
@@ -478,6 +481,15 @@ public final class BestToolsCommands {
     // -------------------------------------------------------------------------
     // Shared helpers
     // -------------------------------------------------------------------------
+
+    /**
+     * Shared throttle gate for command executors, mirroring ClickSorted's
+     * {@code ClickSortedCommands.throttled}: on denial, {@link net.kccricket.bestesttool.security.ActionThrottle}
+     * itself sends the rate-limited {@code actionTooFast} notice.
+     */
+    private static boolean throttled(BestestToolPlugin main, Player player) {
+        return main.getActionThrottle().throttled(player);
+    }
 
     /** Sends {@code noPermission} and returns {@code false} unless {@code sender} has {@code node}. */
     private static boolean checkPermission(BestestToolPlugin main, CommandSender sender, String node) {

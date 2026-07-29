@@ -7,9 +7,11 @@ import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 
 import net.kccricket.bestesttool.config.ConfigManager;
 import net.kccricket.bestesttool.placeholders.BestToolsPlaceholders;
+import net.kccricket.bestesttool.security.ActionThrottle;
 import net.kccricket.bestesttool.text.MessageUtil;
 
 import net.kccricket.kcmclib.logging.Log;
+import net.kccricket.kcmclib.text.CooldownMessenger;
 import net.kccricket.kcmclib.update.ModrinthUpdateChecker;
 
 import org.bstats.bukkit.Metrics;
@@ -54,7 +56,17 @@ public class BestestToolPlugin extends JavaPlugin {
         return configManager;
     }
 
+    public CooldownMessenger getMessenger() {
+        return messenger;
+    }
+
+    public ActionThrottle getActionThrottle() {
+        return actionThrottle;
+    }
+
     private Metrics metrics;
+    private final CooldownMessenger messenger = new CooldownMessenger();
+    public ActionThrottle actionThrottle;
 
     public ConfigManager configManager;
     public BestToolsHandler toolHandler;
@@ -98,6 +110,8 @@ public class BestestToolPlugin extends JavaPlugin {
         if (configManager.main().getEnableMetrics()) {
             metrics = new Metrics(this, 32836);
         }
+
+        actionThrottle = new ActionThrottle(this);
 
         updateChecker = new ModrinthUpdateChecker(
                 this,

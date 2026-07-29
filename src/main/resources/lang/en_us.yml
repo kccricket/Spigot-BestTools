@@ -109,3 +109,7 @@ benchmarkStopped: "<gray>Benchmark stopped.</gray>"
 benchmarkStatus: "<gray>Benchmark running: last completed batch <gold><n></gold> in <ms>ms.</gray>"
 # Placeholders: <kit>, <peak>, <nspersel>, <pertick>
 benchmarkFinished: "<green>Benchmark finished</green> <gray>(kit: <gold><kit></gold>). Peak batch under 50ms: <gold><peak></gold> selections (<nspersel> ns/selection) — sustainable rate: <gold>~<pertick></gold> selections/tick.</gray>"
+
+# Rate-limited notice (at most once per few seconds) shown when a player's commands/blacklist
+# edits are being throttled by action_cooldown_ms.
+actionTooFast: "<red>Slow down — you're acting too quickly."
