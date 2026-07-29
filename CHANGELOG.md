@@ -1,6 +1,11 @@
 # Changelog
 
 ## Unreleased
+- Fixed `consider_swords_for_leaves`/`consider_swords_for_cobwebs`/`use_axe_as_sword`/
+  `global_block_blacklist` not taking effect on `/bestesttool admin reload` — these were cached at
+  construction time in `BestToolsHandler`/`BestToolsListener`, which are now (see below) only ever
+  constructed once, in `onEnable`. They're now parsed once per load/reload in `MainConfig` and read
+  live from there
 - Renamed the plugin's main class from `Main` to `BestestToolPlugin` (matches ClickSorted's
   `ClickSortedPlugin`), moved its 34 previously flat classes into `commands/`, `listeners/`,
   `tool/`, `refill/`, `model/`, `selftest/`, `benchmark/`, and `util/` subpackages, and reworked

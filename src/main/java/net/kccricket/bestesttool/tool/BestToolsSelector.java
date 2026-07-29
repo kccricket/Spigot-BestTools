@@ -65,7 +65,7 @@ public final class BestToolsSelector {
         Material mat = block.getType();
         if (mat == Material.AIR) return ToolDecision.NOT_APPLICABLE_DECISION;
 
-        if (main.toolHandler.globalBlacklist.contains(mat)) return ToolDecision.NOT_APPLICABLE_DECISION;
+        if (handler.isGloballyBlacklisted(mat)) return ToolDecision.NOT_APPLICABLE_DECISION;
 
         // Blacklist
         if (playerSetting.getBlacklist().contains(mat)) return ToolDecision.NOT_APPLICABLE_DECISION;

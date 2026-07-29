@@ -40,7 +40,6 @@ public class BestToolsHandler {
     // Configurable End //
 
     final HashMap<Material,Tool> toolMap = new HashMap<>();
-    final HashSet<Material> globalBlacklist = new HashSet<>();
     ArrayList<Tag<Material>> usedTags = new ArrayList<>();
 
     // TODO: Cache valid tool materials here
@@ -72,27 +71,9 @@ public class BestToolsHandler {
 
     final ArrayList<Material> weapons = new ArrayList<>();
 
-    // Cached like BestToolsListener.useAxeAsWeapon: read once per load/reload (BestToolsHandler is
-    // reconstructed fresh in BestestToolPlugin.load()), not on every candidate check.
-    boolean considerSwordsForLeaves;
-    boolean considerSwordsForCobwebs;
-
     public BestToolsHandler(BestestToolPlugin main) {
 
         this.main=Objects.requireNonNull(main,"BestestToolPlugin must not be null");
-
-        considerSwordsForLeaves = main.configManager.main().getConsiderSwordsForLeaves();
-        considerSwordsForCobwebs = main.configManager.main().getConsiderSwordsForCobwebs();
-
-        for(String name : main.configManager.main().getGlobalBlockBlacklist()) {
-            Material mat = Material.getMaterial(name.toUpperCase());
-            if(mat==null) {
-                main.getLogger().warning("Invalid material on global_block_blacklist: "+name);
-                continue;
-            }
-            Log.debug("Adding to global block blacklist: " + mat.name());
-            globalBlacklist.add(mat);
-        }
 
         Arrays.stream(Material.values()).forEach(material -> {
             if(material.name().endsWith("_LEAVES")) {
@@ -191,9 +172,14 @@ public class BestToolsHandler {
      */
     boolean isCandidate(ItemStack item, Material target) {
         if(!swords.contains(item.getType())) return true;
-        if(LeavesUtils.isLeaves(target)) return considerSwordsForLeaves;
-        if(target == Material.COBWEB) return considerSwordsForCobwebs;
+        if(LeavesUtils.isLeaves(target)) return main.configManager.main().getConsiderSwordsForLeaves();
+        if(target == Material.COBWEB) return main.configManager.main().getConsiderSwordsForCobwebs();
         return true;
+    }
+
+    /** Live read of {@code global_block_blacklist}, parsed and cached once per load/reload in {@link net.kccricket.bestesttool.config.MainConfig}. */
+    public boolean isGloballyBlacklisted(Material mat) {
+        return main.configManager.main().getGlobalBlockBlacklist().contains(mat);
     }
 
     static int getEmptyHotbarSlot(PlayerInventory inv) {

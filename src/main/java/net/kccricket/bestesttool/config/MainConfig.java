@@ -6,11 +6,11 @@ import net.kccricket.kcmclib.config.ResourceUpdater;
 import net.kccricket.kcmclib.logging.DebugLevel;
 import net.kccricket.kcmclib.logging.Log;
 
-import java.util.List;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
-import net.kccricket.bestesttool.model.PlayerSetting;
+import org.bukkit.Material;
 
 /**
  * Wraps {@code config.yml} via Bukkit's built-in {@code JavaPlugin} config machinery, mirroring
@@ -24,9 +24,16 @@ import net.kccricket.bestesttool.model.PlayerSetting;
 public class MainConfig implements ManagedConfig {
 
     private final BestestToolPlugin plugin;
-    // Reassigned on reload; read on Folia-async-scheduler threads (e.g. ModrinthUpdateChecker's
-    // notice lines), so publish via volatile — mirrors ClickSorted's MainConfig.
+    // Reassigned on reload; read on Folia region threads (e.g. every block break/attack, now that
+    // BestToolsHandler/BestToolsListener are constructed once in onEnable rather than rebuilt per
+    // reload — see BestestToolPlugin.reload()), so published via volatile, mirroring ClickSorted's
+    // MainConfig. defaultLocale is additionally read on Folia-async-scheduler threads (e.g.
+    // ModrinthUpdateChecker's notice lines).
     private volatile Locale defaultLocale = Locale.forLanguageTag("en-US");
+    private volatile boolean considerSwordsForLeaves;
+    private volatile boolean considerSwordsForCobwebs;
+    private volatile boolean useAxeAsSword;
+    private volatile Set<Material> globalBlockBlacklist = Set.of();
 
     public MainConfig(BestestToolPlugin plugin) {
         this.plugin = plugin;
@@ -113,6 +120,24 @@ public class MainConfig implements ManagedConfig {
     private void applyToRuntime() {
         Log.setDebugLevel(DebugLevel.parse(plugin.getConfig().getString("debug_level"), DebugLevel.OFF));
         defaultLocale = parseLocaleToken(plugin.getConfig().getString("default_locale", "en_us"));
+        considerSwordsForLeaves = plugin.getConfig().getBoolean("consider_swords_for_leaves", false);
+        considerSwordsForCobwebs = plugin.getConfig().getBoolean("consider_swords_for_cobwebs", false);
+        useAxeAsSword = plugin.getConfig().getBoolean("use_axe_as_sword", false);
+        globalBlockBlacklist = parseGlobalBlockBlacklist();
+    }
+
+    /** Unknown material name -> warn and skip, mirroring ClickSorted's blacklist-parsing policy. */
+    private Set<Material> parseGlobalBlockBlacklist() {
+        Set<Material> mats = new HashSet<>();
+        for (String name : plugin.getConfig().getStringList("global_block_blacklist")) {
+            Material mat = Material.getMaterial(name.toUpperCase(Locale.ROOT));
+            if (mat == null) {
+                Log.warning("Unknown material on global_block_blacklist: '" + name + "' — skipping");
+                continue;
+            }
+            mats.add(mat);
+        }
+        return mats;
     }
 
     /** Parses a lowercase Minecraft-style locale token ({@code lang} or {@code lang_country}), falling back to {@code en_us} on garbage. */
@@ -166,19 +191,20 @@ public class MainConfig implements ManagedConfig {
     }
 
     public boolean getConsiderSwordsForLeaves() {
-        return plugin.getConfig().getBoolean("consider_swords_for_leaves", false);
+        return considerSwordsForLeaves;
     }
 
     public boolean getConsiderSwordsForCobwebs() {
-        return plugin.getConfig().getBoolean("consider_swords_for_cobwebs", false);
+        return considerSwordsForCobwebs;
     }
 
     public boolean getUseAxeAsSword() {
-        return plugin.getConfig().getBoolean("use_axe_as_sword", false);
+        return useAxeAsSword;
     }
 
-    public List<String> getGlobalBlockBlacklist() {
-        return plugin.getConfig().getStringList("global_block_blacklist");
+    /** Parsed once per load/reload; an unrecognized material name is warned about and skipped. */
+    public Set<Material> getGlobalBlockBlacklist() {
+        return globalBlockBlacklist;
     }
 
     // -------------------------------------------------------------------------

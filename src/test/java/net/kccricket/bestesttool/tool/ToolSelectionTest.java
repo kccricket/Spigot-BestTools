@@ -533,13 +533,16 @@ class ToolSelectionTest extends BestToolsTestBase {
     }
 
     @Test
-    void invalidGlobalBlockBlacklistEntryIsSkippedNotThrown() {
-        plugin.getConfig().set("global_block_blacklist", List.of("NOT_A_REAL_MATERIAL", "STONE"));
+    void invalidGlobalBlockBlacklistEntryIsSkippedNotThrown() throws java.io.IOException {
+        java.io.File configFile = new java.io.File(plugin.getDataFolder(), "config.yml");
+        String edited = java.nio.file.Files.readString(configFile.toPath())
+                .replace("global_block_blacklist: []", "global_block_blacklist: [NOT_A_REAL_MATERIAL, STONE]");
+        java.nio.file.Files.writeString(configFile.toPath(), edited);
 
-        BestToolsHandler handler = assertDoesNotThrow(() -> new BestToolsHandler(plugin));
+        assertDoesNotThrow(() -> plugin.configManager.reloadAll());
 
-        assertTrue(handler.globalBlacklist.contains(Material.STONE));
-        assertFalse(handler.globalBlacklist.contains(Material.DIRT));
+        assertTrue(plugin.toolHandler.isGloballyBlacklisted(Material.STONE));
+        assertFalse(plugin.toolHandler.isGloballyBlacklisted(Material.DIRT));
     }
 
     @Test
