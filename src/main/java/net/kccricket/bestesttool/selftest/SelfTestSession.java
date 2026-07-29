@@ -90,7 +90,7 @@ public final class SelfTestSession {
         settings.setFavoriteSlot(-1);
         settings.setSwordOnMobs(true);
         settings.setRefillEnabled(refillEnabledForThisStage);
-        settings.getBlacklist().mats.clear();
+        settings.getBlacklist().clear();
         settings.getBtcache().invalidated();
     }
 
@@ -145,7 +145,7 @@ public final class SelfTestSession {
         settings.setFavoriteSlot(savedFavoriteSlot);
         settings.setSwordOnMobs(savedSwordOnMobs);
         settings.setRefillEnabled(savedRefillEnabled);
-        settings.getBlacklist().mats.clear();
+        settings.getBlacklist().clear();
         for (String s : savedBlacklist) settings.getBlacklist().add(s);
         settings.getBtcache().invalidated();
 
@@ -191,7 +191,7 @@ public final class SelfTestSession {
             settings.setFavoriteSlot(yaml.getInt("favoriteSlot", settings.getFavoriteSlot()));
             settings.setSwordOnMobs(yaml.getBoolean("swordOnMobs", settings.isSwordOnMobs()));
             settings.setRefillEnabled(yaml.getBoolean("refillEnabled", settings.isRefillEnabled()));
-            settings.getBlacklist().mats.clear();
+            settings.getBlacklist().clear();
             for (String s : yaml.getStringList("blacklist")) settings.getBlacklist().add(s);
             settings.getBtcache().invalidated();
 

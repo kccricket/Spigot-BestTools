@@ -58,8 +58,8 @@ public class CommandBlacklist {
     void reset(Player p) {
         main.getPlayerSetting(p).getBtcache().invalidated();
         Blacklist b = main.getPlayerSetting(p).getBlacklist();
-        p.sendMessage(MessageUtil.get(p, "blacklistRemoved", Placeholder.unparsed("items", matlist2string(b.mats))));
-        b.mats.clear();
+        p.sendMessage(MessageUtil.get(p, "blacklistRemoved", Placeholder.unparsed("items", stringlist2string(b.toStringList()))));
+        b.clear();
     }
 
     /**

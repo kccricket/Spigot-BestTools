@@ -2,71 +2,80 @@ package net.kccricket.bestesttool.model;
 
 import net.kccricket.bestesttool.text.MessageUtil;
 
+import net.kccricket.kcmclib.pdc.PdcStringSet;
+
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
+/**
+ * A per-player set of materials to never auto-switch for, backed directly by PDC via
+ * {@link PdcStringSet} — every mutation ({@link #add}/{@link #remove}) persists immediately,
+ * rather than riding along on the next unrelated {@link PlayerSetting#save()} call. The
+ * {@code bestesttool:blacklist} key matches what {@code PlayerSetting} used to manage itself
+ * (namespace/key/comma-delimiter all identical), so existing on-disk player data is unaffected.
+ */
 public class Blacklist {
 
-    public List<Material> mats;
+    private static final PdcStringSet<Material> STORE = new PdcStringSet<>(
+            new NamespacedKey("bestesttool", "blacklist"), ",",
+            Material::getMaterial, Material::name, HashSet::new);
 
-    Blacklist(List<String> strings) {
-        mats = new ArrayList<>();
-        for(String s : strings) {
-            Material mat = Material.getMaterial(s);
-            if(mat!=null) mats.add(mat);
-        }
-    }
+    private final Player player;
 
-    Blacklist() {
-        mats = new ArrayList<>();
+    Blacklist(Player player) {
+        this.player = player;
     }
 
     public void add(String string) {
         Material mat = Material.getMaterial(string);
-        if(mat!=null) mats.add(mat);
+        if (mat != null) add(mat);
     }
 
     public void add(Material mat) {
-        mats.add(mat);
+        STORE.add(player, mat);
     }
 
     public boolean contains(Material mat) {
-        return mats.contains(mat);
+        return STORE.get(player).contains(mat);
     }
 
     public void remove(Material mat) {
-        if(mats.contains(mat)) mats.remove(mat);
+        STORE.remove(player, mat);
     }
 
-    public List<String> toStringList() {
-        ArrayList<String> list = new ArrayList<>();
+    public void clear() {
+        STORE.clear(player);
+    }
 
-        for(Material mat : mats) {
-            list.add(mat.name());
-        }
-        return list;
+    /** Alphabetical by material name, for deterministic display/serialization order. */
+    public List<String> toStringList() {
+        return STORE.get(player).stream()
+                .map(Material::name)
+                .sorted()
+                .toList();
     }
 
     public void print(Player p) {
-
-        if(mats.size()==0) {
+        List<String> names = toStringList();
+        if (names.isEmpty()) {
             MessageUtil.send(p, "blacklistEmpty");
             return;
         }
 
         p.sendMessage(MessageUtil.get(p, "blacklistTitle"));
 
-        for(Material mat : mats) {
-            Component link = createLink("[X] ","/bestesttool blacklist remove "+mat.name());
-            Component name = Component.text(mat.name(), NamedTextColor.GRAY);
-            p.sendMessage(link.append(name));
+        for (String name : names) {
+            Component link = createLink("[X] ", "/bestesttool blacklist remove " + name);
+            Component nameComponent = Component.text(name, NamedTextColor.GRAY);
+            p.sendMessage(link.append(nameComponent));
         }
     }
 

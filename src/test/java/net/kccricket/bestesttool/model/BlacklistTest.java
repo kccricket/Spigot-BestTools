@@ -3,19 +3,16 @@ package net.kccricket.bestesttool.model;
 import net.kccricket.bestesttool.BestToolsTestBase;
 import org.bukkit.Material;
 import org.junit.jupiter.api.Test;
+import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import net.kccricket.bestesttool.model.Blacklist;
 
 class BlacklistTest extends BestToolsTestBase {
 
     @Test
     void addRemoveContainsRoundTrip() {
-        Blacklist b = new Blacklist();
+        Blacklist b = new Blacklist(newPlayer());
         b.add(Material.STONE);
         assertTrue(b.contains(Material.STONE));
 
@@ -25,26 +22,28 @@ class BlacklistTest extends BestToolsTestBase {
 
     @Test
     void addByStringName() {
-        Blacklist b = new Blacklist();
+        Blacklist b = new Blacklist(newPlayer());
         b.add("DIRT");
         assertTrue(b.contains(Material.DIRT));
     }
 
     @Test
-    void toStringListRoundTrip() {
-        Blacklist b = new Blacklist();
+    void mutationsPersistImmediatelyToPdcForTheSamePlayer() {
+        PlayerMock player = newPlayer();
+        Blacklist b = new Blacklist(player);
         b.add(Material.STONE);
         b.add(Material.DIRT);
 
-        Blacklist restored = new Blacklist(b.toStringList());
+        Blacklist reloaded = new Blacklist(player);
 
-        assertTrue(restored.contains(Material.STONE));
-        assertTrue(restored.contains(Material.DIRT));
+        assertTrue(reloaded.contains(Material.STONE));
+        assertTrue(reloaded.contains(Material.DIRT));
     }
 
     @Test
     void invalidStringIsIgnored() {
-        Blacklist b = new Blacklist(List.of("NOT_A_MATERIAL"));
-        assertEquals(0, b.mats.size());
+        Blacklist b = new Blacklist(newPlayer());
+        b.add("NOT_A_MATERIAL");
+        assertTrue(b.toStringList().isEmpty());
     }
 }

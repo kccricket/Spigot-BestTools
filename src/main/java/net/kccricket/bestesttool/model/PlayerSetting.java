@@ -5,8 +5,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.util.Arrays;
-import java.util.List;
 import net.kccricket.bestesttool.selftest.SelfTestSession;
 import net.kccricket.bestesttool.tool.BestToolsCache;
 
@@ -30,7 +28,6 @@ public class PlayerSetting {
         private static final NamespacedKey KEY_SWORD_ON_MOBS = new NamespacedKey(NAMESPACE, "sword_on_mobs");
         private static final NamespacedKey KEY_HAS_SEEN_BESTTOOLS_MESSAGE = new NamespacedKey(NAMESPACE, "has_seen_besttools_message");
         private static final NamespacedKey KEY_HAS_SEEN_REFILL_MESSAGE = new NamespacedKey(NAMESPACE, "has_seen_refill_message");
-        private static final NamespacedKey KEY_BLACKLIST = new NamespacedKey(NAMESPACE, "blacklist");
 
         private Blacklist blacklist;
 
@@ -112,11 +109,6 @@ public class PlayerSetting {
                 this.hotbarOnly = getBoolean(pdc, KEY_HOTBAR_ONLY, hotbarOnly);
                 this.swordOnMobs = getBoolean(pdc, KEY_SWORD_ON_MOBS, swordOnMobs);
                 this.favoriteSlot = pdc.getOrDefault(KEY_FAVORITE_SLOT, PersistentDataType.INTEGER, favoriteSlot);
-
-                String blacklistStr = pdc.get(KEY_BLACKLIST, PersistentDataType.STRING);
-                this.blacklist = (blacklistStr == null || blacklistStr.isEmpty())
-                        ? new Blacklist()
-                        : new Blacklist(List.of(blacklistStr.split(",")));
         }
 
         public void save() {
@@ -128,13 +120,12 @@ public class PlayerSetting {
                 pdc.set(KEY_HOTBAR_ONLY, PersistentDataType.BYTE, (byte) (hotbarOnly ? 1 : 0));
                 pdc.set(KEY_SWORD_ON_MOBS, PersistentDataType.BYTE, (byte) (swordOnMobs ? 1 : 0));
                 pdc.set(KEY_FAVORITE_SLOT, PersistentDataType.INTEGER, favoriteSlot);
-                pdc.set(KEY_BLACKLIST, PersistentDataType.STRING, String.join(",", blacklist.toStringList()));
         }
 
         public PlayerSetting(Player player, boolean bestToolsEnabled, boolean refillEnabled, boolean hotbarOnly, int favoriteSlot, boolean swordOnMobs) {
 
                 this.player = player;
-                this.blacklist = new Blacklist();
+                this.blacklist = new Blacklist(player);
                 this.bestToolsEnabled = bestToolsEnabled;
                 this.refillEnabled = refillEnabled;
                 this.hasSeenBestToolsMessage = false;

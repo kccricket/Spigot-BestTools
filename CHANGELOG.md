@@ -1,6 +1,11 @@
 # Changelog
 
 ## Unreleased
+- Fixed the root cause behind the documented "blacklist edits aren't explicitly persisted" quirk:
+  `Blacklist` now writes through to PDC immediately on every `add`/`remove`, via the new shared
+  `net.kccricket.kcmclib.pdc.PdcStringSet` (promoted out of ClickSorted's `PlayerSortingPrefs`),
+  instead of mutating an in-memory list that only got saved when some other, unrelated setting
+  changed. The on-disk PDC key is unchanged, so existing player data is unaffected
 - Lifted `check_for_updates`'s tri-state (`true`/`on-startup`/off) into a new
   `net.kccricket.kcmclib.update.UpdateCheckMode` enum, so `ModrinthUpdateChecker` itself now owns
   the once-vs-recurring decision instead of each plugin's wiring re-deriving it. No behavior change
