@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
+import net.kccricket.bestesttool.model.PlayerSetting;
 
 /**
  * Wraps {@code config.yml} via Bukkit's built-in {@code JavaPlugin} config machinery, mirroring

@@ -16,6 +16,7 @@ import java.util.logging.LogRecord;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import net.kccricket.bestesttool.model.PlayerSetting;
 
 /**
  * Verifies MainConfig's comment-carrying <em>wiring</em> (saveDefaultConfig + reloadConfig +

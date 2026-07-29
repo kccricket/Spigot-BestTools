@@ -24,6 +24,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import net.kccricket.bestesttool.benchmark.BenchmarkManager;
+import net.kccricket.bestesttool.commands.BestToolsCommands;
+import net.kccricket.bestesttool.commands.CommandBenchmark;
+import net.kccricket.bestesttool.commands.CommandBestTools;
+import net.kccricket.bestesttool.commands.CommandBlacklist;
+import net.kccricket.bestesttool.commands.CommandRefill;
+import net.kccricket.bestesttool.commands.CommandSelfTest;
+import net.kccricket.bestesttool.listeners.BestToolsCacheListener;
+import net.kccricket.bestesttool.listeners.BestToolsListener;
+import net.kccricket.bestesttool.listeners.PlayerListener;
+import net.kccricket.bestesttool.listeners.RefillListener;
+import net.kccricket.bestesttool.model.PlayerSetting;
+import net.kccricket.bestesttool.refill.RefillUtils;
+import net.kccricket.bestesttool.selftest.SelfTestManager;
+import net.kccricket.bestesttool.selftest.SelfTestSession;
+import net.kccricket.bestesttool.tool.BestToolsHandler;
+import net.kccricket.bestesttool.tool.BestToolsUtils;
+import net.kccricket.bestesttool.util.FileUtils;
 
 public class Main extends JavaPlugin {
 
@@ -41,38 +59,38 @@ public class Main extends JavaPlugin {
         return configManager;
     }
 
-    ConfigManager configManager;
-    BestToolsHandler toolHandler;
-    BestToolsUtils toolUtils;
-    RefillListener refillListener;
-    BestToolsListener bestToolsListener;
-    PlayerListener playerListener;
-    BestToolsCacheListener bestToolsCacheListener;
-    FileUtils fileUtils;
-    RefillUtils refillUtils;
-    CommandBestTools commandBestTools;
-    CommandRefill commandRefill;
-    CommandBlacklist commandBlacklist;
-    CommandSelfTest commandSelfTest;
-    CommandBenchmark commandBenchmark;
-    ModrinthUpdateChecker updateChecker;
+    public ConfigManager configManager;
+    public BestToolsHandler toolHandler;
+    public BestToolsUtils toolUtils;
+    public RefillListener refillListener;
+    public BestToolsListener bestToolsListener;
+    public PlayerListener playerListener;
+    public BestToolsCacheListener bestToolsCacheListener;
+    public FileUtils fileUtils;
+    public RefillUtils refillUtils;
+    public CommandBestTools commandBestTools;
+    public CommandRefill commandRefill;
+    public CommandBlacklist commandBlacklist;
+    public CommandSelfTest commandSelfTest;
+    public CommandBenchmark commandBenchmark;
+    public ModrinthUpdateChecker updateChecker;
 
     // Unlike the fields above, constructed exactly once in onEnable rather than on every
     // load()/reload — an in-progress /bestesttool selftest run must survive a reload, not be
     // silently dropped by it.
-    SelfTestManager selfTestManager;
+    public SelfTestManager selfTestManager;
 
     // Like selfTestManager, constructed exactly once in onEnable rather than on every load()/
     // reload. Unlike selfTestManager's in-progress run, a running /bestesttool benchmark is
     // explicitly stopped (not carried across) on reload/disable, since it holds a live
     // GlobalRegionScheduler task — see BenchmarkManager.abortAll, called from load()'s reload
     // branch and from onDisable().
-    BenchmarkManager benchmarkManager;
+    public BenchmarkManager benchmarkManager;
 
     // ConcurrentHashMap: mutated from per-region Folia threads (see getPlayerSetting and
     // PlayerListener.onPlayerQuit) with no external synchronization, same hazard already guarded
     // against by BestToolsHandler's silkMattersCache.
-    final Map<UUID,PlayerSetting> playerSettings = new ConcurrentHashMap<>();
+    public final Map<UUID,PlayerSetting> playerSettings = new ConcurrentHashMap<>();
 
 
     @Override
@@ -144,7 +162,7 @@ public class Main extends JavaPlugin {
         });
     }
 
-    void load(boolean reload) {
+    public void load(boolean reload) {
 
         if(reload) {
             updateChecker.stop();

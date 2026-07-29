@@ -1,5 +1,6 @@
 package net.kccricket.bestesttool;
 
+import net.kccricket.bestesttool.Main;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
@@ -9,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import net.kccricket.bestesttool.model.PlayerSetting;
 
 /**
  * Regression coverage for the Folia thread-safety fix to {@code Main.playerSettings}: it must be
