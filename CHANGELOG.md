@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- Lifted `check_for_updates`'s tri-state (`true`/`on-startup`/off) into a new
+  `net.kccricket.kcmclib.update.UpdateCheckMode` enum, so `ModrinthUpdateChecker` itself now owns
+  the once-vs-recurring decision instead of each plugin's wiring re-deriving it. No behavior change
+  for BestestTool
 - Added a new `action_cooldown_ms` config key (default 150ms) that throttles repeated
   `/bestesttool` command use and blacklist edits per player, mirroring ClickSorted's
   `ActionThrottle` — a rate-limited `actionTooFast` notice is shown on denial. Players holding

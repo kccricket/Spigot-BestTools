@@ -5,6 +5,7 @@ import net.kccricket.kcmclib.config.ManagedConfig;
 import net.kccricket.kcmclib.config.ResourceUpdater;
 import net.kccricket.kcmclib.logging.DebugLevel;
 import net.kccricket.kcmclib.logging.Log;
+import net.kccricket.kcmclib.update.UpdateCheckMode;
 
 import java.util.HashSet;
 import java.util.Locale;
@@ -212,8 +213,8 @@ public class MainConfig implements ManagedConfig {
     // -------------------------------------------------------------------------
 
     /** Tri-state: {@code "true"} (immediate + recurring), {@code "on-startup"}, or anything else (off). */
-    public String getCheckForUpdatesMode() {
-        return plugin.getConfig().getString("check_for_updates", "true");
+    public UpdateCheckMode getCheckForUpdatesMode() {
+        return UpdateCheckMode.parse(plugin.getConfig().getString("check_for_updates", "true"));
     }
 
     public int getCheckForUpdatesIntervalHours() {

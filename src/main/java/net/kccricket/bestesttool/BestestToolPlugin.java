@@ -116,7 +116,7 @@ public class BestestToolPlugin extends JavaPlugin {
         updateChecker = new ModrinthUpdateChecker(
                 this,
                 "bfE7PKmz",
-                () -> configManager.main().getCheckForUpdatesMode().equalsIgnoreCase("true"),
+                () -> configManager.main().getCheckForUpdatesMode(),
                 () -> configManager.main().getCheckForUpdatesIntervalHours(),
                 (latestVersion, currentVersion) -> List.of(
                         "A new version of BestestTool is available: " + latestVersion
@@ -148,7 +148,7 @@ public class BestestToolPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(selfTestManager.listener(), this);
 
         dumpIfConfigured();
-        restartUpdateChecker();
+        updateChecker.restart();
 
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new BestToolsPlaceholders(this).register();
@@ -228,7 +228,7 @@ public class BestestToolPlugin extends JavaPlugin {
         MessageUtil.init(configManager);
         selfTestManager.reloadSpec();
         dumpIfConfigured();
-        restartUpdateChecker();
+        updateChecker.restart();
     }
 
     private void dumpIfConfigured() {
@@ -238,27 +238,6 @@ public class BestestToolPlugin extends JavaPlugin {
             } catch (IOException e) {
                 Log.warning("Could not create dump.csv");
             }
-        }
-    }
-
-    /**
-     * "check_for_updates" is tri-state (true / on-startup / anything else = off), but
-     * {@link ModrinthUpdateChecker}'s {@code enabled} supplier only drives one binary gate shared
-     * by both the immediate check and the recurring schedule. Preserve the tri-state in this wiring
-     * instead: "on-startup" always fires exactly one check and never arms a recurring task; "true"
-     * gets both (via {@code restart()}); anything else fires neither ({@code restart()} ->
-     * {@code reschedule()} -> {@code stop()} still cancels a previously-armed recurring task if the
-     * setting was just switched off/changed). Called from both {@link #onEnable} and
-     * {@link #reload} — {@code updateChecker} itself is constructed once and never rebuilt, so this
-     * is the only re-evaluation its tri-state semantics need on reload.
-     */
-    private void restartUpdateChecker() {
-        String updateCheckMode = configManager.main().getCheckForUpdatesMode();
-        if (updateCheckMode.equalsIgnoreCase("on-startup")) {
-            updateChecker.stop();
-            updateChecker.check();
-        } else {
-            updateChecker.restart();
         }
     }
 
