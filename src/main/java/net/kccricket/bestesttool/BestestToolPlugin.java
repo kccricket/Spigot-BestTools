@@ -222,7 +222,7 @@ public class BestestToolPlugin extends JavaPlugin {
             try {
                 fileUtils.dumpFile(new File(getDataFolder() + File.separator + "dump.csv"));
             } catch (IOException e) {
-                getLogger().warning("Could not create dump.csv");
+                Log.warning("Could not create dump.csv");
             }
         }
     }

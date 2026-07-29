@@ -15,6 +15,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
 import net.kccricket.bestesttool.selftest.SelfTestManager;
 
 /**
@@ -132,7 +133,7 @@ public final class BenchmarkManager {
 
         BenchmarkRun.BatchResult justRan = session.run.lastBatch();
         if (justRan != null) {
-            main.getLogger().info(String.format(Locale.US,
+            Log.log(Level.INFO, String.format(Locale.US,
                     "[benchmark] batch %,d selections in %.2f ms (%.1f ns/selection)",
                     justRan.n(), justRan.elapsedMillis(), justRan.nsPerSelection()));
         }

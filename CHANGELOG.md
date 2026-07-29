@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- Routed the plugin's two remaining `getLogger()` call sites (the `dump.csv` failure warning and the
+  per-batch `/bestesttool admin benchmark` progress line) through the shared `Log` facade instead,
+  so debug-level gating and future logging changes apply uniformly
 - Every chat message is now prefixed (`[BestestTool]`, new `prefix` lang key), and a message sent to
   the console now goes through the plugin's own logger instead of a raw component send, matching
   ClickSorted's `MessageUtil`
