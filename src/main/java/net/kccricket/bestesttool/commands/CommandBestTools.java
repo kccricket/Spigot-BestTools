@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.commands;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import net.kccricket.bestesttool.text.MessageUtil;
 
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -16,9 +16,9 @@ import net.kccricket.bestesttool.model.PlayerSetting;
  */
 public class CommandBestTools {
 
-    final Main main;
+    final BestestToolPlugin main;
 
-    public CommandBestTools(Main main) {
+    public CommandBestTools(BestestToolPlugin main) {
         this.main = main;
     }
 

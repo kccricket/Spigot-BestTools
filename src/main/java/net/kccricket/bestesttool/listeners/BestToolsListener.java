@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.listeners;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import net.kccricket.bestesttool.events.BestToolsNotifyEvent;
 import net.kccricket.bestesttool.security.Permissions;
 import net.kccricket.bestesttool.text.MessageUtil;
@@ -33,11 +33,11 @@ import net.kccricket.bestesttool.util.PlayerUtils;
 public class BestToolsListener implements Listener {
 
     final BestToolsHandler handler;
-    final Main main;
+    final BestestToolPlugin main;
     boolean useAxeAsWeapon;
 
-    public BestToolsListener(@NotNull Main main) {
-        this.main=Objects.requireNonNull(main,"Main must not be null");
+    public BestToolsListener(@NotNull BestestToolPlugin main) {
+        this.main=Objects.requireNonNull(main,"BestestToolPlugin must not be null");
         handler=Objects.requireNonNull(main.toolHandler,"ToolHandler must not be null");
         useAxeAsWeapon = main.configManager.main().getUseAxeAsSword();
     }

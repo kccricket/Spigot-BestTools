@@ -1,14 +1,14 @@
 package net.kccricket.bestesttool.placeholders;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.entity.Player;
 
 public class BestToolsPlaceholders extends PlaceholderExpansion {
-    private Main main;
+    private BestestToolPlugin main;
 
 
-    public BestToolsPlaceholders(Main main){
+    public BestToolsPlaceholders(BestestToolPlugin main){
         this.main = main;
     }
 

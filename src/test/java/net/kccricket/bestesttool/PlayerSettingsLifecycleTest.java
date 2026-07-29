@@ -1,6 +1,5 @@
 package net.kccricket.bestesttool;
 
-import net.kccricket.bestesttool.Main;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
@@ -13,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import net.kccricket.bestesttool.model.PlayerSetting;
 
 /**
- * Regression coverage for the Folia thread-safety fix to {@code Main.playerSettings}: it must be
+ * Regression coverage for the Folia thread-safety fix to {@code BestestToolPlugin.playerSettings}: it must be
  * a {@link ConcurrentMap} (not a plain {@code HashMap}), a {@code /bestesttool reload} must not
  * discard an online player's already-created {@link PlayerSetting}, and quitting must still
  * remove the entry. The concurrency hazard itself (two region threads racing a first {@code put})

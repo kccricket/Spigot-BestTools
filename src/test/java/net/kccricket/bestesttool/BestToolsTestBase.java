@@ -1,6 +1,5 @@
 package net.kccricket.bestesttool;
 
-import net.kccricket.bestesttool.Main;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockbukkit.mockbukkit.MockBukkit;
@@ -10,12 +9,12 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 public abstract class BestToolsTestBase {
 
     protected ServerMock server;
-    protected Main plugin;
+    protected BestestToolPlugin plugin;
 
     @BeforeEach
     void setUpBase() {
         server = MockBukkit.mock();
-        plugin = MockBukkit.load(Main.class);
+        plugin = MockBukkit.load(BestestToolPlugin.class);
     }
 
     @AfterEach

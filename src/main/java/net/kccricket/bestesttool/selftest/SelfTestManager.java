@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.selftest;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import net.kccricket.bestesttool.text.MessageUtil;
 import net.kccricket.kcmclib.logging.Log;
 
@@ -24,19 +24,19 @@ import net.kccricket.bestesttool.tool.EnchantmentUtils;
  * Orchestrates {@code /bestesttool selftest}: owns every tester's {@link SelfTestSession}, the
  * parsed {@link SelfTestSpec}, and the shared {@link SelfTestListener}.
  * <p>
- * Constructed exactly once, in {@link Main#onEnable} — not in {@link Main#load}, which re-runs on
+ * Constructed exactly once, in {@link BestestToolPlugin#onEnable} — not in {@link BestestToolPlugin#load}, which re-runs on
  * every {@code /bestesttool reload} — so an in-progress test survives a reload; {@link #abortAll}
- * is called from {@code Main.load}'s reload branch just before the old listeners are torn down, so
+ * is called from {@code BestestToolPlugin.load}'s reload branch just before the old listeners are torn down, so
  * the tester is put back the way they were rather than left mid-test with no observer attached.
  */
 public final class SelfTestManager {
 
-    private final Main main;
+    private final BestestToolPlugin main;
     private final SelfTestListener listener;
     private final Map<UUID, SelfTestSession> sessions = new ConcurrentHashMap<>();
     private volatile SelfTestSpec spec;
 
-    public SelfTestManager(Main main) {
+    public SelfTestManager(BestestToolPlugin main) {
         this.main = main;
         this.listener = new SelfTestListener(main, this);
         reloadSpec();
@@ -145,7 +145,7 @@ public final class SelfTestManager {
         if (messageKey != null) MessageUtil.send(player, messageKey);
     }
 
-    /** Ends every in-progress session — called on {@code /bestesttool reload}, {@code Main.onDisable}, and player quit. */
+    /** Ends every in-progress session — called on {@code /bestesttool reload}, {@code BestestToolPlugin.onDisable}, and player quit. */
     public void abortAll(String reason) {
         for (UUID id : List.copyOf(sessions.keySet())) {
             SelfTestSession session = sessions.remove(id);

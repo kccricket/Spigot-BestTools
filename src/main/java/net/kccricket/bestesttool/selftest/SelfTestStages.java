@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.selftest;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import net.kccricket.kcmclib.logging.Log;
 
 import org.bukkit.Material;
@@ -34,7 +34,7 @@ public final class SelfTestStages {
 
     private SelfTestStages() {}
 
-    static SelfTestSpec load(Main main) {
+    static SelfTestSpec load(BestestToolPlugin main) {
         File override = new File(main.getDataFolder(), "selftest.yml");
         YamlConfiguration yaml;
         if (override.isFile()) {
@@ -46,7 +46,7 @@ public final class SelfTestStages {
         return parse(yaml);
     }
 
-    private static YamlConfiguration loadBundled(Main main) {
+    private static YamlConfiguration loadBundled(BestestToolPlugin main) {
         try (InputStream in = main.getResource("selftest/stages.yml")) {
             if (in == null) {
                 throw new IllegalStateException("Bundled selftest/stages.yml resource is missing");

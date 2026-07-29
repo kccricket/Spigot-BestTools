@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.config;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import net.kccricket.kcmclib.config.ManagedConfig;
 import net.kccricket.kcmclib.config.ResourceUpdater;
 import net.kccricket.kcmclib.logging.DebugLevel;
@@ -23,12 +23,12 @@ import net.kccricket.bestesttool.model.PlayerSetting;
  */
 public class MainConfig implements ManagedConfig {
 
-    private final Main plugin;
+    private final BestestToolPlugin plugin;
     // Reassigned on reload; read on Folia-async-scheduler threads (e.g. ModrinthUpdateChecker's
     // notice lines), so publish via volatile — mirrors ClickSorted's MainConfig.
     private volatile Locale defaultLocale = Locale.forLanguageTag("en-US");
 
-    public MainConfig(Main plugin) {
+    public MainConfig(BestestToolPlugin plugin) {
         this.plugin = plugin;
     }
 
@@ -201,6 +201,10 @@ public class MainConfig implements ManagedConfig {
 
     public boolean getDump() {
         return plugin.getConfig().getBoolean("dump", false);
+    }
+
+    public boolean getEnableMetrics() {
+        return plugin.getConfig().getBoolean("enable_metrics", true);
     }
 
     /**

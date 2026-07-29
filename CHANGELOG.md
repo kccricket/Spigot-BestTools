@@ -1,6 +1,19 @@
 # Changelog
 
 ## Unreleased
+- Renamed the plugin's main class from `Main` to `BestestToolPlugin` (matches ClickSorted's
+  `ClickSortedPlugin`), moved its 34 previously flat classes into `commands/`, `listeners/`,
+  `tool/`, `refill/`, `model/`, `selftest/`, `benchmark/`, and `util/` subpackages, and reworked
+  `onEnable`/`onDisable`/`/bestesttool admin reload` so every service and listener is constructed
+  and registered exactly once, on enable — `admin reload` now only re-reads config and re-derives
+  config-dependent state instead of tearing down and rebuilding everything. Purely internal/
+  structural, but touches `paper-plugin.yml`'s `main:` — a manual jar swap (not a hot reload) is
+  needed to pick this up
+- Added an `enable_metrics` config key (default `true`) to opt out of the bundled bStats reporting,
+  and the metrics instance is now properly shut down on disable instead of leaking one
+- On disable, blacklist edits and other per-player setting mutations that hadn't yet ridden along on
+  a later save are now explicitly flushed to PDC, closing a gap where such an edit could be lost if
+  the server stopped before another mutator happened to trigger a save
 - Moved `reload`, `debug`, `selftest`, and `benchmark` under a new `/bestesttool admin` subcommand
   (e.g. `/bestesttool admin reload`). Their permission nodes are renamed to match —
   `bestesttool.admin.reload`/`.debug`/`.selftest`/`.benchmark` — as children of the existing

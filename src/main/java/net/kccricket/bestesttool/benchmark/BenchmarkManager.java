@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.benchmark;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 
 import net.kccricket.bestesttool.text.MessageUtil;
@@ -25,18 +25,18 @@ import net.kccricket.bestesttool.selftest.SelfTestManager;
  * the ramp needs to be tick-aligned so a batch's wall time is directly comparable to the 50ms tick
  * budget; {@code Bukkit.getScheduler()} is never used, per this project's Folia rule.
  * <p>
- * Constructed exactly once, in {@link Main#onEnable} — not in {@link Main#load}, which re-runs on
+ * Constructed exactly once, in {@link BestestToolPlugin#onEnable} — not in {@link BestestToolPlugin#load}, which re-runs on
  * every {@code /bestesttool reload} — mirroring {@link SelfTestManager}. Unlike a self-test run, a
- * benchmark does not survive a reload: {@link #abortAll} is called from {@code Main.load}'s reload
- * branch and from {@code Main.onDisable}, both of which just stop the scheduled task — there's no
+ * benchmark does not survive a reload: {@link #abortAll} is called from {@code BestestToolPlugin.load}'s reload
+ * branch and from {@code BestestToolPlugin.onDisable}, both of which just stop the scheduled task — there's no
  * player state to restore, since the workload never touches a real player or the world.
  */
 public final class BenchmarkManager {
 
-    private final Main main;
+    private final BestestToolPlugin main;
     private final AtomicReference<Session> active = new AtomicReference<>();
 
-    public BenchmarkManager(Main main) {
+    public BenchmarkManager(BestestToolPlugin main) {
         this.main = main;
     }
 

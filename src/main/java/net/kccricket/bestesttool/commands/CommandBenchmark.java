@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.commands;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import org.bukkit.command.CommandSender;
 import net.kccricket.bestesttool.benchmark.BenchmarkWorkload;
 
@@ -15,9 +15,9 @@ import net.kccricket.bestesttool.benchmark.BenchmarkWorkload;
  */
 public class CommandBenchmark {
 
-    private final Main main;
+    private final BestestToolPlugin main;
 
-    public CommandBenchmark(Main main) {
+    public CommandBenchmark(BestestToolPlugin main) {
         this.main = main;
     }
 

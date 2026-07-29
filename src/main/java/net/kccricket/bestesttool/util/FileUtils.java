@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.util;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import net.kccricket.kcmclib.logging.DebugLevel;
 import net.kccricket.kcmclib.logging.Log;
 
@@ -12,9 +12,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 public class FileUtils {
-    final Main main;
+    final BestestToolPlugin main;
 
-    public FileUtils(Main main) {
+    public FileUtils(BestestToolPlugin main) {
         this.main=main;
     }
 

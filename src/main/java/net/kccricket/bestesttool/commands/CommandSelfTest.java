@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.commands;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import org.bukkit.entity.Player;
 import net.kccricket.bestesttool.selftest.SelfTestManager;
 
@@ -9,14 +9,14 @@ import net.kccricket.bestesttool.selftest.SelfTestManager;
  * config gating live in the Brigadier tree built by {@link BestToolsCommands} — this class only
  * performs the action once a call site has already established the sender is an authorized
  * {@link Player}. The actual test logic lives in {@link SelfTestManager}, which (unlike this
- * class) is constructed once in {@link Main#onEnable}, not per {@code /bestesttool reload}, so an
+ * class) is constructed once in {@link BestestToolPlugin#onEnable}, not per {@code /bestesttool reload}, so an
  * in-progress test survives a reload.
  */
 public class CommandSelfTest {
 
-    private final Main main;
+    private final BestestToolPlugin main;
 
-    public CommandSelfTest(Main main) {
+    public CommandSelfTest(BestestToolPlugin main) {
         this.main = main;
     }
 

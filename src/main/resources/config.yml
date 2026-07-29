@@ -146,6 +146,10 @@ default_locale: en_us
 
 # ----- Technical stuff! -----
 
+# Send anonymous usage statistics to bStats (https://bstats.org).
+# Set to false to opt out.
+enable_metrics: true
+
 # Logging verbosity for the plugin.
 # Values: OFF (no debug output), DEBUG (high-level flow), TRACE (per-item verbose)
 debug_level: 'OFF'

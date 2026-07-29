@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.selftest;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import net.kccricket.bestesttool.text.MessageUtil;
 
 import org.bukkit.Location;
@@ -26,9 +26,9 @@ import net.kccricket.bestesttool.model.PlayerSetting;
  * The self-test's event side: an observer that records verdicts (never itself deciding what the
  * plugin should do), plus arena protection so a test run doesn't consume the blocks/mobs it built.
  * <p>
- * Registered fresh on every {@link Main#load}, same as {@code BestToolsListener} — but the
+ * Registered fresh on every {@link BestestToolPlugin#load}, same as {@code BestToolsListener} — but the
  * {@link SelfTestManager} it reports to (and thus every in-progress {@link SelfTestSession}) is
- * owned by {@code Main} directly and survives a reload; only this listener object is rebuilt.
+ * owned by {@code BestestToolPlugin} directly and survives a reload; only this listener object is rebuilt.
  * <p>
  * Priorities matter here: the {@code LOWEST}/{@code MONITOR} pair around
  * {@link org.bukkit.event.player.PlayerInteractEvent} brackets {@code BestToolsListener}'s own
@@ -39,10 +39,10 @@ import net.kccricket.bestesttool.model.PlayerSetting;
  */
 public final class SelfTestListener implements Listener {
 
-    private final Main main;
+    private final BestestToolPlugin main;
     private final SelfTestManager manager;
 
-    SelfTestListener(Main main, SelfTestManager manager) {
+    SelfTestListener(BestestToolPlugin main, SelfTestManager manager) {
         this.main = main;
         this.manager = manager;
     }

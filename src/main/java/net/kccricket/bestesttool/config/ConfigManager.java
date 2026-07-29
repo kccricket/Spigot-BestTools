@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.config;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import net.kccricket.kcmclib.text.lang.Localized;
 
 import java.util.Locale;
@@ -14,7 +14,7 @@ public class ConfigManager {
     private final MainConfig main;
     private final LangConfig lang;
 
-    public ConfigManager(Main plugin) {
+    public ConfigManager(BestestToolPlugin plugin) {
         this.main = new MainConfig(plugin);
         this.lang = new LangConfig(plugin);
     }
@@ -32,6 +32,12 @@ public class ConfigManager {
     public void reloadAll() {
         main.reload();
         lang.reload();
+    }
+
+    /** Persist any in-memory mutations. Called from {@code onDisable}. */
+    public void saveAll() {
+        main.save();
+        lang.save();
     }
 
     public MainConfig main() {

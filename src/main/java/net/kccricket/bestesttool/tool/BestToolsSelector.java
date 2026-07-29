@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.tool;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import net.kccricket.kcmclib.logging.Log;
 
 import org.bukkit.Material;
@@ -58,7 +58,7 @@ public final class BestToolsSelector {
      * {@link Outcome#NO_CHANGE} (cache still validated); every other early exit is
      * {@link Outcome#NOT_APPLICABLE} (cache left untouched), exactly as before.
      */
-    public static ToolDecision decide(Main main, BestToolsHandler handler, Player p, PlayerSetting playerSetting,
+    public static ToolDecision decide(BestestToolPlugin main, BestToolsHandler handler, Player p, PlayerSetting playerSetting,
                                 @Nullable Block block, Action action, EquipmentSlot hand) {
         if (block == null) return ToolDecision.NOT_APPLICABLE_DECISION;
 

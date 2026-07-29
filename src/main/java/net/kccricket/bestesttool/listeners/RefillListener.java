@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.listeners;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import net.kccricket.bestesttool.security.Permissions;
 import net.kccricket.bestesttool.text.MessageUtil;
 import net.kccricket.kcmclib.logging.Log;
@@ -20,9 +20,9 @@ import net.kccricket.bestesttool.util.PlayerUtils;
 
 public class RefillListener implements Listener {
 
-    final Main main;
+    final BestestToolPlugin main;
 
-    public RefillListener(Main main) {
+    public RefillListener(BestestToolPlugin main) {
         this.main=main;
     }
 

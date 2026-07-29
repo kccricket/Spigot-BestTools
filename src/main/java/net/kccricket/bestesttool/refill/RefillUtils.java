@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.refill;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import net.kccricket.kcmclib.logging.Log;
 
 import org.bukkit.Material;
@@ -18,9 +18,9 @@ public class RefillUtils {
 
     final static int inventorySize = 36;
 
-    final Main main;
+    final BestestToolPlugin main;
 
-    public RefillUtils(Main main) {
+    public RefillUtils(BestestToolPlugin main) {
         this.main=main;
     }
 

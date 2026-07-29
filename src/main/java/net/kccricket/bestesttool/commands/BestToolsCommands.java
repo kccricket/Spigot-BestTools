@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.commands;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -40,11 +40,11 @@ import net.kccricket.bestesttool.listeners.BestToolsListener;
  * {@code refill} commands that were registered directly against the server's command map via
  * {@code DelegatingCommand} — {@code paper-plugin.yml} still cannot declare a {@code commands:}
  * block, but Paper's Brigadier {@code LifecycleEvents.COMMANDS} registrar (see
- * {@link Main#onEnable}) supersedes that workaround and adds real per-argument suggestions and
+ * {@link BestestToolPlugin#onEnable}) supersedes that workaround and adds real per-argument suggestions and
  * client-side validation.
  *
  * <p>Every {@code executes} body dereferences {@code main.command*} fields rather than closing
- * over a local reference, because {@link Main#load} reassigns all of them on
+ * over a local reference, because {@link BestestToolPlugin#load} reassigns all of them on
  * {@code /bestesttool reload} while this tree is built and registered exactly once, in
  * {@code onEnable}.
  */
@@ -68,7 +68,7 @@ public final class BestToolsCommands {
     // /bestesttool
     // -------------------------------------------------------------------------
 
-    public static LiteralCommandNode<CommandSourceStack> buildBestTools(Main main) {
+    public static LiteralCommandNode<CommandSourceStack> buildBestTools(BestestToolPlugin main) {
         return Commands.literal("bestesttool")
                 .executes(ctx -> {
                     Player player = requirePlayer(ctx);
@@ -94,7 +94,7 @@ public final class BestToolsCommands {
     // reach that child, so visibility is left to each child's own .requires, same as before.
     // -------------------------------------------------------------------------
 
-    private static LiteralArgumentBuilder<CommandSourceStack> buildAdmin(Main main) {
+    private static LiteralArgumentBuilder<CommandSourceStack> buildAdmin(BestestToolPlugin main) {
         return Commands.literal("admin")
                 .then(buildReload(main))
                 .then(buildDebug(main))
@@ -115,7 +115,7 @@ public final class BestToolsCommands {
      * instance, since a single node can't be attached under two different roots.
      */
     public static LiteralCommandNode<CommandSourceStack> buildRefillAlias(
-            Main main, LiteralCommandNode<CommandSourceStack> bestToolsRoot) {
+            BestestToolPlugin main, LiteralCommandNode<CommandSourceStack> bestToolsRoot) {
         var canonicalRefill = bestToolsRoot.getChild("refill");
         return Commands.literal("refill")
                 .executes(canonicalRefill.getCommand())
@@ -127,7 +127,7 @@ public final class BestToolsCommands {
     // /bestesttool hotbaronly
     // -------------------------------------------------------------------------
 
-    private static LiteralArgumentBuilder<CommandSourceStack> buildToggleHotbarOnly(Main main) {
+    private static LiteralArgumentBuilder<CommandSourceStack> buildToggleHotbarOnly(BestestToolPlugin main) {
         return Commands.literal("hotbaronly")
                 .executes(ctx -> {
                     Player player = requirePlayer(ctx);
@@ -154,7 +154,7 @@ public final class BestToolsCommands {
      * separate "unset" state is needed. The {@code -1..8} range is enforced client-side by
      * {@link IntegerArgumentType}, unlike the string-based {@link #boolStateArg}.
      */
-    private static LiteralArgumentBuilder<CommandSourceStack> buildFavoriteSlot(Main main) {
+    private static LiteralArgumentBuilder<CommandSourceStack> buildFavoriteSlot(BestestToolPlugin main) {
         return Commands.literal("favoriteslot")
                 .executes(ctx -> {
                     Player player = requirePlayer(ctx);
@@ -180,7 +180,7 @@ public final class BestToolsCommands {
     // /bestesttool refill (also the canonical target of the /refill, /rf alias)
     // -------------------------------------------------------------------------
 
-    private static LiteralArgumentBuilder<CommandSourceStack> buildRefill(Main main) {
+    private static LiteralArgumentBuilder<CommandSourceStack> buildRefill(BestestToolPlugin main) {
         return Commands.literal("refill")
                 .executes(ctx -> {
                     Player player = requirePlayer(ctx);
@@ -198,7 +198,7 @@ public final class BestToolsCommands {
      * {@code /rf} root aliases (see {@link #buildRefillAlias}) — built fresh per call site since a
      * single {@code CommandNode} instance can't be attached under two different roots.
      */
-    private static RequiredArgumentBuilder<CommandSourceStack, String> refillStateArg(Main main) {
+    private static RequiredArgumentBuilder<CommandSourceStack, String> refillStateArg(BestestToolPlugin main) {
         return boolStateArg(main, Permissions.PERM_REFILL,
                 (player, state) -> main.commandRefill.setRefill(player, state));
     }
@@ -208,7 +208,7 @@ public final class BestToolsCommands {
     // node (via .requires), rather than answered with noPermission.
     // -------------------------------------------------------------------------
 
-    private static LiteralArgumentBuilder<CommandSourceStack> buildReload(Main main) {
+    private static LiteralArgumentBuilder<CommandSourceStack> buildReload(BestestToolPlugin main) {
         return Commands.literal("reload")
                 .requires(src -> Permissions.isAllowedTo(src.getSender(), Permissions.PERM_RELOAD))
                 .executes(ctx -> {
@@ -217,7 +217,7 @@ public final class BestToolsCommands {
                 });
     }
 
-    private static LiteralArgumentBuilder<CommandSourceStack> buildDebug(Main main) {
+    private static LiteralArgumentBuilder<CommandSourceStack> buildDebug(BestestToolPlugin main) {
         return Commands.literal("debug")
                 .requires(src -> Permissions.isAllowedTo(src.getSender(), Permissions.PERM_DEBUG))
                 .executes(ctx -> {
@@ -228,7 +228,7 @@ public final class BestToolsCommands {
     }
 
     /** A {@code <state>} child for {@code debug}, matching its own sender type (no player requirement). */
-    private static RequiredArgumentBuilder<CommandSourceStack, String> debugStateArg(Main main, String arg) {
+    private static RequiredArgumentBuilder<CommandSourceStack, String> debugStateArg(BestestToolPlugin main, String arg) {
         return Commands.argument("state", StringArgumentType.word())
                 .suggests((ctx, b) -> suggestYesNo(b))
                 .executes(ctx -> {
@@ -250,7 +250,7 @@ public final class BestToolsCommands {
     // completion (and unparseable) rather than answered with a noPermission message.
     // -------------------------------------------------------------------------
 
-    private static LiteralArgumentBuilder<CommandSourceStack> buildSelfTest(Main main) {
+    private static LiteralArgumentBuilder<CommandSourceStack> buildSelfTest(BestestToolPlugin main) {
         return Commands.literal("selftest")
                 .requires(src -> main.getConfigManager().main().getEnableSelfTest()
                         && Permissions.isAllowedTo(src.getSender(), Permissions.PERM_SELFTEST))
@@ -279,7 +279,7 @@ public final class BestToolsCommands {
                 }));
     }
 
-    private static int runSelfTestStart(Main main, CommandContext<CommandSourceStack> ctx, @Nullable String stageName) {
+    private static int runSelfTestStart(BestestToolPlugin main, CommandContext<CommandSourceStack> ctx, @Nullable String stageName) {
         Player player = requirePlayer(ctx);
         if (player == null) return Command.SINGLE_SUCCESS;
         main.commandSelfTest.start(player, stageName);
@@ -293,7 +293,7 @@ public final class BestToolsCommands {
     // works from console too.
     // -------------------------------------------------------------------------
 
-    private static LiteralArgumentBuilder<CommandSourceStack> buildBenchmark(Main main) {
+    private static LiteralArgumentBuilder<CommandSourceStack> buildBenchmark(BestestToolPlugin main) {
         return Commands.literal("benchmark")
                 .requires(src -> main.getConfigManager().main().getEnableBenchmark()
                         && Permissions.isAllowedTo(src.getSender(), Permissions.PERM_BENCHMARK))
@@ -313,7 +313,7 @@ public final class BestToolsCommands {
                 }));
     }
 
-    private static int runBenchmarkStart(Main main, CommandContext<CommandSourceStack> ctx, BenchmarkWorkload.KitSize kitSize) {
+    private static int runBenchmarkStart(BestestToolPlugin main, CommandContext<CommandSourceStack> ctx, BenchmarkWorkload.KitSize kitSize) {
         main.commandBenchmark.start(ctx.getSource().getSender(), kitSize);
         return Command.SINGLE_SUCCESS;
     }
@@ -322,7 +322,7 @@ public final class BestToolsCommands {
     // /bestesttool blacklist
     // -------------------------------------------------------------------------
 
-    private static LiteralArgumentBuilder<CommandSourceStack> buildBlacklist(Main main) {
+    private static LiteralArgumentBuilder<CommandSourceStack> buildBlacklist(BestestToolPlugin main) {
         return Commands.literal("blacklist")
                 .executes(ctx -> runBlacklistShow(main, ctx))
                 .then(Commands.literal("show").executes(ctx -> runBlacklistShow(main, ctx)))
@@ -339,7 +339,7 @@ public final class BestToolsCommands {
                         }));
     }
 
-    private static int runBlacklistShow(Main main, CommandContext<CommandSourceStack> ctx) {
+    private static int runBlacklistShow(BestestToolPlugin main, CommandContext<CommandSourceStack> ctx) {
         Player player = requirePlayer(ctx);
         if (player == null || !checkPermission(main, player, Permissions.PERM_USE)) {
             return Command.SINGLE_SUCCESS;
@@ -349,7 +349,7 @@ public final class BestToolsCommands {
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> buildBlacklistAddRemove(
-            Main main, String literal, boolean add) {
+            BestestToolPlugin main, String literal, boolean add) {
         return Commands.literal(literal)
                 .executes(ctx -> {
                     Player player = requirePlayer(ctx);
@@ -382,7 +382,7 @@ public final class BestToolsCommands {
     }
 
     private static int runBlacklistFromInventory(
-            Main main, CommandContext<CommandSourceStack> ctx, boolean add, boolean hotbarOnly) {
+            BestestToolPlugin main, CommandContext<CommandSourceStack> ctx, boolean add, boolean hotbarOnly) {
         Player player = requirePlayer(ctx);
         if (player == null || !checkPermission(main, player, Permissions.PERM_USE)) {
             return Command.SINGLE_SUCCESS;
@@ -392,7 +392,7 @@ public final class BestToolsCommands {
     }
 
     /** The sender's currently-blacklisted material names, lower-cased; empty for a non-player. */
-    static List<String> blacklistedMaterialNames(Main main, CommandSender sender) {
+    static List<String> blacklistedMaterialNames(BestestToolPlugin main, CommandSender sender) {
         return sender instanceof Player player
                 ? main.getPlayerSetting(player).getBlacklist().toStringList().stream()
                         .map(s -> s.toLowerCase(Locale.ROOT))
@@ -402,7 +402,7 @@ public final class BestToolsCommands {
 
     /** Suggests the currently-blacklisted materials for {@code blacklist remove}. */
     static CompletableFuture<Suggestions> suggestBlacklistedMaterialToken(
-            Main main, CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
+            BestestToolPlugin main, CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
         return suggestToken(builder, blacklistedMaterialNames(main, ctx.getSource().getSender()));
     }
 
@@ -456,7 +456,7 @@ public final class BestToolsCommands {
      * an explicit {@code node} permission check with a {@code noPermission} message on denial.
      */
     private static RequiredArgumentBuilder<CommandSourceStack, String> boolStateArg(
-            Main main, String permissionNode, BiConsumer<Player, Boolean> apply) {
+            BestestToolPlugin main, String permissionNode, BiConsumer<Player, Boolean> apply) {
         return Commands.argument("state", StringArgumentType.word())
                 .suggests((ctx, b) -> suggestYesNo(b))
                 .executes(ctx -> {
@@ -480,7 +480,7 @@ public final class BestToolsCommands {
     // -------------------------------------------------------------------------
 
     /** Sends {@code noPermission} and returns {@code false} unless {@code sender} has {@code node}. */
-    private static boolean checkPermission(Main main, CommandSender sender, String node) {
+    private static boolean checkPermission(BestestToolPlugin main, CommandSender sender, String node) {
         if (Permissions.isAllowedTo(sender, node)) return true;
         MessageUtil.send(sender, "noPermission", Placeholder.unparsed("plugin", main.getName()));
         return false;

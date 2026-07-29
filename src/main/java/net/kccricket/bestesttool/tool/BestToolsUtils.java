@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.tool;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import net.kccricket.bestesttool.tool.BestToolsHandler.Tool;
 import net.kccricket.kcmclib.logging.Log;
 
@@ -28,13 +28,13 @@ public class BestToolsUtils {
             Material.POTTED_DANDELION, Material.POTTED_POPPY, Material.POTTED_BLUE_ORCHID, Material.POTTED_ALLIUM, Material.POTTED_AZURE_BLUET, Material.POTTED_RED_TULIP, Material.POTTED_ORANGE_TULIP, Material.POTTED_WHITE_TULIP, Material.POTTED_PINK_TULIP, Material.POTTED_OXEYE_DAISY, Material.POTTED_CORNFLOWER, Material.POTTED_LILY_OF_THE_VALLEY, Material.POTTED_WITHER_ROSE,
             Material.TUBE_CORAL, Material.BRAIN_CORAL, Material.BUBBLE_CORAL, Material.FIRE_CORAL, Material.HORN_CORAL, Material.DEAD_TUBE_CORAL, Material.DEAD_BRAIN_CORAL, Material.DEAD_BUBBLE_CORAL, Material.DEAD_FIRE_CORAL, Material.DEAD_HORN_CORAL};
 
-    final Main main;
+    final BestestToolPlugin main;
 
 
     // This is called AFTER BestToolsHandler, so the Utils can affect the Handler
-    public BestToolsUtils(@NotNull Main main) {
+    public BestToolsUtils(@NotNull BestestToolPlugin main) {
 
-        this.main = Objects.requireNonNull(main, "Main must not be null");
+        this.main = Objects.requireNonNull(main, "BestestToolPlugin must not be null");
         Objects.requireNonNull(main.toolHandler, "BestToolsHandler must be instantiated before BestToolUtils!");
 
         // Register all InstaBreaksByHand

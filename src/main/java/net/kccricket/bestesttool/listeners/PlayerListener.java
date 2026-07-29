@@ -1,15 +1,15 @@
 package net.kccricket.bestesttool.listeners;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 public class PlayerListener implements Listener {
 
-    final Main main;
+    final BestestToolPlugin main;
 
-    public PlayerListener(Main main) {
+    public PlayerListener(BestestToolPlugin main) {
         this.main=main;
     }
 

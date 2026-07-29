@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.commands;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import net.kccricket.bestesttool.text.MessageUtil;
 
 import org.bukkit.entity.Player;
@@ -14,9 +14,9 @@ import net.kccricket.bestesttool.model.PlayerSetting;
  */
 public class CommandRefill {
 
-    final Main main;
+    final BestestToolPlugin main;
 
-    public CommandRefill(Main main) {
+    public CommandRefill(BestestToolPlugin main) {
         this.main = main;
     }
 

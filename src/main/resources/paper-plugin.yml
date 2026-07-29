@@ -1,4 +1,4 @@
-main: net.kccricket.bestesttool.Main
+main: net.kccricket.bestesttool.BestestToolPlugin
 name: BestestTool
 version: ${project.version}
 api-version: "1.20.6"

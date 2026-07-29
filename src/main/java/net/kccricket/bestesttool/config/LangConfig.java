@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.config;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import net.kccricket.kcmclib.config.ManagedConfig;
 import net.kccricket.kcmclib.logging.Log;
 import net.kccricket.kcmclib.text.lang.Localized;
@@ -44,10 +44,10 @@ public class LangConfig implements ManagedConfig, MessageSource {
 
     private static final String DIR = "lang";
 
-    private final Main plugin;
+    private final BestestToolPlugin plugin;
     private volatile LocaleMessages messages = new LocaleMessages(Map.of(), Map.of(), Locale.US);
 
-    public LangConfig(Main plugin) {
+    public LangConfig(BestestToolPlugin plugin) {
         this.plugin = plugin;
     }
 

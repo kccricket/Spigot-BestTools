@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.selftest;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import net.kccricket.kcmclib.logging.Log;
 
 import org.bukkit.GameMode;
@@ -58,7 +58,7 @@ public final class SelfTestSession {
 
     private final File backupFile;
 
-    SelfTestSession(Main main, Player player, SelfTestSpec spec) {
+    SelfTestSession(BestestToolPlugin main, Player player, SelfTestSpec spec) {
         this.player = player;
         this.spec = spec;
 
@@ -82,7 +82,7 @@ public final class SelfTestSession {
     }
 
     /** Forces the plugin state a self-test run needs, regardless of what the tester had set. */
-    void applyTestSettings(Main main, boolean refillEnabledForThisStage) {
+    void applyTestSettings(BestestToolPlugin main, boolean refillEnabledForThisStage) {
         player.setGameMode(GameMode.SURVIVAL);
         PlayerSetting settings = main.getPlayerSetting(player);
         settings.setBestToolsEnabled(true);
@@ -126,7 +126,7 @@ public final class SelfTestSession {
     }
 
     /** Restores everything this session forced/replaced, then deletes the on-disk backup. */
-    void restoreAndClear(Main main) {
+    void restoreAndClear(BestestToolPlugin main) {
         if (arena != null) {
             arena.teardown();
             arena = null;
@@ -158,7 +158,7 @@ public final class SelfTestSession {
      * {@link #restoreAndClear} — e.g. the server crashed, or was stopped mid-test. Called from
      * {@code SelfTestListener#onJoin}. Returns {@code true} if a backup was found and restored.
      */
-    static boolean restoreOrphanedBackup(Main main, Player player) {
+    static boolean restoreOrphanedBackup(BestestToolPlugin main, Player player) {
         File file = new File(main.getDataFolder(), "selftest-backup-" + player.getUniqueId() + ".yml");
         if (!file.isFile()) return false;
 

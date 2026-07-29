@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.listeners;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -12,9 +12,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class BestToolsCacheListener implements @NotNull Listener {
 
-    final Main main;
+    final BestestToolPlugin main;
 
-    public BestToolsCacheListener(Main main) {
+    public BestToolsCacheListener(BestestToolPlugin main) {
         this.main=main;
     }
 

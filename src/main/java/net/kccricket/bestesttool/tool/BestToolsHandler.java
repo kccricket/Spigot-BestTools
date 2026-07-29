@@ -1,6 +1,6 @@
 package net.kccricket.bestesttool.tool;
 
-import net.kccricket.bestesttool.Main;
+import net.kccricket.bestesttool.BestestToolPlugin;
 import net.kccricket.kcmclib.logging.Log;
 
 import org.bukkit.Material;
@@ -28,7 +28,7 @@ import net.kccricket.bestesttool.listeners.BestToolsListener;
  */
 public class BestToolsHandler {
 
-    final Main main;
+    final BestestToolPlugin main;
     boolean debug = false;
     boolean verbose = true;
 
@@ -62,24 +62,24 @@ public class BestToolsHandler {
     final EnumSet<Material> neverSwitch = EnumSet.noneOf(Material.class);
 
     // Per-Material memo of silkChangesDrops(); see that method. Not an EnumMap: mutated from
-    // per-region Folia threads, and discarded whenever Main.load() rebuilds this handler.
+    // per-region Folia threads, and discarded whenever BestestToolPlugin.load() rebuilds this handler.
     private final Map<Material, Boolean> silkMattersCache = new ConcurrentHashMap<>();
     // Built once here, not as a static field: EnchantmentUtils.getEnchantment reads
     // Registry.ENCHANTMENT, which isn't populated until the server is up, and this constructor
-    // already only ever runs after that point (Main.load() constructs BestToolsHandler on enable
+    // already only ever runs after that point (BestestToolPlugin.load() constructs BestToolsHandler on enable
     // /reload).
     private final ItemStack silkProbe;
 
     final ArrayList<Material> weapons = new ArrayList<>();
 
     // Cached like BestToolsListener.useAxeAsWeapon: read once per load/reload (BestToolsHandler is
-    // reconstructed fresh in Main.load()), not on every candidate check.
+    // reconstructed fresh in BestestToolPlugin.load()), not on every candidate check.
     boolean considerSwordsForLeaves;
     boolean considerSwordsForCobwebs;
 
-    public BestToolsHandler(Main main) {
+    public BestToolsHandler(BestestToolPlugin main) {
 
-        this.main=Objects.requireNonNull(main,"Main must not be null");
+        this.main=Objects.requireNonNull(main,"BestestToolPlugin must not be null");
 
         considerSwordsForLeaves = main.configManager.main().getConsiderSwordsForLeaves();
         considerSwordsForCobwebs = main.configManager.main().getConsiderSwordsForCobwebs();

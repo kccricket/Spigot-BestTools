@@ -1,6 +1,5 @@
 package net.kccricket.bestesttool.model;
 
-import net.kccricket.bestesttool.Main;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -19,15 +18,19 @@ import net.kccricket.bestesttool.tool.BestToolsCache;
  */
 public class PlayerSetting {
 
-        private static final Main main = Main.getInstance();
-        private static final NamespacedKey KEY_ENABLED = new NamespacedKey(main, "enabled");
-        private static final NamespacedKey KEY_REFILL_ENABLED = new NamespacedKey(main, "refill_enabled");
-        private static final NamespacedKey KEY_HOTBAR_ONLY = new NamespacedKey(main, "hotbar_only");
-        private static final NamespacedKey KEY_FAVORITE_SLOT = new NamespacedKey(main, "favorite_slot");
-        private static final NamespacedKey KEY_SWORD_ON_MOBS = new NamespacedKey(main, "sword_on_mobs");
-        private static final NamespacedKey KEY_HAS_SEEN_BESTTOOLS_MESSAGE = new NamespacedKey(main, "has_seen_besttools_message");
-        private static final NamespacedKey KEY_HAS_SEEN_REFILL_MESSAGE = new NamespacedKey(main, "has_seen_refill_message");
-        private static final NamespacedKey KEY_BLACKLIST = new NamespacedKey(main, "blacklist");
+        // Namespace matches what NamespacedKey(Plugin, key) would have derived from the plugin name
+        // ("BestestTool" -> "bestesttool") — spelled out as a literal instead of going through
+        // BestestToolPlugin.getInstance() so this class carries no static back-reference to the
+        // plugin singleton. Existing on-disk PDC data is unaffected: the namespace string is identical.
+        private static final String NAMESPACE = "bestesttool";
+        private static final NamespacedKey KEY_ENABLED = new NamespacedKey(NAMESPACE, "enabled");
+        private static final NamespacedKey KEY_REFILL_ENABLED = new NamespacedKey(NAMESPACE, "refill_enabled");
+        private static final NamespacedKey KEY_HOTBAR_ONLY = new NamespacedKey(NAMESPACE, "hotbar_only");
+        private static final NamespacedKey KEY_FAVORITE_SLOT = new NamespacedKey(NAMESPACE, "favorite_slot");
+        private static final NamespacedKey KEY_SWORD_ON_MOBS = new NamespacedKey(NAMESPACE, "sword_on_mobs");
+        private static final NamespacedKey KEY_HAS_SEEN_BESTTOOLS_MESSAGE = new NamespacedKey(NAMESPACE, "has_seen_besttools_message");
+        private static final NamespacedKey KEY_HAS_SEEN_REFILL_MESSAGE = new NamespacedKey(NAMESPACE, "has_seen_refill_message");
+        private static final NamespacedKey KEY_BLACKLIST = new NamespacedKey(NAMESPACE, "blacklist");
 
         private Blacklist blacklist;
 
@@ -116,7 +119,7 @@ public class PlayerSetting {
                         : new Blacklist(List.of(blacklistStr.split(",")));
         }
 
-        private void save() {
+        public void save() {
                 PersistentDataContainer pdc = player.getPersistentDataContainer();
                 pdc.set(KEY_ENABLED, PersistentDataType.BYTE, (byte) (bestToolsEnabled ? 1 : 0));
                 pdc.set(KEY_HAS_SEEN_BESTTOOLS_MESSAGE, PersistentDataType.BYTE, (byte) (hasSeenBestToolsMessage ? 1 : 0));
