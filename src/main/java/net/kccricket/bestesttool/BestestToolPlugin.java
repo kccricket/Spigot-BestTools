@@ -8,10 +8,9 @@ import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import net.kccricket.bestesttool.config.ConfigManager;
 import net.kccricket.bestesttool.placeholders.BestToolsPlaceholders;
 import net.kccricket.bestesttool.security.ActionThrottle;
-import net.kccricket.bestesttool.text.MessageUtil;
 
 import net.kccricket.kcmclib.logging.Log;
-import net.kccricket.kcmclib.text.CooldownMessenger;
+import net.kccricket.kcmclib.text.Messenger;
 import net.kccricket.kcmclib.update.ModrinthUpdateChecker;
 
 import org.bstats.bukkit.Metrics;
@@ -56,7 +55,13 @@ public class BestestToolPlugin extends JavaPlugin {
         return configManager;
     }
 
-    public CooldownMessenger getMessenger() {
+    /**
+     * The single entry point for sending a message to a player or console — see
+     * {@link net.kccricket.kcmclib.text.Messenger}'s class javadoc. Built in {@link #onEnable} once
+     * {@link #configManager} exists (it reads lang live through it, so there is nothing to re-init
+     * on {@link #reload}).
+     */
+    public Messenger messages() {
         return messenger;
     }
 
@@ -65,7 +70,7 @@ public class BestestToolPlugin extends JavaPlugin {
     }
 
     private Metrics metrics;
-    private final CooldownMessenger messenger = new CooldownMessenger();
+    private Messenger messenger;
     public ActionThrottle actionThrottle;
 
     public ConfigManager configManager;
@@ -105,7 +110,7 @@ public class BestestToolPlugin extends JavaPlugin {
 
         configManager = new ConfigManager(this);
         configManager.loadAll();
-        MessageUtil.init(configManager);
+        messenger = new Messenger(configManager);
 
         if (configManager.main().getEnableMetrics()) {
             metrics = new Metrics(this, 32836);
@@ -187,7 +192,6 @@ public class BestestToolPlugin extends JavaPlugin {
                 setting.save();
             }
         }
-        MessageUtil.init(null);
         instance = null;
     }
 
@@ -225,7 +229,6 @@ public class BestestToolPlugin extends JavaPlugin {
      */
     public void reload() {
         configManager.reloadAll();
-        MessageUtil.init(configManager);
         selfTestManager.reloadSpec();
         dumpIfConfigured();
         updateChecker.restart();

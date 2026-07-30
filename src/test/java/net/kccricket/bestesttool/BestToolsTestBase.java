@@ -51,9 +51,9 @@ public abstract class BestToolsTestBase {
 
     /**
      * Runs {@code action}, returning every message logged by the plugin logger — used to assert on
-     * console-sender feedback, since {@code MessageUtil.send} routes a {@code ConsoleCommandSender}
-     * through {@link net.kccricket.kcmclib.logging.Log} rather than {@code sendMessage}, so it never
-     * reaches {@code ConsoleCommandSender#nextMessage()}.
+     * console-sender feedback, since {@link net.kccricket.kcmclib.text.Send} routes a
+     * {@code ConsoleCommandSender} through {@link net.kccricket.kcmclib.logging.Log} rather than
+     * {@code sendMessage}, so it never reaches {@code ConsoleCommandSender#nextMessage()}.
      */
     protected List<String> captureLogMessages(Runnable action) {
         List<String> messages = new ArrayList<>();

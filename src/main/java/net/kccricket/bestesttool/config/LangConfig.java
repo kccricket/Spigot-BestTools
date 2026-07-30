@@ -139,13 +139,13 @@ public class LangConfig implements ManagedConfig, MessageSource {
     }
 
     @Override
-    public String getMessage(Locale locale, String path) {
-        return messages.getMessage(locale, path);
+    public String raw(Locale locale, String path) {
+        return messages.raw(locale, path);
     }
 
     @Override
-    public Component getColoredMessage(Locale locale, String path, TagResolver... resolvers) {
-        return messages.getColoredMessage(locale, path, resolvers);
+    public Component render(Locale locale, String path, TagResolver... resolvers) {
+        return messages.render(locale, path, resolvers);
     }
 
     @Override

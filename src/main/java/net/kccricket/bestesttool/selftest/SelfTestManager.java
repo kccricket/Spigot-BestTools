@@ -1,7 +1,6 @@
 package net.kccricket.bestesttool.selftest;
 
 import net.kccricket.bestesttool.BestestToolPlugin;
-import net.kccricket.bestesttool.text.MessageUtil;
 import net.kccricket.kcmclib.logging.Log;
 
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -72,11 +71,11 @@ public final class SelfTestManager {
 
     public void start(Player player, String stageName) {
         if (sessions.containsKey(player.getUniqueId())) {
-            MessageUtil.send(player, "selfTestAlreadyRunning");
+            main.messages().to(player).error().send("selfTestAlreadyRunning");
             return;
         }
         if (spec.stages.isEmpty()) {
-            MessageUtil.send(player, "selfTestNoStagesConfigured");
+            main.messages().to(player).status().send("selfTestNoStagesConfigured");
             return;
         }
 
@@ -84,14 +83,14 @@ public final class SelfTestManager {
         if (stageName != null) {
             startIndex = spec.indexOfStage(stageName);
             if (startIndex == -1) {
-                MessageUtil.send(player, "selfTestUnknownStage", Placeholder.unparsed("stage", stageName));
+                main.messages().to(player).error().send("selfTestUnknownStage", Placeholder.unparsed("stage", stageName));
                 return;
             }
         }
 
         SelfTestSpec.Stage firstStage = spec.stage(startIndex);
         if (!SelfTestArena.hasSpace(player, firstStage)) {
-            MessageUtil.send(player, "selfTestNeedsSpace",
+            main.messages().to(player).error().send("selfTestNeedsSpace",
                     Placeholder.unparsed("n", String.valueOf(requiredClearance(firstStage))));
             return;
         }
@@ -106,7 +105,7 @@ public final class SelfTestManager {
     public void advance(Player player) {
         SelfTestSession session = sessions.get(player.getUniqueId());
         if (session == null) {
-            MessageUtil.send(player, "selfTestNoneRunning");
+            main.messages().to(player).error().send("selfTestNoneRunning");
             return;
         }
         if (session.arena != null) {
@@ -120,12 +119,12 @@ public final class SelfTestManager {
     public void status(Player player) {
         SelfTestSession session = sessions.get(player.getUniqueId());
         if (session == null) {
-            MessageUtil.send(player, "selfTestNoneRunning");
+            main.messages().to(player).error().send("selfTestNoneRunning");
             return;
         }
         SelfTestSpec.Stage stage = session.currentStage();
         int remaining = stage == null ? 0 : stage.cases.size() - session.caseIndex;
-        MessageUtil.send(player, "selfTestStatus",
+        main.messages().to(player).status().send("selfTestStatus",
                 Placeholder.unparsed("stage", stage == null ? "-" : stage.name),
                 Placeholder.unparsed("remaining", String.valueOf(remaining)));
     }
@@ -138,11 +137,11 @@ public final class SelfTestManager {
     public void stop(Player player, String messageKey) {
         SelfTestSession session = sessions.remove(player.getUniqueId());
         if (session == null) {
-            if (messageKey != null) MessageUtil.send(player, "selfTestNoneRunning");
+            if (messageKey != null) main.messages().to(player).error().send("selfTestNoneRunning");
             return;
         }
         session.restoreAndClear(main);
-        if (messageKey != null) MessageUtil.send(player, messageKey);
+        if (messageKey != null) main.messages().to(player).status().send(messageKey);
     }
 
     /** Ends every in-progress session — called on {@code /bestesttool reload}, {@code BestestToolPlugin.onDisable}, and player quit. */
@@ -183,7 +182,7 @@ public final class SelfTestManager {
             return;
         }
         if (!SelfTestArena.hasSpace(session.player, stage)) {
-            MessageUtil.send(session.player, "selfTestNeedsSpace",
+            main.messages().to(session.player).error().send("selfTestNeedsSpace",
                     Placeholder.unparsed("n", String.valueOf(requiredClearance(stage))));
             stop(session.player, null);
             return;
@@ -195,7 +194,7 @@ public final class SelfTestManager {
         session.caseIndex = 0;
         session.stagePassed = 0;
 
-        MessageUtil.send(session.player, "selfTestStarted",
+        main.messages().to(session.player).status().send("selfTestStarted",
                 Placeholder.unparsed("stage", stage.name),
                 Placeholder.unparsed("total", String.valueOf(stage.cases.size())));
     }
@@ -225,11 +224,11 @@ public final class SelfTestManager {
         if (pass) {
             session.stagePassed++;
             session.totalPassed++;
-            MessageUtil.send(session.player, "selfTestCasePass",
+            main.messages().to(session.player).status().send("selfTestCasePass",
                     Placeholder.unparsed("block", subjectName),
                     Placeholder.unparsed("expected", expectedDesc));
         } else {
-            MessageUtil.send(session.player, "selfTestCaseFail",
+            main.messages().to(session.player).status().send("selfTestCaseFail",
                     Placeholder.unparsed("block", subjectName),
                     Placeholder.unparsed("expected", expectedDesc),
                     Placeholder.unparsed("actual", actualDesc));
@@ -238,7 +237,7 @@ public final class SelfTestManager {
         session.caseIndex++;
         SelfTestSpec.Stage stage = session.currentStage();
         if (stage == null || session.caseIndex >= stage.cases.size()) {
-            MessageUtil.send(session.player, "selfTestStageComplete",
+            main.messages().to(session.player).status().send("selfTestStageComplete",
                     Placeholder.unparsed("stage", stage == null ? "-" : stage.name),
                     Placeholder.unparsed("passed", String.valueOf(session.stagePassed)),
                     Placeholder.unparsed("total", String.valueOf(stage == null ? 0 : stage.cases.size())));
@@ -250,7 +249,7 @@ public final class SelfTestManager {
     }
 
     private void finish(SelfTestSession session) {
-        MessageUtil.send(session.player, "selfTestFinished",
+        main.messages().to(session.player).status().send("selfTestFinished",
                 Placeholder.unparsed("passed", String.valueOf(session.totalPassed)),
                 Placeholder.unparsed("total", String.valueOf(session.totalCases)));
         session.restoreAndClear(main);

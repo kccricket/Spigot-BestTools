@@ -3,7 +3,6 @@ package net.kccricket.bestesttool.benchmark;
 import net.kccricket.bestesttool.BestestToolPlugin;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 
-import net.kccricket.bestesttool.text.MessageUtil;
 import net.kccricket.kcmclib.logging.Log;
 
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -72,11 +71,11 @@ public final class BenchmarkManager {
     public void start(CommandSender sender, BenchmarkWorkload.KitSize kitSize) {
         Session session = new Session(sender, kitSize);
         if (!active.compareAndSet(null, session)) {
-            MessageUtil.send(sender, "benchmarkAlreadyRunning");
+            main.messages().to(sender).error().send("benchmarkAlreadyRunning");
             return;
         }
 
-        MessageUtil.send(sender, "benchmarkStarted",
+        main.messages().to(sender).status().send("benchmarkStarted",
                 Placeholder.unparsed("kit", kitSize.name().toLowerCase(Locale.ROOT)));
 
         session.task = main.getServer().getGlobalRegionScheduler()
@@ -86,21 +85,21 @@ public final class BenchmarkManager {
     public void stop(CommandSender sender) {
         Session session = active.getAndSet(null);
         if (session == null) {
-            MessageUtil.send(sender, "benchmarkNoneRunning");
+            main.messages().to(sender).error().send("benchmarkNoneRunning");
             return;
         }
         cancel(session);
-        MessageUtil.send(sender, "benchmarkStopped");
+        main.messages().to(sender).status().send("benchmarkStopped");
     }
 
     public void status(CommandSender sender) {
         Session session = active.get();
         if (session == null) {
-            MessageUtil.send(sender, "benchmarkNoneRunning");
+            main.messages().to(sender).error().send("benchmarkNoneRunning");
             return;
         }
         BenchmarkRun.BatchResult last = session.run.lastBatch();
-        MessageUtil.send(sender, "benchmarkStatus",
+        main.messages().to(sender).status().send("benchmarkStatus",
                 Placeholder.unparsed("n", last == null ? "-" : String.valueOf(last.n())),
                 Placeholder.unparsed("ms", last == null ? "-" : String.format(Locale.US, "%.2f", last.elapsedMillis())));
     }
@@ -143,7 +142,7 @@ public final class BenchmarkManager {
             cancel(session);
 
             BenchmarkRun.Summary summary = session.run.summary();
-            MessageUtil.send(session.sender, "benchmarkFinished",
+            main.messages().to(session.sender).status().send("benchmarkFinished",
                     Placeholder.unparsed("kit", session.kitSize.name().toLowerCase(Locale.ROOT)),
                     Placeholder.unparsed("peak", String.valueOf(summary.peakBatchSize())),
                     Placeholder.unparsed("nspersel", String.format(Locale.US, "%.1f", summary.nsPerSelection())),

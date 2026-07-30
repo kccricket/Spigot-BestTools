@@ -8,6 +8,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CommandBlacklistTest extends BestToolsTestBase {
@@ -95,5 +96,56 @@ class CommandBlacklistTest extends BestToolsTestBase {
         assertDoesNotThrow(() -> player.performCommand("bestesttool bl add DIRT"));
 
         assertFalse(plugin.getPlayerSetting(player).getBlacklist().contains(Material.DIRT));
+    }
+
+    // -------------------------------------------------------------------------
+    // Regression: blacklistAdded/blacklistRemoved/blacklistInvalid/blacklistTitle used to bypass
+    // MessageUtil's prefix entirely (a p.sendMessage(MessageUtil.get(...)) pattern). Now that every
+    // send goes through Messenger, all four must carry the [BestestTool] prefix like every other
+    // message — see model/Blacklist.java and commands/CommandBlacklist.java.
+    // -------------------------------------------------------------------------
+
+    private String nextPrefixedMessage(PlayerMock player) {
+        String message = player.nextMessage();
+        assertNotNull(message, "expected a message but none was sent");
+        return message;
+    }
+
+    @Test
+    void addedMessageIsPrefixed() {
+        PlayerMock player = opPlayer();
+
+        player.performCommand("bestesttool blacklist add DIRT");
+
+        assertTrue(nextPrefixedMessage(player).contains("BestestTool"));
+    }
+
+    @Test
+    void removedMessageIsPrefixed() {
+        PlayerMock player = opPlayer();
+        plugin.getPlayerSetting(player).getBlacklist().add(Material.DIRT);
+
+        player.performCommand("bestesttool blacklist remove DIRT");
+
+        assertTrue(nextPrefixedMessage(player).contains("BestestTool"));
+    }
+
+    @Test
+    void invalidMessageIsPrefixed() {
+        PlayerMock player = opPlayer();
+
+        player.performCommand("bestesttool blacklist add NOT_A_MATERIAL");
+
+        assertTrue(nextPrefixedMessage(player).contains("BestestTool"));
+    }
+
+    @Test
+    void showTitleIsPrefixed() {
+        PlayerMock player = opPlayer();
+        plugin.getPlayerSetting(player).getBlacklist().add(Material.DIRT);
+
+        player.performCommand("bestesttool blacklist show");
+
+        assertTrue(nextPrefixedMessage(player).contains("BestestTool"));
     }
 }

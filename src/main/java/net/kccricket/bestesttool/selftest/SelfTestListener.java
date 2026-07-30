@@ -1,7 +1,6 @@
 package net.kccricket.bestesttool.selftest;
 
 import net.kccricket.bestesttool.BestestToolPlugin;
-import net.kccricket.bestesttool.text.MessageUtil;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -177,7 +176,7 @@ public final class SelfTestListener implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         if (SelfTestSession.restoreOrphanedBackup(main, event.getPlayer())) {
-            MessageUtil.send(event.getPlayer(), "selfTestBackupRestored");
+            main.messages().to(event.getPlayer()).status().send("selfTestBackupRestored");
         }
     }
 }

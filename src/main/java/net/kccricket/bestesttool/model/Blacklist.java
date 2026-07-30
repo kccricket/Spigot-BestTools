@@ -1,13 +1,7 @@
 package net.kccricket.bestesttool.model;
 
-import net.kccricket.bestesttool.text.MessageUtil;
-
 import net.kccricket.kcmclib.pdc.PdcStringSet;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -21,6 +15,8 @@ import java.util.List;
  * rather than riding along on the next unrelated {@link PlayerSetting#save()} call. The
  * {@code bestesttool:blacklist} key matches what {@code PlayerSetting} used to manage itself
  * (namespace/key/comma-delimiter all identical), so existing on-disk player data is unaffected.
+ * Pure data — no plugin reference and no messaging; the chat-facing listing lives in
+ * {@code CommandBlacklist.show}.
  */
 public class Blacklist {
 
@@ -61,29 +57,6 @@ public class Blacklist {
                 .map(Material::name)
                 .sorted()
                 .toList();
-    }
-
-    public void print(Player p) {
-        List<String> names = toStringList();
-        if (names.isEmpty()) {
-            MessageUtil.send(p, "blacklistEmpty");
-            return;
-        }
-
-        p.sendMessage(MessageUtil.get(p, "blacklistTitle"));
-
-        for (String name : names) {
-            Component link = createLink("[X] ", "/bestesttool blacklist remove " + name);
-            Component nameComponent = Component.text(name, NamedTextColor.GRAY);
-            p.sendMessage(link.append(nameComponent));
-        }
-    }
-
-    private Component createLink(String text, String link) {
-        // TODO: Make color configurable
-        return Component.text(text, NamedTextColor.DARK_RED)
-                .decorate(TextDecoration.BOLD)
-                .clickEvent(ClickEvent.runCommand(link));
     }
 
 }

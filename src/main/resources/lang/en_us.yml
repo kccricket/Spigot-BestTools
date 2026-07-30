@@ -17,7 +17,8 @@
 # Placeholder tags are listed in comments above each message that accepts one.
 # Do not remove a placeholder from a message that requires it.
 
-# Prepended to every message sent to a player or the console (see MessageUtil).
+# Prepended to every message sent via Messenger's .error()/.status()/.alert() severities
+# (not .raw()) — see net.kccricket.kcmclib.text.Messenger.
 prefix: "<gray>[<aqua>BestestTool<gray>] "
 
 # Command feedback — /bestesttool toggle

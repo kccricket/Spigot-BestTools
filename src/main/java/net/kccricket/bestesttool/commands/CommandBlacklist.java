@@ -1,8 +1,11 @@
 package net.kccricket.bestesttool.commands;
 
 import net.kccricket.bestesttool.BestestToolPlugin;
-import net.kccricket.bestesttool.text.MessageUtil;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
 import org.bukkit.Material;
@@ -50,15 +53,38 @@ public class CommandBlacklist {
         return String.join(", ", list);
     }
 
+    /**
+     * Lists the player's blacklist as clickable {@code [X] <material>} rows that run
+     * {@code /bestesttool blacklist remove <material>}. Lives here rather than on {@link Blacklist}
+     * (pure data, no plugin reference) since it's the only chat-facing piece of that model.
+     */
     void show(Player p) {
         main.getPlayerSetting(p).getBtcache().invalidated();
-        main.getPlayerSetting(p).getBlacklist().print(p);
+        List<String> names = main.getPlayerSetting(p).getBlacklist().toStringList();
+        if (names.isEmpty()) {
+            main.messages().to(p).status().send("blacklistEmpty");
+            return;
+        }
+
+        main.messages().to(p).status().send("blacklistTitle");
+        for (String name : names) {
+            Component link = createLink("[X] ", "/bestesttool blacklist remove " + name);
+            Component nameComponent = Component.text(name, NamedTextColor.GRAY);
+            main.messages().to(p).raw().send(link.append(nameComponent));
+        }
+    }
+
+    private Component createLink(String text, String link) {
+        // TODO: Make color configurable
+        return Component.text(text, NamedTextColor.DARK_RED)
+                .decorate(TextDecoration.BOLD)
+                .clickEvent(ClickEvent.runCommand(link));
     }
 
     void reset(Player p) {
         main.getPlayerSetting(p).getBtcache().invalidated();
         Blacklist b = main.getPlayerSetting(p).getBlacklist();
-        p.sendMessage(MessageUtil.get(p, "blacklistRemoved", Placeholder.unparsed("items", stringlist2string(b.toStringList()))));
+        main.messages().to(p).status().send("blacklistRemoved", Placeholder.unparsed("items", stringlist2string(b.toStringList())));
         b.clear();
     }
 
@@ -75,7 +101,7 @@ public class CommandBlacklist {
         if (materialNames.isEmpty()) {
             ItemStack currentItem = p.getInventory().getItemInMainHand();
             if (currentItem.getType() == Material.AIR) {
-                MessageUtil.send(p, "blacklistNothingSpecified");
+                main.messages().to(p).error().send("blacklistNothingSpecified");
                 return;
             }
             materialNames = List.of(currentItem.getType().name());
@@ -111,11 +137,11 @@ public class CommandBlacklist {
         }
 
         if (!errors.isEmpty()) {
-            p.sendMessage(MessageUtil.get(p, "blacklistInvalid", Placeholder.unparsed("items", stringlist2string(errors))));
+            main.messages().to(p).error().send("blacklistInvalid", Placeholder.unparsed("items", stringlist2string(errors)));
         }
         if (!successes.isEmpty()) {
             String key = add ? "blacklistAdded" : "blacklistRemoved";
-            p.sendMessage(MessageUtil.get(p, key, Placeholder.unparsed("items", matlist2string(successes))));
+            main.messages().to(p).status().send(key, Placeholder.unparsed("items", matlist2string(successes)));
         }
     }
 }

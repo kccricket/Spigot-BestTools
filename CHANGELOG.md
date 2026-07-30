@@ -1,6 +1,13 @@
 # Changelog
 
 ## Unreleased
+- Replaced `text.MessageUtil` and the shared `CooldownMessenger` with a single KcMcLib
+  `net.kccricket.kcmclib.text.Messenger`, reached via `plugin.messages()`: every send is now
+  `messenger.to(target).<severity>().send("key", ...)`, with `.throttle(key, seconds)` folding
+  rate-limiting into the same call instead of a separate messaging path. Fixes a real bug this
+  surfaced: `blacklistAdded`/`blacklistRemoved`/`blacklistInvalid`/`blacklistTitle` were being sent
+  via a path that bypassed the `[BestestTool]` prefix every other message carries — they're now
+  prefixed like everything else
 - Fixed the root cause behind the documented "blacklist edits aren't explicitly persisted" quirk:
   `Blacklist` now writes through to PDC immediately on every `add`/`remove`, via the new shared
   `net.kccricket.kcmclib.pdc.PdcStringSet` (promoted out of ClickSorted's `PlayerSortingPrefs`),

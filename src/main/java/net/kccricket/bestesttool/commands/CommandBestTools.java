@@ -1,7 +1,6 @@
 package net.kccricket.bestesttool.commands;
 
 import net.kccricket.bestesttool.BestestToolPlugin;
-import net.kccricket.bestesttool.text.MessageUtil;
 
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
@@ -28,7 +27,7 @@ public class CommandBestTools {
         setting.getBtcache().invalidated();
         setting.setHasSeenBestToolsMessage(true);
         setting.setBestToolsEnabled(enabled);
-        MessageUtil.send(p, enabled ? "besttoolsEnabled" : "besttoolsDisabled");
+        main.messages().to(p).status().send(enabled ? "besttoolsEnabled" : "besttoolsDisabled");
     }
 
     void toggleHotbarOnly(Player p) {
@@ -40,13 +39,13 @@ public class CommandBestTools {
         setting.getBtcache().invalidated();
         setting.setHasSeenBestToolsMessage(true);
         setting.setHotbarOnly(enabled);
-        MessageUtil.send(p, enabled ? "hotbarOnlyEnabled" : "hotbarOnlyDisabled");
+        main.messages().to(p).status().send(enabled ? "hotbarOnlyEnabled" : "hotbarOnlyDisabled");
     }
 
     /** Reports the effective favorite slot (already resolved to the held slot if unset/out-of-range). */
     void reportFavoriteSlot(Player p) {
         int slot = main.getPlayerSetting(p).getFavoriteSlot();
-        MessageUtil.send(p, "favoriteSlotSet", Placeholder.unparsed("slot", Integer.toString(slot)));
+        main.messages().to(p).status().send("favoriteSlotSet", Placeholder.unparsed("slot", Integer.toString(slot)));
     }
 
     /** {@code slot} of {@code -1} means "use whatever slot I'm currently holding" — see {@link PlayerSetting#getFavoriteSlot()}. */
@@ -56,9 +55,9 @@ public class CommandBestTools {
         setting.setHasSeenBestToolsMessage(true);
         setting.setFavoriteSlot(slot);
         if (slot < 0 || slot > 8) {
-            MessageUtil.send(p, "favoriteSlotHeld");
+            main.messages().to(p).status().send("favoriteSlotHeld");
         } else {
-            MessageUtil.send(p, "favoriteSlotSet", Placeholder.unparsed("slot", Integer.toString(slot)));
+            main.messages().to(p).status().send("favoriteSlotSet", Placeholder.unparsed("slot", Integer.toString(slot)));
         }
     }
 }

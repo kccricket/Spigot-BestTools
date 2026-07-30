@@ -2,7 +2,6 @@ package net.kccricket.bestesttool.listeners;
 
 import net.kccricket.bestesttool.BestestToolPlugin;
 import net.kccricket.bestesttool.security.Permissions;
-import net.kccricket.bestesttool.text.MessageUtil;
 import net.kccricket.kcmclib.logging.Log;
 
 import org.bukkit.Material;
@@ -66,7 +65,7 @@ public class RefillListener implements Listener {
         if (!Permissions.isAllowedTo(p, Permissions.PERM_REFILL)) return;
         if (!playerSetting.isRefillEnabled()) {
             if (!playerSetting.isHasSeenRefillMessage()) {
-                MessageUtil.send(p, "refillUsage");
+                main.messages().to(p).status().send("refillUsage");
                 playerSetting.setHasSeenRefillMessage(true);
             }
             Log.debug("ABORTING");

@@ -2,7 +2,6 @@ package net.kccricket.bestesttool.commands;
 
 import net.kccricket.bestesttool.BestestToolPlugin;
 import net.kccricket.bestesttool.security.Permissions;
-import net.kccricket.bestesttool.text.MessageUtil;
 import net.kccricket.kcmclib.logging.DebugLevel;
 import net.kccricket.kcmclib.logging.Log;
 
@@ -15,7 +14,7 @@ public class CommandDebug {
 
     static void debug(CommandSender sender, BestestToolPlugin main, String arg) {
         if (!Permissions.isAllowedTo(sender, Permissions.PERM_DEBUG)) {
-            MessageUtil.send(sender, "noPermission", Placeholder.unparsed("plugin", main.getName()));
+            main.messages().to(sender).error().send("noPermission", Placeholder.unparsed("plugin", main.getName()));
             return;
         }
         if (arg.equalsIgnoreCase("debug")) {
@@ -25,7 +24,7 @@ public class CommandDebug {
 
     static void debug(CommandSender sender, BestestToolPlugin main, String arg, boolean enabled) {
         if (!Permissions.isAllowedTo(sender, Permissions.PERM_DEBUG)) {
-            MessageUtil.send(sender, "noPermission", Placeholder.unparsed("plugin", main.getName()));
+            main.messages().to(sender).error().send("noPermission", Placeholder.unparsed("plugin", main.getName()));
             return;
         }
         if (arg.equalsIgnoreCase("debug")) {
@@ -36,6 +35,6 @@ public class CommandDebug {
 
     private static void setDebug(CommandSender sender, BestestToolPlugin main, boolean enabled) {
         Log.setDebugLevel(enabled ? DebugLevel.DEBUG : DebugLevel.OFF);
-        MessageUtil.send(sender, enabled ? "debugEnabled" : "debugDisabled", Placeholder.unparsed("plugin", main.getName()));
+        main.messages().to(sender).status().send(enabled ? "debugEnabled" : "debugDisabled", Placeholder.unparsed("plugin", main.getName()));
     }
 }

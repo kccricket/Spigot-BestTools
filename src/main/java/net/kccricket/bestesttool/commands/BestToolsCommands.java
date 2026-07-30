@@ -15,7 +15,6 @@ import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 
 import net.kccricket.bestesttool.security.Permissions;
-import net.kccricket.bestesttool.text.MessageUtil;
 
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
@@ -70,7 +69,7 @@ public final class BestToolsCommands {
     public static LiteralCommandNode<CommandSourceStack> buildBestTools(BestestToolPlugin main) {
         return Commands.literal("bestesttool")
                 .executes(ctx -> {
-                    Player player = requirePlayer(ctx);
+                    Player player = requirePlayer(main, ctx);
                     if (player == null || throttled(main, player)
                             || !checkPermission(main, player, Permissions.PERM_USE)) {
                         return Command.SINGLE_SUCCESS;
@@ -130,7 +129,7 @@ public final class BestToolsCommands {
     private static LiteralArgumentBuilder<CommandSourceStack> buildToggleHotbarOnly(BestestToolPlugin main) {
         return Commands.literal("hotbaronly")
                 .executes(ctx -> {
-                    Player player = requirePlayer(ctx);
+                    Player player = requirePlayer(main, ctx);
                     if (player == null || !checkPermission(main, player, Permissions.PERM_USE)) {
                         return Command.SINGLE_SUCCESS;
                     }
@@ -157,7 +156,7 @@ public final class BestToolsCommands {
     private static LiteralArgumentBuilder<CommandSourceStack> buildFavoriteSlot(BestestToolPlugin main) {
         return Commands.literal("favoriteslot")
                 .executes(ctx -> {
-                    Player player = requirePlayer(ctx);
+                    Player player = requirePlayer(main, ctx);
                     if (player == null || !checkPermission(main, player, Permissions.PERM_USE)) {
                         return Command.SINGLE_SUCCESS;
                     }
@@ -166,7 +165,7 @@ public final class BestToolsCommands {
                 })
                 .then(Commands.argument("slot", IntegerArgumentType.integer(-1, 8))
                         .executes(ctx -> {
-                            Player player = requirePlayer(ctx);
+                            Player player = requirePlayer(main, ctx);
                             if (player == null || !checkPermission(main, player, Permissions.PERM_USE)) {
                                 return Command.SINGLE_SUCCESS;
                             }
@@ -183,7 +182,7 @@ public final class BestToolsCommands {
     private static LiteralArgumentBuilder<CommandSourceStack> buildRefill(BestestToolPlugin main) {
         return Commands.literal("refill")
                 .executes(ctx -> {
-                    Player player = requirePlayer(ctx);
+                    Player player = requirePlayer(main, ctx);
                     if (player == null || !checkPermission(main, player, Permissions.PERM_REFILL)) {
                         return Command.SINGLE_SUCCESS;
                     }
@@ -236,7 +235,7 @@ public final class BestToolsCommands {
                     String raw = StringArgumentType.getString(ctx, "state");
                     Boolean state = parseState(raw);
                     if (state == null) {
-                        sendInvalidValue(sender, raw);
+                        sendInvalidValue(main, sender, raw);
                         return Command.SINGLE_SUCCESS;
                     }
                     CommandDebug.debug(sender, main, arg, state);
@@ -260,19 +259,19 @@ public final class BestToolsCommands {
                                 .suggests((ctx, b) -> suggestToken(b, main.selfTestManager.stageNames()))
                                 .executes(ctx -> runSelfTestStart(main, ctx, StringArgumentType.getString(ctx, "stage")))))
                 .then(Commands.literal("next").executes(ctx -> {
-                    Player player = requirePlayer(ctx);
+                    Player player = requirePlayer(main, ctx);
                     if (player == null) return Command.SINGLE_SUCCESS;
                     main.commandSelfTest.next(player);
                     return Command.SINGLE_SUCCESS;
                 }))
                 .then(Commands.literal("status").executes(ctx -> {
-                    Player player = requirePlayer(ctx);
+                    Player player = requirePlayer(main, ctx);
                     if (player == null) return Command.SINGLE_SUCCESS;
                     main.commandSelfTest.status(player);
                     return Command.SINGLE_SUCCESS;
                 }))
                 .then(Commands.literal("stop").executes(ctx -> {
-                    Player player = requirePlayer(ctx);
+                    Player player = requirePlayer(main, ctx);
                     if (player == null) return Command.SINGLE_SUCCESS;
                     main.commandSelfTest.stop(player);
                     return Command.SINGLE_SUCCESS;
@@ -280,7 +279,7 @@ public final class BestToolsCommands {
     }
 
     private static int runSelfTestStart(BestestToolPlugin main, CommandContext<CommandSourceStack> ctx, @Nullable String stageName) {
-        Player player = requirePlayer(ctx);
+        Player player = requirePlayer(main, ctx);
         if (player == null) return Command.SINGLE_SUCCESS;
         main.commandSelfTest.start(player, stageName);
         return Command.SINGLE_SUCCESS;
@@ -330,7 +329,7 @@ public final class BestToolsCommands {
                 .then(buildBlacklistAddRemove(main, "remove", false))
                 .then(Commands.literal("reset")
                         .executes(ctx -> {
-                            Player player = requirePlayer(ctx);
+                            Player player = requirePlayer(main, ctx);
                             if (player == null || !checkPermission(main, player, Permissions.PERM_USE)) {
                                 return Command.SINGLE_SUCCESS;
                             }
@@ -340,7 +339,7 @@ public final class BestToolsCommands {
     }
 
     private static int runBlacklistShow(BestestToolPlugin main, CommandContext<CommandSourceStack> ctx) {
-        Player player = requirePlayer(ctx);
+        Player player = requirePlayer(main, ctx);
         if (player == null || !checkPermission(main, player, Permissions.PERM_USE)) {
             return Command.SINGLE_SUCCESS;
         }
@@ -352,7 +351,7 @@ public final class BestToolsCommands {
             BestestToolPlugin main, String literal, boolean add) {
         return Commands.literal(literal)
                 .executes(ctx -> {
-                    Player player = requirePlayer(ctx);
+                    Player player = requirePlayer(main, ctx);
                     if (player == null || throttled(main, player)
                             || !checkPermission(main, player, Permissions.PERM_USE)) {
                         return Command.SINGLE_SUCCESS;
@@ -369,7 +368,7 @@ public final class BestToolsCommands {
                                 ? suggestToken(builder, SUGGESTABLE_MATERIAL_NAMES)
                                 : suggestBlacklistedMaterialToken(main, ctx, builder))
                         .executes(ctx -> {
-                            Player player = requirePlayer(ctx);
+                            Player player = requirePlayer(main, ctx);
                             if (player == null || throttled(main, player)
                                     || !checkPermission(main, player, Permissions.PERM_USE)) {
                                 return Command.SINGLE_SUCCESS;
@@ -385,7 +384,7 @@ public final class BestToolsCommands {
 
     private static int runBlacklistFromInventory(
             BestestToolPlugin main, CommandContext<CommandSourceStack> ctx, boolean add, boolean hotbarOnly) {
-        Player player = requirePlayer(ctx);
+        Player player = requirePlayer(main, ctx);
         if (player == null || throttled(main, player)
                 || !checkPermission(main, player, Permissions.PERM_USE)) {
             return Command.SINGLE_SUCCESS;
@@ -447,8 +446,8 @@ public final class BestToolsCommands {
     }
 
     /** Send the shared "invalid value" error naming {@code raw} and the valid yes/no words. */
-    private static void sendInvalidValue(CommandSender sender, String raw) {
-        MessageUtil.send(sender, "invalidValue",
+    private static void sendInvalidValue(BestestToolPlugin main, CommandSender sender, String raw) {
+        main.messages().to(sender).error().send("invalidValue",
                 Placeholder.unparsed("value", raw),
                 Placeholder.unparsed("valid", BOOLEAN_VALUES));
     }
@@ -463,14 +462,14 @@ public final class BestToolsCommands {
         return Commands.argument("state", StringArgumentType.word())
                 .suggests((ctx, b) -> suggestYesNo(b))
                 .executes(ctx -> {
-                    Player player = requirePlayer(ctx);
+                    Player player = requirePlayer(main, ctx);
                     if (player == null || !checkPermission(main, player, permissionNode)) {
                         return Command.SINGLE_SUCCESS;
                     }
                     String raw = StringArgumentType.getString(ctx, "state");
                     Boolean state = parseState(raw);
                     if (state == null) {
-                        sendInvalidValue(player, raw);
+                        sendInvalidValue(main, player, raw);
                         return Command.SINGLE_SUCCESS;
                     }
                     apply.accept(player, state);
@@ -494,16 +493,16 @@ public final class BestToolsCommands {
     /** Sends {@code noPermission} and returns {@code false} unless {@code sender} has {@code node}. */
     private static boolean checkPermission(BestestToolPlugin main, CommandSender sender, String node) {
         if (Permissions.isAllowedTo(sender, node)) return true;
-        MessageUtil.send(sender, "noPermission", Placeholder.unparsed("plugin", main.getName()));
+        main.messages().to(sender).error().send("noPermission", Placeholder.unparsed("plugin", main.getName()));
         return false;
     }
 
     /** Returns the sender as a {@link Player}, or sends {@code notAPlayer} and returns {@code null}. */
     @Nullable
-    private static Player requirePlayer(CommandContext<CommandSourceStack> ctx) {
+    private static Player requirePlayer(BestestToolPlugin main, CommandContext<CommandSourceStack> ctx) {
         CommandSender sender = ctx.getSource().getSender();
         if (sender instanceof Player player) return player;
-        MessageUtil.send(sender, "notAPlayer");
+        main.messages().to(sender).error().send("notAPlayer");
         return null;
     }
 }

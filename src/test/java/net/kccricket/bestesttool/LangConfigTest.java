@@ -1,6 +1,5 @@
 package net.kccricket.bestesttool;
 
-import net.kccricket.bestesttool.text.MessageUtil;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,8 +23,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * ({@code src/test/resources/lang/test-lang.yml}, installed as the {@code lang/en_us.yml} on-disk
  * override before each test) rather than the real bundled {@code lang/en_us.yml} prose, so these
  * tests don't depend on production wording.
+ *
+ * <p>Renamed from {@code MessageUtilTest} when {@code text/MessageUtil} was deleted in favor of
+ * KcMcLib's {@link net.kccricket.kcmclib.text.Messenger} — these assertions were always about
+ * {@code ConfigManager.lang(...)}'s resolution, not {@code MessageUtil} itself, so they now go
+ * straight through {@link net.kccricket.kcmclib.text.lang.Localized#render} rather than a deleted
+ * plugin-local wrapper.
  */
-class MessageUtilTest extends BestToolsTestBase {
+class LangConfigTest extends BestToolsTestBase {
 
     /**
      * Installs the test-only lang fixture as the {@code lang/en_us.yml} on-disk override before
@@ -52,7 +57,8 @@ class MessageUtilTest extends BestToolsTestBase {
     void placeholderIsSubstitutedIntoMessage() {
         PlayerMock player = newPlayer();
 
-        String rendered = plain(MessageUtil.get(player, "blacklistAdded", Placeholder.unparsed("items", "STONE, DIRT")));
+        String rendered = plain(plugin.getConfigManager().lang(player.locale())
+                .render("blacklistAdded", Placeholder.unparsed("items", "STONE, DIRT")));
 
         assertTrue(rendered.contains("STONE, DIRT"), "Placeholder <items> must be substituted: " + rendered);
         assertTrue(rendered.contains("TEST-BLACKLIST-ADDED"), "Fixture override text must render: " + rendered);
@@ -68,7 +74,7 @@ class MessageUtilTest extends BestToolsTestBase {
 
         plugin.configManager.reloadAll();
 
-        String rendered = plain(MessageUtil.get(player, "notAPlayer"));
+        String rendered = plain(plugin.getConfigManager().lang(player.locale()).render("notAPlayer"));
         assertEquals("Custom override text", rendered);
     }
 }

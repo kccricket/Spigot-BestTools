@@ -1,7 +1,6 @@
 package net.kccricket.bestesttool.commands;
 
 import net.kccricket.bestesttool.BestestToolPlugin;
-import net.kccricket.bestesttool.text.MessageUtil;
 
 import org.bukkit.entity.Player;
 import net.kccricket.bestesttool.model.PlayerSetting;
@@ -28,6 +27,6 @@ public class CommandRefill {
         PlayerSetting playerSetting = main.getPlayerSetting(p);
         playerSetting.setHasSeenRefillMessage(true);
         playerSetting.setRefillEnabled(enabled);
-        MessageUtil.send(p, enabled ? "refillEnabled" : "refillDisabled");
+        main.messages().to(p).status().send(enabled ? "refillEnabled" : "refillDisabled");
     }
 }

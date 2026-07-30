@@ -1,7 +1,6 @@
 package net.kccricket.bestesttool.security;
 
 import net.kccricket.bestesttool.BestestToolPlugin;
-import net.kccricket.bestesttool.text.MessageUtil;
 
 import org.bukkit.entity.Player;
 
@@ -48,9 +47,7 @@ public class ActionThrottle {
         if (allow(player)) {
             return false;
         }
-        plugin.getMessenger().message(player, "throttle", 3,
-                MessageUtil.withPrefix(player,
-                        plugin.getConfigManager().lang(player.locale()).getColoredMessage("actionTooFast")));
+        plugin.messages().to(player).error().throttle("throttle", 3).send("actionTooFast");
         return true;
     }
 }

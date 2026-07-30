@@ -16,6 +16,7 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         main.playerSettings.remove(event.getPlayer().getUniqueId());
+        main.messages().forget(event.getPlayer());
     }
 
 }
