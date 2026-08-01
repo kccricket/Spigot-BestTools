@@ -213,12 +213,7 @@ public class BestestToolPlugin extends JavaPlugin {
     public PlayerSetting getPlayerSetting(Player player) {
         return playerSettings.computeIfAbsent(player.getUniqueId(), id -> {
             Log.debug("Creating new player setting for "+player.getName());
-            return new PlayerSetting(player,
-                    configManager.main().getDefaultBestToolsEnabled(),
-                    configManager.main().getDefaultRefillEnabled(),
-                    configManager.main().getDefaultHotbarOnly(),
-                    configManager.main().getDefaultFavoriteSlot(),
-                    configManager.main().getDefaultSwordOnMobs());
+            return new PlayerSetting(player, configManager.main().playerDefaults());
         });
     }
 

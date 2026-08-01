@@ -8,10 +8,14 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockbukkit.mockbukkit.entity.LivingEntityMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
+
+import java.io.File;
+import java.nio.file.Files;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -57,6 +61,50 @@ class PermissionSiteTest extends BestToolsTestBase {
         // bestesttool.use defaults to true, so only an explicit DENIED actually withholds it.
         boolean granted = grantType != Grant.DENIED;
         assertEquals(granted ? 1 : 0, inv.getHeldItemSlot());
+    }
+
+    @ParameterizedTest
+    @EnumSource(Grant.class)
+    void bestToolsListener_attackSite_gatesOnCombatPermission(Grant grantType) {
+        PlayerMock player = newPlayer();
+        grant(player, "combat", grantType);
+        plugin.getPlayerSetting(player).toggleBestToolsEnabled();
+
+        PlayerInventory inv = player.getInventory();
+        inv.setItem(0, new ItemStack(Material.WOODEN_SWORD));
+        inv.setItem(1, new ItemStack(Material.IRON_SWORD));
+        inv.setHeldItemSlot(0);
+
+        Zombie zombie = player.getWorld().spawn(player.getLocation(), Zombie.class);
+        ((LivingEntityMock) zombie).simulateDamage(1.0, player);
+
+        // bestesttool.combat defaults to true, so only an explicit DENIED actually withholds it.
+        boolean granted = grantType != Grant.DENIED;
+        assertEquals(granted ? 1 : 0, inv.getHeldItemSlot());
+    }
+
+    @Test
+    void bestToolsListener_attackSite_inertWhenCombatDisabledInConfig() throws Exception {
+        PlayerMock player = newPlayer();
+        plugin.getPlayerSetting(player).toggleBestToolsEnabled();
+
+        File configFile = new File(plugin.getDataFolder(), "config.yml");
+        String edited = Files.readString(configFile.toPath())
+                .replace("allow_combat_switching: true", "allow_combat_switching: false");
+        Files.writeString(configFile.toPath(), edited);
+        plugin.configManager.reloadAll();
+
+        PlayerInventory inv = player.getInventory();
+        inv.setItem(0, new ItemStack(Material.WOODEN_SWORD));
+        inv.setItem(1, new ItemStack(Material.IRON_SWORD));
+        inv.setHeldItemSlot(0);
+
+        Zombie zombie = player.getWorld().spawn(player.getLocation(), Zombie.class);
+        ((LivingEntityMock) zombie).simulateDamage(1.0, player);
+
+        // allow_combat_switching: false — the weapon-switching path must be fully inert even
+        // though bestesttool.combat and bestesttool.use are both granted.
+        assertEquals(0, inv.getHeldItemSlot());
     }
 
     @ParameterizedTest

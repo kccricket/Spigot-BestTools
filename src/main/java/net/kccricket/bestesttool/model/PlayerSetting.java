@@ -26,6 +26,10 @@ public class PlayerSetting {
         private static final NamespacedKey KEY_HOTBAR_ONLY = new NamespacedKey(NAMESPACE, "hotbar_only");
         private static final NamespacedKey KEY_FAVORITE_SLOT = new NamespacedKey(NAMESPACE, "favorite_slot");
         private static final NamespacedKey KEY_SWORD_ON_MOBS = new NamespacedKey(NAMESPACE, "sword_on_mobs");
+        private static final NamespacedKey KEY_USE_AXE_AS_SWORD = new NamespacedKey(NAMESPACE, "use_axe_as_sword");
+        private static final NamespacedKey KEY_SWITCH_DURING_BATTLE = new NamespacedKey(NAMESPACE, "switch_during_battle");
+        private static final NamespacedKey KEY_CONSIDER_SWORDS_FOR_LEAVES = new NamespacedKey(NAMESPACE, "consider_swords_for_leaves");
+        private static final NamespacedKey KEY_CONSIDER_SWORDS_FOR_COBWEBS = new NamespacedKey(NAMESPACE, "consider_swords_for_cobwebs");
         private static final NamespacedKey KEY_HAS_SEEN_BESTTOOLS_MESSAGE = new NamespacedKey(NAMESPACE, "has_seen_besttools_message");
         private static final NamespacedKey KEY_HAS_SEEN_REFILL_MESSAGE = new NamespacedKey(NAMESPACE, "has_seen_refill_message");
 
@@ -40,6 +44,10 @@ public class PlayerSetting {
         private int favoriteSlot = 0;
 
         private boolean swordOnMobs;
+        private boolean useAxeAsSword;
+        private boolean switchDuringBattle;
+        private boolean considerSwordsForLeaves;
+        private boolean considerSwordsForCobwebs;
 
         private boolean hasSeenBestToolsMessage = false;
         private boolean hasSeenRefillMessage = false;
@@ -66,6 +74,23 @@ public class PlayerSetting {
 
         public boolean isSwordOnMobs() {
                 return swordOnMobs;
+        }
+
+        public boolean isUseAxeAsSword() {
+                return useAxeAsSword;
+        }
+
+        /** Whether BestTools keeps switching tools while this player holds a sword/bow/crossbow/trident. Not a combat preference — see config.yml's switch_during_battle comment. */
+        public boolean isSwitchDuringBattle() {
+                return switchDuringBattle;
+        }
+
+        public boolean isConsiderSwordsForLeaves() {
+                return considerSwordsForLeaves;
+        }
+
+        public boolean isConsiderSwordsForCobwebs() {
+                return considerSwordsForCobwebs;
         }
 
         public boolean isHasSeenBestToolsMessage() {
@@ -108,6 +133,10 @@ public class PlayerSetting {
                 this.refillEnabled = getBoolean(pdc, KEY_REFILL_ENABLED, refillEnabled);
                 this.hotbarOnly = getBoolean(pdc, KEY_HOTBAR_ONLY, hotbarOnly);
                 this.swordOnMobs = getBoolean(pdc, KEY_SWORD_ON_MOBS, swordOnMobs);
+                this.useAxeAsSword = getBoolean(pdc, KEY_USE_AXE_AS_SWORD, useAxeAsSword);
+                this.switchDuringBattle = getBoolean(pdc, KEY_SWITCH_DURING_BATTLE, switchDuringBattle);
+                this.considerSwordsForLeaves = getBoolean(pdc, KEY_CONSIDER_SWORDS_FOR_LEAVES, considerSwordsForLeaves);
+                this.considerSwordsForCobwebs = getBoolean(pdc, KEY_CONSIDER_SWORDS_FOR_COBWEBS, considerSwordsForCobwebs);
                 this.favoriteSlot = pdc.getOrDefault(KEY_FAVORITE_SLOT, PersistentDataType.INTEGER, favoriteSlot);
         }
 
@@ -119,20 +148,28 @@ public class PlayerSetting {
                 pdc.set(KEY_REFILL_ENABLED, PersistentDataType.BYTE, (byte) (refillEnabled ? 1 : 0));
                 pdc.set(KEY_HOTBAR_ONLY, PersistentDataType.BYTE, (byte) (hotbarOnly ? 1 : 0));
                 pdc.set(KEY_SWORD_ON_MOBS, PersistentDataType.BYTE, (byte) (swordOnMobs ? 1 : 0));
+                pdc.set(KEY_USE_AXE_AS_SWORD, PersistentDataType.BYTE, (byte) (useAxeAsSword ? 1 : 0));
+                pdc.set(KEY_SWITCH_DURING_BATTLE, PersistentDataType.BYTE, (byte) (switchDuringBattle ? 1 : 0));
+                pdc.set(KEY_CONSIDER_SWORDS_FOR_LEAVES, PersistentDataType.BYTE, (byte) (considerSwordsForLeaves ? 1 : 0));
+                pdc.set(KEY_CONSIDER_SWORDS_FOR_COBWEBS, PersistentDataType.BYTE, (byte) (considerSwordsForCobwebs ? 1 : 0));
                 pdc.set(KEY_FAVORITE_SLOT, PersistentDataType.INTEGER, favoriteSlot);
         }
 
-        public PlayerSetting(Player player, boolean bestToolsEnabled, boolean refillEnabled, boolean hotbarOnly, int favoriteSlot, boolean swordOnMobs) {
+        public PlayerSetting(Player player, PlayerDefaults defaults) {
 
                 this.player = player;
                 this.blacklist = new Blacklist(player);
-                this.bestToolsEnabled = bestToolsEnabled;
-                this.refillEnabled = refillEnabled;
+                this.bestToolsEnabled = defaults.bestToolsEnabled();
+                this.refillEnabled = defaults.refillEnabled();
                 this.hasSeenBestToolsMessage = false;
                 this.hasSeenRefillMessage = false;
-                this.hotbarOnly = hotbarOnly;
-                this.swordOnMobs= swordOnMobs;
-                this.favoriteSlot = favoriteSlot;
+                this.hotbarOnly = defaults.hotbarOnly();
+                this.swordOnMobs = defaults.swordOnMobs();
+                this.useAxeAsSword = defaults.useAxeAsSword();
+                this.switchDuringBattle = defaults.switchDuringBattle();
+                this.considerSwordsForLeaves = defaults.considerSwordsForLeaves();
+                this.considerSwordsForCobwebs = defaults.considerSwordsForCobwebs();
+                this.favoriteSlot = defaults.favoriteSlot();
                 getPDCValues(player);
                 this.save();
         }
@@ -159,11 +196,39 @@ public class PlayerSetting {
                 return hotbarOnly;
         }
 
-        /** Package-private setter used by {@link SelfTestSession} to force/restore this preference around a test run. */
+        /** Also used by {@link SelfTestSession} to force/restore this preference around a test run. */
         public boolean setSwordOnMobs(boolean enabled) {
                 swordOnMobs = enabled;
                 save();
                 return swordOnMobs;
+        }
+
+        /** Also used by {@link SelfTestSession} to force/restore this preference around a test run. */
+        public boolean setUseAxeAsSword(boolean enabled) {
+                useAxeAsSword = enabled;
+                save();
+                return useAxeAsSword;
+        }
+
+        /** Also used by {@link SelfTestSession} to force/restore this preference around a test run. */
+        public boolean setSwitchDuringBattle(boolean enabled) {
+                switchDuringBattle = enabled;
+                save();
+                return switchDuringBattle;
+        }
+
+        /** Also used by {@link SelfTestSession} to force/restore this preference around a test run. */
+        public boolean setConsiderSwordsForLeaves(boolean enabled) {
+                considerSwordsForLeaves = enabled;
+                save();
+                return considerSwordsForLeaves;
+        }
+
+        /** Also used by {@link SelfTestSession} to force/restore this preference around a test run. */
+        public boolean setConsiderSwordsForCobwebs(boolean enabled) {
+                considerSwordsForCobwebs = enabled;
+                save();
+                return considerSwordsForCobwebs;
         }
 
         public void setHasSeenBestToolsMessage(boolean seen) {

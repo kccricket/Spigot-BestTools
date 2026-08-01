@@ -164,16 +164,17 @@ public class BestToolsHandler {
     // TODO: Implement profitsFromFortune()
 
     /**
-     * Filters mining-tool candidates independent of live mining speed — currently just the config
-     * toggles that keep swords out of leaf/cobweb selection unless explicitly enabled. Everything
-     * else (is this item even fast at this block) is answered by {@link BlockData#getDestroySpeed}
-     * itself: an irrelevant item (e.g. a sword against stone) has no matching vanilla tool rule and
-     * scores no better than a bare hand, so it never needs an explicit category filter here.
+     * Filters mining-tool candidates independent of live mining speed — currently just the
+     * per-player preferences (see {@link SwordPolicy}) that keep swords out of leaf/cobweb
+     * selection unless explicitly enabled. Everything else (is this item even fast at this block)
+     * is answered by {@link BlockData#getDestroySpeed} itself: an irrelevant item (e.g. a sword
+     * against stone) has no matching vanilla tool rule and scores no better than a bare hand, so
+     * it never needs an explicit category filter here.
      */
-    boolean isCandidate(ItemStack item, Material target) {
+    boolean isCandidate(ItemStack item, Material target, SwordPolicy policy) {
         if(!swords.contains(item.getType())) return true;
-        if(LeavesUtils.isLeaves(target)) return main.configManager.main().getConsiderSwordsForLeaves();
-        if(target == Material.COBWEB) return main.configManager.main().getConsiderSwordsForCobwebs();
+        if(LeavesUtils.isLeaves(target)) return policy.forLeaves();
+        if(target == Material.COBWEB) return policy.forCobwebs();
         return true;
     }
 
@@ -238,7 +239,8 @@ public class BestToolsHandler {
      *              (see {@link #silkChangesDrops}) the enchant is the point, not the speed.
      */
     @Nullable
-    ItemStack getBestItemStackFromArray(@NotNull BlockData data, @NotNull ItemStack[] items, boolean trySilktouch, @NotNull Material target, float floor) {
+    ItemStack getBestItemStackFromArray(@NotNull BlockData data, @NotNull ItemStack[] items, boolean trySilktouch,
+                                         @NotNull Material target, float floor, @NotNull SwordPolicy policy) {
 
         boolean needsCorrect = data.requiresCorrectToolForDrops();
 
@@ -252,7 +254,7 @@ public class BestToolsHandler {
             // TODO: Check if durability is 1
 
             if(trySilktouch && (!isToolOrRoscoe(item) || !hasSilktouch(item))) continue;
-            if(!isCandidate(item,target)) continue;
+            if(!isCandidate(item,target,policy)) continue;
 
             float speed = data.getDestroySpeed(item,true);
             if(speed > bestAnySpeed) {
@@ -267,7 +269,7 @@ public class BestToolsHandler {
 
         if(bestAny == null) {
             if(trySilktouch) {
-                return getBestItemStackFromArray(data,items,false,target,1.0f);
+                return getBestItemStackFromArray(data,items,false,target,1.0f,policy);
             } else {
                 return null;
             }
@@ -358,9 +360,9 @@ public class BestToolsHandler {
      * @return
      */
     @Nullable
-    ItemStack getBestToolFromInventory(@NotNull Block block, Player p, boolean hotbarOnly) {
+    ItemStack getBestToolFromInventory(@NotNull Block block, Player p, boolean hotbarOnly, @NotNull SwordPolicy policy) {
         ItemStack[] items = inventoryToArray(p,hotbarOnly);
-        return selectBestTool(block.getBlockData(), block.getType(), items, () -> silkChangesDrops(block));
+        return selectBestTool(block.getBlockData(), block.getType(), items, () -> silkChangesDrops(block), policy);
     }
 
     /**
@@ -378,15 +380,15 @@ public class BestToolsHandler {
      */
     @Nullable
     public ItemStack selectBestTool(@NotNull BlockData data, @NotNull Material mat, @NotNull ItemStack[] items,
-                              @NotNull BooleanSupplier silkChangesDrops) {
-        ItemStack bestStack = getBestItemStackFromArray(data,items,profitsFromSilkTouch(mat),mat,1.0f);
+                              @NotNull BooleanSupplier silkChangesDrops, @NotNull SwordPolicy policy) {
+        ItemStack bestStack = getBestItemStackFromArray(data,items,profitsFromSilkTouch(mat),mat,1.0f,policy);
         if(bestStack!=null) {
             Log.debug("bestStack is "+bestStack.toString());
             return bestStack;
         }
         Log.debug("bestStack is null");
         if(silkChangesDrops.getAsBoolean()) {
-            ItemStack silkStack = getBestItemStackFromArray(data,items,true,mat,0.0f);
+            ItemStack silkStack = getBestItemStackFromArray(data,items,true,mat,0.0f,policy);
             if(silkStack!=null) {
                 Log.debug("silkStack is "+silkStack.toString());
                 return silkStack;

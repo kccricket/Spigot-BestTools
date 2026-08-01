@@ -54,7 +54,9 @@ public final class BestToolsSelector {
      * Decides what BestTools should do about {@code block}, given {@code p}'s inventory and
      * settings. Mirrors the gating order {@code onPlayerInteractWithBlock} used to run inline:
      * null/AIR &gt; global blacklist &gt; per-player blacklist &gt; never-switch &gt; gamemode &gt;
-     * mid-battle &gt; action/hand &gt; actual selection. Only the never-switch branch is a
+     * mid-battle (a per-player preference, {@link PlayerSetting#isSwitchDuringBattle()} — not a
+     * combat feature, stays available regardless of {@code allow_combat_switching}) &gt;
+     * action/hand &gt; actual selection. Only the never-switch branch is a
      * {@link Outcome#NO_CHANGE} (cache still validated); every other early exit is
      * {@link Outcome#NOT_APPLICABLE} (cache left untouched), exactly as before.
      */
@@ -81,7 +83,7 @@ public final class BestToolsSelector {
         }
 
         PlayerInventory inv = p.getInventory();
-        if (main.configManager.main().getDontSwitchDuringBattle() && handler.isWeapon(inv.getItemInMainHand())) {
+        if (!playerSetting.isSwitchDuringBattle() && handler.isWeapon(inv.getItemInMainHand())) {
             Log.debug("Return: It's a gun^^");
             return ToolDecision.NOT_APPLICABLE_DECISION;
         }
@@ -89,7 +91,7 @@ public final class BestToolsSelector {
         if (action != Action.LEFT_CLICK_BLOCK) return ToolDecision.NOT_APPLICABLE_DECISION;
         if (hand != EquipmentSlot.HAND) return ToolDecision.NOT_APPLICABLE_DECISION;
 
-        ItemStack bestTool = handler.getBestToolFromInventory(block, p, playerSetting.isHotbarOnly());
+        ItemStack bestTool = handler.getBestToolFromInventory(block, p, playerSetting.isHotbarOnly(), SwordPolicy.from(playerSetting));
         return bestTool != null ? ToolDecision.switchTo(bestTool) : ToolDecision.BARE_HAND_DECISION;
     }
 }

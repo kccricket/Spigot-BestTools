@@ -9,6 +9,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CommandBlacklistTest extends BestToolsTestBase {
@@ -56,6 +57,32 @@ class CommandBlacklistTest extends BestToolsTestBase {
         player.performCommand("bestesttool blacklist reset");
 
         assertFalse(plugin.getPlayerSetting(player).getBlacklist().contains(Material.DIRT));
+    }
+
+    @Test
+    void resetSendsOneSummaryMessageNotOnePerItem() {
+        PlayerMock player = opPlayer();
+        plugin.getPlayerSetting(player).getBlacklist().add(Material.DIRT);
+        plugin.getPlayerSetting(player).getBlacklist().add(Material.STONE);
+        plugin.getPlayerSetting(player).getBlacklist().add(Material.SAND);
+
+        player.performCommand("bestesttool blacklist reset");
+
+        String message = player.nextMessage();
+        assertNotNull(message);
+        assertFalse(message.contains("DIRT") || message.contains("STONE") || message.contains("SAND"), message);
+        assertNull(player.nextMessage(), "reset should send exactly one message, not one per item");
+    }
+
+    @Test
+    void resetOnAlreadyEmptyBlacklistReportsEmpty() {
+        PlayerMock player = opPlayer();
+
+        player.performCommand("bestesttool blacklist reset");
+
+        String message = player.nextMessage();
+        assertNotNull(message);
+        assertTrue(message.contains("empty"), message);
     }
 
     @Test

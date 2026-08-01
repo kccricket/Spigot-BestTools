@@ -20,9 +20,15 @@ permissions:
     default: true
     children:
       bestesttool.use: true
+      bestesttool.combat: true
       bestesttool.refill: true
   bestesttool.use:
     description: Automatic best-tool switching and the /bestesttool command
+    default: true
+  bestesttool.combat:
+    description: >-
+      Best-weapon switching when attacking mobs, and /bestesttool combat (also requires
+      allow_combat_switching in config.yml)
     default: true
   bestesttool.refill:
     description: Automatic hotbar refilling and /bestesttool refill (aliases /refill, /rf)

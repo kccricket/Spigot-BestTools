@@ -17,6 +17,7 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import net.kccricket.bestesttool.selftest.SelfTestManager;
+import net.kccricket.bestesttool.tool.SwordPolicy;
 
 /**
  * Orchestrates {@code /bestesttool benchmark}: owns the single server-wide run (if any) and its
@@ -123,8 +124,12 @@ public final class BenchmarkManager {
         long start = System.nanoTime();
         for (int i = 0; i < n; i++) {
             int idx = i % session.materials.length;
+            // SwordPolicy.NONE: the benchmark deliberately pins the sword-fallback preferences
+            // off so results stay comparable across releases and independent of any player's
+            // (or config.yml's) actual settings.
             ItemStack result = main.toolHandler.selectBestTool(
-                    session.blockData[idx], session.materials[idx], session.kit, BenchmarkWorkload.NEVER_SILK);
+                    session.blockData[idx], session.materials[idx], session.kit, BenchmarkWorkload.NEVER_SILK,
+                    SwordPolicy.NONE);
             if (result != null) session.sink += result.hashCode();
         }
         long elapsed = System.nanoTime() - start;

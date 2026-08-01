@@ -48,6 +48,10 @@ public class BestToolsListener implements Listener {
         Log.debug("EntityDamageByEntity 2");
         Player p = (Player) e.getDamager();
         if(!Permissions.isAllowedTo(p, Permissions.PERM_USE)) return;
+        // Combat gate: needs both allow_combat_switching and bestesttool.combat. Checked before
+        // any PlayerSetting read/mutation so a gated-off player's stored combat prefs are never
+        // touched — they're preserved, just ignored while the gate is off.
+        if(!Permissions.canUseCombat(main, p)) return;
         Log.debug("EntityDamageByEntity 3");
         PlayerSetting playerSetting = main.getPlayerSetting(p);
         if(!playerSetting.isBestToolsEnabled()) return;
@@ -63,7 +67,7 @@ public class BestToolsListener implements Listener {
         Log.debug("Getting the best roscoe for "+enemy.getType().name());
 
         PlayerInventory inv = p.getInventory();
-        ItemStack bestRoscoe = handler.getBestRoscoeFromInventory(enemy.getType(), p,playerSetting.isHotbarOnly(),inv.getItemInMainHand(),main.configManager.main().getUseAxeAsSword());
+        ItemStack bestRoscoe = handler.getBestRoscoeFromInventory(enemy.getType(), p,playerSetting.isHotbarOnly(),inv.getItemInMainHand(),playerSetting.isUseAxeAsSword());
 
         if(bestRoscoe==null || bestRoscoe.equals(inv.getItemInMainHand())) {
             return;

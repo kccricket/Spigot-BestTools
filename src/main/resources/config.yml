@@ -30,11 +30,24 @@
 # /bestesttool blacklist remove hotbar        Removes all items in your hotbar from your blacklist
 # /bestesttool blacklist reset                Removes all items from your blacklist
 
+# /bestesttool swordsforleaves [<state>]:     Toggle (or set) using swords as a leaf-breaking fallback
+# /bestesttool swordsforcobwebs [<state>]:    Toggle (or set) using swords as a cobweb-breaking fallback
+# /bestesttool switchduringbattle [<state>]:  Toggle (or set) whether BestTools keeps switching tools
+#                                  while you hold a sword/bow/crossbow/trident
+# /bestesttool combat swordonmobs [<state>]:  Toggle (or set) switching to your best sword/axe when
+#                                  attacking mobs (needs allow_combat_switching below, plus the
+#                                  bestesttool.combat permission)
+# /bestesttool combat useaxeassword [<state>]: Toggle (or set) preferring an axe over a sword when
+#                                  attacking, if the axe hits harder (same requirements as above)
+
 
 # ----- Permissions -----
 
 # bestesttool.use:      (default: true)  Allows using /bestesttool (or /bt), including hotbar,
-#                        favoriteslot, and the blacklist subcommands
+#                        favoriteslot, the blacklist subcommands, and every preference above except
+#                        the combat subtree
+# bestesttool.combat:   (default: true)  Allows /bestesttool combat and weapon-switching when
+#                        attacking mobs (also needs allow_combat_switching below)
 # bestesttool.refill:   (default: true)  Allows using /bestesttool refill (or /refill, /rf)
 # bestesttool.admin.reload:   (default: op)    Allows using /bestesttool admin reload
 # bestesttool.admin.debug:    (default: op)    Allows enabling debug mode via /bestesttool admin debug
@@ -74,7 +87,30 @@ defaults:
   favorite_slot: 8
 
   # Allow /bestesttool to switch to your sword/axe (whatever is better) when attacking mobs?
+  # Can be changed per player using /bestesttool combat swordonmobs (needs allow_combat_switching
+  # below and the bestesttool.combat permission).
   sword_on_mobs: true
+
+  # Use axe instead of sword when the axe does more damage (it's slower though and does not deal
+  # sweep damage). Can be changed per player using /bestesttool combat useaxeassword (same
+  # requirements as sword_on_mobs above).
+  use_axe_as_sword: false
+
+  # When true, BestTools keeps switching tools even while you're holding a sword, crossbow, bow,
+  # or trident. When false (the default), it leaves your hand alone during a fight. This is NOT a
+  # combat feature — it protects your held item regardless of allow_combat_switching/
+  # bestesttool.combat below. Can be changed per player using /bestesttool switchduringbattle.
+  switch_during_battle: false
+
+  # The best tool for leaves are shears as only those give drops. BestTools will try to
+  # use hoes instead if you don't have any shears. You can also make BestTools try to use
+  # swords if you don't have both, however swords will take twice the damage when breaking
+  # leaves with it. Can be changed per player using /bestesttool swordsforleaves.
+  consider_swords_for_leaves: false
+
+  # Uses swords for cobwebs if you don't have shears. Can be changed per player using
+  # /bestesttool swordsforcobwebs.
+  consider_swords_for_cobwebs: false
 
 
 # ----- General config -----
@@ -83,21 +119,14 @@ defaults:
 # When set to true, it works in survival and adventure game mode
 allow_in_adventure_mode: false
 
-# When enabled, BestTools will not attempt to switch any tools when the player is
-# holding a sword, crossbow, bow or trident
-dont_switch_during_battle: true
-
-# The best tool for leaves are shears as only those give drops. BestTools will try to
-# use hoes instead if you don't have any shears. You can also make BestTools try to use
-# swords if you don't have both, however swords will take twice the damage when breaking
-# leaves with it.
-consider_swords_for_leaves: false
-
-# Uses swords for cobwebs if you don't have shears.
-consider_swords_for_cobwebs: false
-
-# Use axe instead of sword when the axe does more damage (it's slower though and does not deal sweep damage)
-use_axe_as_sword: false
+# Master switch for BestTools' combat features: switching to your best sword/axe when you attack a
+# mob (defaults.sword_on_mobs/defaults.use_axe_as_sword above, and /bestesttool combat ...). When
+# false, the combat subtree is hidden from the command tree entirely and no weapon switching
+# happens on attack — players' stored combat preferences are kept, just ignored. Players also need
+# the bestesttool.combat permission (default: true). Does NOT affect switch_during_battle,
+# consider_swords_for_leaves, or consider_swords_for_cobwebs above — none of those are combat
+# features.
+allow_combat_switching: true
 
 # NOT IMPLEMENTED YET, comes with next update
 # use-sword-on-friendly-mobs: false

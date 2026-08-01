@@ -1,6 +1,7 @@
 package net.kccricket.bestesttool.config;
 
 import net.kccricket.bestesttool.BestestToolPlugin;
+import net.kccricket.bestesttool.model.PlayerDefaults;
 import net.kccricket.kcmclib.config.ManagedConfig;
 import net.kccricket.kcmclib.config.ResourceUpdater;
 import net.kccricket.kcmclib.logging.DebugLevel;
@@ -31,9 +32,12 @@ public class MainConfig implements ManagedConfig {
     // MainConfig. defaultLocale is additionally read on Folia-async-scheduler threads (e.g.
     // ModrinthUpdateChecker's notice lines).
     private volatile Locale defaultLocale = Locale.forLanguageTag("en-US");
-    private volatile boolean considerSwordsForLeaves;
-    private volatile boolean considerSwordsForCobwebs;
-    private volatile boolean useAxeAsSword;
+    // allow_combat_switching is read on every EntityDamageByEntityEvent (region thread) and inside
+    // a Brigadier .requires predicate (main thread, on command-tree sync) — same hot-path shape as
+    // defaultLocale/globalBlockBlacklist below, so it gets the same volatile-cache treatment. The
+    // four sword/battle toggles that used to live here moved to PlayerSetting (read once per
+    // player, not per event) when they became per-player preferences.
+    private volatile boolean allowCombatSwitching = true;
     private volatile Set<Material> globalBlockBlacklist = Set.of();
 
     public MainConfig(BestestToolPlugin plugin) {
@@ -121,9 +125,7 @@ public class MainConfig implements ManagedConfig {
     private void applyToRuntime() {
         Log.setDebugLevel(DebugLevel.parse(plugin.getConfig().getString("debug_level"), DebugLevel.OFF));
         defaultLocale = parseLocaleToken(plugin.getConfig().getString("default_locale", "en_us"));
-        considerSwordsForLeaves = plugin.getConfig().getBoolean("consider_swords_for_leaves", false);
-        considerSwordsForCobwebs = plugin.getConfig().getBoolean("consider_swords_for_cobwebs", false);
-        useAxeAsSword = plugin.getConfig().getBoolean("use_axe_as_sword", false);
+        allowCombatSwitching = plugin.getConfig().getBoolean("allow_combat_switching", true);
         globalBlockBlacklist = parseGlobalBlockBlacklist();
     }
 
@@ -179,6 +181,39 @@ public class MainConfig implements ManagedConfig {
         return plugin.getConfig().getBoolean("defaults.sword_on_mobs", true);
     }
 
+    public boolean getDefaultUseAxeAsSword() {
+        return plugin.getConfig().getBoolean("defaults.use_axe_as_sword", false);
+    }
+
+    /**
+     * Bundled default for {@code defaults.switch_during_battle} — a pure rename+invert of the old
+     * {@code dont_switch_during_battle: true}, so {@code false} here reproduces prior behavior
+     * exactly. Named so the default is a single one-line change; kept in sync with the bundled
+     * {@code config.yml} by {@code MainConfigTest#bundledSwitchDuringBattleMatchesConstant}.
+     */
+    public static final boolean DEFAULT_SWITCH_DURING_BATTLE = false;
+
+    public boolean getDefaultSwitchDuringBattle() {
+        return plugin.getConfig().getBoolean("defaults.switch_during_battle", DEFAULT_SWITCH_DURING_BATTLE);
+    }
+
+    public boolean getDefaultConsiderSwordsForLeaves() {
+        return plugin.getConfig().getBoolean("defaults.consider_swords_for_leaves", false);
+    }
+
+    public boolean getDefaultConsiderSwordsForCobwebs() {
+        return plugin.getConfig().getBoolean("defaults.consider_swords_for_cobwebs", false);
+    }
+
+    /** Assembles every per-player preference default in one read, for {@link net.kccricket.bestesttool.model.PlayerSetting}'s constructor. */
+    public PlayerDefaults playerDefaults() {
+        return new PlayerDefaults(
+                getDefaultBestToolsEnabled(), getDefaultRefillEnabled(), getDefaultHotbarOnly(),
+                getDefaultFavoriteSlot(), getDefaultSwordOnMobs(), getDefaultUseAxeAsSword(),
+                getDefaultSwitchDuringBattle(), getDefaultConsiderSwordsForLeaves(),
+                getDefaultConsiderSwordsForCobwebs());
+    }
+
     // -------------------------------------------------------------------------
     // Server-wide policy toggles
     // -------------------------------------------------------------------------
@@ -187,20 +222,14 @@ public class MainConfig implements ManagedConfig {
         return plugin.getConfig().getBoolean("allow_in_adventure_mode", false);
     }
 
-    public boolean getDontSwitchDuringBattle() {
-        return plugin.getConfig().getBoolean("dont_switch_during_battle", true);
-    }
-
-    public boolean getConsiderSwordsForLeaves() {
-        return considerSwordsForLeaves;
-    }
-
-    public boolean getConsiderSwordsForCobwebs() {
-        return considerSwordsForCobwebs;
-    }
-
-    public boolean getUseAxeAsSword() {
-        return useAxeAsSword;
+    /**
+     * Master switch for BestTools' combat features (weapon-switching on attack). Read on every
+     * {@code EntityDamageByEntityEvent} and inside the {@code /bestesttool combat} command node's
+     * {@code .requires}, so it's cached like {@link #getDefaultLocale()}/{@link #getGlobalBlockBlacklist()}
+     * rather than read live like the one-shot per-player defaults above.
+     */
+    public boolean getAllowCombatSwitching() {
+        return allowCombatSwitching;
     }
 
     /** Parsed once per load/reload; an unrecognized material name is warned about and skipped. */

@@ -1,6 +1,34 @@
 # Changelog
 
 ## Unreleased
+- Moved `sword_on_mobs`, `use_axe_as_sword`, `consider_swords_for_leaves`, and
+  `consider_swords_for_cobwebs` from server-wide config keys into per-player preferences
+  (`defaults.*` still sets the starting value for new players), and added five new commands to
+  change them: `/bestesttool swordsforleaves`, `swordsforcobwebs`, `switchduringbattle`, and
+  `combat swordonmobs`/`combat useaxeassword`. Renamed `dont_switch_during_battle` to
+  `switch_during_battle` with inverted meaning (default `false` reproduces the old
+  `dont_switch_during_battle: true` exactly — no behavior change). Existing on-disk
+  `dont_switch_during_battle`/`consider_swords_for_*`/`use_axe_as_sword` keys are now unrecognized
+  and will be named in a console warning on next load (no migration scheme, per project convention)
+- Added `allow_combat_switching` (config, default `true`) and a new `bestesttool.combat` permission
+  (default `true`) gating weapon-switching on attack and the new `/bestesttool combat` subtree —
+  both are required. `switch_during_battle`/`consider_swords_for_leaves`/`consider_swords_for_cobwebs`
+  are explicitly **not** combat features and stay available regardless of this gate. Disabling the
+  gate hides the combat commands and makes weapon-switching inert without touching stored player
+  preferences
+- Fixed `/bestesttool admin` (and every other admin subcommand's parent) showing up in tab
+  completion for players holding no admin permission at all — the node had no `.requires` of its
+  own, so Brigadier synced it to everyone even though every child was correctly hidden. The `admin`
+  node is now guarded by the OR of its children's own permission checks, so a sender holding only
+  one admin child permission (e.g. just `bestesttool.admin.reload`) can still reach it
+- Fixed `/bestesttool blacklist reset` dumping every removed material into one giant chat line; it
+  now sends a single `blacklistCleared` summary message (or `blacklistEmpty` if there was nothing
+  to clear)
+- Material tab-completion (`blacklist add`/`remove`) now suggests namespaced IDs
+  (`minecraft:dirt`) instead of bare names, via a new shared `net.kccricket.kcmclib.commands.Suggest`
+  helper (also used by ClickSorted). Parsing switched from the case-sensitive, non-namespaced
+  `Material.getMaterial` to `Material.matchMaterial`, which accepts namespaced input, bare input,
+  and any case — old bare-name blacklist entries and links keep working unchanged
 - Fixed `/bestesttool admin benchmark`'s per-batch progress line (`benchmarkTick`) never actually
   reaching the player who started the run — the lang key existed but nothing sent it. Each batch now
   reports to the player (when the sender is a player) in addition to the existing console log line

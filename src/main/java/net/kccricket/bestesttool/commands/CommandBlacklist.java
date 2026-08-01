@@ -84,8 +84,12 @@ public class CommandBlacklist {
     void reset(Player p) {
         main.getPlayerSetting(p).getBtcache().invalidated();
         Blacklist b = main.getPlayerSetting(p).getBlacklist();
-        main.messages().to(p).status().send("blacklistRemoved", Placeholder.unparsed("items", stringlist2string(b.toStringList())));
+        if (b.toStringList().isEmpty()) {
+            main.messages().to(p).status().send("blacklistEmpty");
+            return;
+        }
         b.clear();
+        main.messages().to(p).status().send("blacklistCleared");
     }
 
     /**
@@ -122,7 +126,10 @@ public class CommandBlacklist {
         ArrayList<String> errors = new ArrayList<>();
 
         for (String s : materialNames) {
-            Material m = Material.getMaterial(s.toUpperCase());
+            // matchMaterial accepts namespaced IDs (minecraft:dirt), bare names, and any case —
+            // getMaterial (valueOf-backed) rejects namespaced input and is locale-sensitive
+            // via a bare toUpperCase().
+            Material m = Material.matchMaterial(s);
             if (m == Material.AIR) m = null;
             if (m == null) {
                 errors.add(s);

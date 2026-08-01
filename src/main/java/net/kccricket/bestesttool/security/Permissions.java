@@ -1,5 +1,7 @@
 package net.kccricket.bestesttool.security;
 
+import net.kccricket.bestesttool.BestestToolPlugin;
+
 import org.bukkit.command.CommandSender;
 
 /**
@@ -14,6 +16,7 @@ public final class Permissions {
     private Permissions() {}
 
     public static final String PERM_USE = "bestesttool.use";
+    public static final String PERM_COMBAT = "bestesttool.combat";
     public static final String PERM_REFILL = "bestesttool.refill";
     public static final String PERM_RELOAD = "bestesttool.admin.reload";
     public static final String PERM_DEBUG = "bestesttool.admin.debug";
@@ -29,5 +32,17 @@ public final class Permissions {
      */
     public static boolean isAllowedTo(CommandSender sender, String node) {
         return net.kccricket.kcmclib.security.Permissions.isAllowedTo(sender, node);
+    }
+
+    /**
+     * Whether {@code sender} may use BestestTool's combat features (best-weapon switching on
+     * attack, and the {@code /bestesttool combat} subtree). Needs BOTH the server-wide
+     * {@code allow_combat_switching} config flag AND the {@link #PERM_COMBAT} node — mirroring how
+     * {@code /bestesttool admin selftest}/{@code benchmark} pair a config master switch with a
+     * permission (see {@code BestToolsCommands#canSelfTest}/{@code canBenchmark}).
+     */
+    public static boolean canUseCombat(BestestToolPlugin main, CommandSender sender) {
+        return main.getConfigManager().main().getAllowCombatSwitching()
+                && isAllowedTo(sender, PERM_COMBAT);
     }
 }

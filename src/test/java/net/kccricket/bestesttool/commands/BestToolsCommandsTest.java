@@ -5,6 +5,7 @@ import com.mojang.brigadier.suggestion.Suggestion;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
+import net.kccricket.kcmclib.commands.Suggest;
 import org.bukkit.Material;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
@@ -23,15 +24,17 @@ class BestToolsCommandsTest extends BestToolsTestBase {
 
     private static List<String> suggest(String input, List<String> candidates) throws Exception {
         SuggestionsBuilder builder = new SuggestionsBuilder(input, 0);
-        Suggestions suggestions = BestToolsCommands.suggestToken(builder, candidates).get();
+        Suggestions suggestions = Suggest.token(builder, candidates).get();
         return suggestions.getList().stream().map(Suggestion::getText).toList();
     }
 
     @Test
-    void suggestableMaterialNamesIncludeBlocksAndExcludeItems() {
-        assertTrue(BestToolsCommands.SUGGESTABLE_MATERIAL_NAMES.contains("dirt"),
-                "DIRT is a block and must be suggestable for the block blacklist");
-        assertFalse(BestToolsCommands.SUGGESTABLE_MATERIAL_NAMES.contains("wooden_sword"),
+    void suggestableMaterialNamesAreNamespacedIncludeBlocksAndExcludeItems() {
+        List<String> names = Suggest.materialNames(BestToolsCommands.SUGGESTABLE_MATERIAL);
+        assertTrue(names.contains("minecraft:dirt"),
+                "DIRT is a block and must be suggestable for the block blacklist, namespaced");
+        assertFalse(names.contains("dirt"), "bare (non-namespaced) names must not be suggested");
+        assertFalse(names.contains("minecraft:wooden_sword"),
                 "WOODEN_SWORD is not a block and must not be suggested");
     }
 
@@ -68,7 +71,7 @@ class BestToolsCommandsTest extends BestToolsTestBase {
 
         List<String> names = BestToolsCommands.blacklistedMaterialNames(plugin, player);
 
-        assertTrue(names.contains("dirt"));
+        assertTrue(names.contains("minecraft:dirt"));
     }
 
     @Test

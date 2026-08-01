@@ -30,16 +30,53 @@ public class CommandBestTools {
         main.messages().to(p).status().send(enabled ? "besttoolsEnabled" : "besttoolsDisabled");
     }
 
-    void toggleHotbarOnly(Player p) {
-        setHotbarOnly(p, !main.getPlayerSetting(p).isHotbarOnly());
-    }
-
     void setHotbarOnly(Player p, boolean enabled) {
         PlayerSetting setting = main.getPlayerSetting(p);
         setting.getBtcache().invalidated();
         setting.setHasSeenBestToolsMessage(true);
         setting.setHotbarOnly(enabled);
         main.messages().to(p).status().send(enabled ? "hotbarOnlyEnabled" : "hotbarOnlyDisabled");
+    }
+
+    void setSwordOnMobs(Player p, boolean enabled) {
+        PlayerSetting setting = main.getPlayerSetting(p);
+        setting.getBtcache().invalidated();
+        setting.setHasSeenBestToolsMessage(true);
+        setting.setSwordOnMobs(enabled);
+        main.messages().to(p).status().send(enabled ? "swordOnMobsEnabled" : "swordOnMobsDisabled");
+    }
+
+    void setUseAxeAsSword(Player p, boolean enabled) {
+        PlayerSetting setting = main.getPlayerSetting(p);
+        setting.getBtcache().invalidated();
+        setting.setHasSeenBestToolsMessage(true);
+        setting.setUseAxeAsSword(enabled);
+        main.messages().to(p).status().send(enabled ? "useAxeAsSwordEnabled" : "useAxeAsSwordDisabled");
+    }
+
+    /** switch_during_battle is not a combat preference — see config.yml's comment on the key. */
+    void setSwitchDuringBattle(Player p, boolean enabled) {
+        PlayerSetting setting = main.getPlayerSetting(p);
+        setting.getBtcache().invalidated();
+        setting.setHasSeenBestToolsMessage(true);
+        setting.setSwitchDuringBattle(enabled);
+        main.messages().to(p).status().send(enabled ? "switchDuringBattleEnabled" : "switchDuringBattleDisabled");
+    }
+
+    void setConsiderSwordsForLeaves(Player p, boolean enabled) {
+        PlayerSetting setting = main.getPlayerSetting(p);
+        setting.getBtcache().invalidated();
+        setting.setHasSeenBestToolsMessage(true);
+        setting.setConsiderSwordsForLeaves(enabled);
+        main.messages().to(p).status().send(enabled ? "swordsForLeavesEnabled" : "swordsForLeavesDisabled");
+    }
+
+    void setConsiderSwordsForCobwebs(Player p, boolean enabled) {
+        PlayerSetting setting = main.getPlayerSetting(p);
+        setting.getBtcache().invalidated();
+        setting.setHasSeenBestToolsMessage(true);
+        setting.setConsiderSwordsForCobwebs(enabled);
+        main.messages().to(p).status().send(enabled ? "swordsForCobwebsEnabled" : "swordsForCobwebsDisabled");
     }
 
     /** Reports the effective favorite slot (already resolved to the held slot if unset/out-of-range). */

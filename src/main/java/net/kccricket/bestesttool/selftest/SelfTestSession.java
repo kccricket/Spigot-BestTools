@@ -53,6 +53,10 @@ public final class SelfTestSession {
     private final boolean savedHotbarOnly;
     private final int savedFavoriteSlot;
     private final boolean savedSwordOnMobs;
+    private final boolean savedUseAxeAsSword;
+    private final boolean savedSwitchDuringBattle;
+    private final boolean savedConsiderSwordsForLeaves;
+    private final boolean savedConsiderSwordsForCobwebs;
     private final boolean savedRefillEnabled;
     private final List<String> savedBlacklist;
 
@@ -74,6 +78,10 @@ public final class SelfTestSession {
         this.savedHotbarOnly = settings.isHotbarOnly();
         this.savedFavoriteSlot = settings.getRawFavoriteSlot();
         this.savedSwordOnMobs = settings.isSwordOnMobs();
+        this.savedUseAxeAsSword = settings.isUseAxeAsSword();
+        this.savedSwitchDuringBattle = settings.isSwitchDuringBattle();
+        this.savedConsiderSwordsForLeaves = settings.isConsiderSwordsForLeaves();
+        this.savedConsiderSwordsForCobwebs = settings.isConsiderSwordsForCobwebs();
         this.savedRefillEnabled = settings.isRefillEnabled();
         this.savedBlacklist = new ArrayList<>(settings.getBlacklist().toStringList());
 
@@ -89,6 +97,14 @@ public final class SelfTestSession {
         settings.setHotbarOnly(true);
         settings.setFavoriteSlot(-1);
         settings.setSwordOnMobs(true);
+        // Forced to false explicitly (not read from config.yml's default): stages.yml's
+        // expectations (e.g. OAK_LEAVES -> [SHEARS, DIAMOND_HOE], COBWEB -> SHEARS) were written
+        // assuming these are off, and switch_during_battle=false reproduces the pre-preference
+        // dont_switch_during_battle:true protection regardless of whatever default is configured.
+        settings.setUseAxeAsSword(false);
+        settings.setSwitchDuringBattle(false);
+        settings.setConsiderSwordsForLeaves(false);
+        settings.setConsiderSwordsForCobwebs(false);
         settings.setRefillEnabled(refillEnabledForThisStage);
         settings.getBlacklist().clear();
         settings.getBtcache().invalidated();
@@ -98,7 +114,10 @@ public final class SelfTestSession {
      * Best-effort crash-safety net: persists the snapshot to disk so a server that dies mid-test
      * doesn't just lose the tester's real inventory. Deleted the moment the session ends normally
      * (see {@link SelfTestManager#stop}); restored and deleted on the tester's next join if it's
-     * still there (see {@code SelfTestListener#onJoin}).
+     * still there (see {@code SelfTestListener#onJoin}). Every key here has a same-named
+     * {@code yaml.getBoolean(key, settings.isX())} fallback in {@link #restoreOrphanedBackup}, so
+     * an orphaned backup written before a preference existed restores fine with no migration —
+     * the missing key just falls back to the player's current live value.
      */
     private void writeBackupFile() {
         try {
@@ -109,6 +128,10 @@ public final class SelfTestSession {
             yaml.set("hotbarOnly", savedHotbarOnly);
             yaml.set("favoriteSlot", savedFavoriteSlot);
             yaml.set("swordOnMobs", savedSwordOnMobs);
+            yaml.set("useAxeAsSword", savedUseAxeAsSword);
+            yaml.set("switchDuringBattle", savedSwitchDuringBattle);
+            yaml.set("considerSwordsForLeaves", savedConsiderSwordsForLeaves);
+            yaml.set("considerSwordsForCobwebs", savedConsiderSwordsForCobwebs);
             yaml.set("refillEnabled", savedRefillEnabled);
             yaml.set("blacklist", savedBlacklist);
 
@@ -144,6 +167,10 @@ public final class SelfTestSession {
         settings.setHotbarOnly(savedHotbarOnly);
         settings.setFavoriteSlot(savedFavoriteSlot);
         settings.setSwordOnMobs(savedSwordOnMobs);
+        settings.setUseAxeAsSword(savedUseAxeAsSword);
+        settings.setSwitchDuringBattle(savedSwitchDuringBattle);
+        settings.setConsiderSwordsForLeaves(savedConsiderSwordsForLeaves);
+        settings.setConsiderSwordsForCobwebs(savedConsiderSwordsForCobwebs);
         settings.setRefillEnabled(savedRefillEnabled);
         settings.getBlacklist().clear();
         for (String s : savedBlacklist) settings.getBlacklist().add(s);
@@ -190,6 +217,10 @@ public final class SelfTestSession {
             settings.setHotbarOnly(yaml.getBoolean("hotbarOnly", settings.isHotbarOnly()));
             settings.setFavoriteSlot(yaml.getInt("favoriteSlot", settings.getFavoriteSlot()));
             settings.setSwordOnMobs(yaml.getBoolean("swordOnMobs", settings.isSwordOnMobs()));
+            settings.setUseAxeAsSword(yaml.getBoolean("useAxeAsSword", settings.isUseAxeAsSword()));
+            settings.setSwitchDuringBattle(yaml.getBoolean("switchDuringBattle", settings.isSwitchDuringBattle()));
+            settings.setConsiderSwordsForLeaves(yaml.getBoolean("considerSwordsForLeaves", settings.isConsiderSwordsForLeaves()));
+            settings.setConsiderSwordsForCobwebs(yaml.getBoolean("considerSwordsForCobwebs", settings.isConsiderSwordsForCobwebs()));
             settings.setRefillEnabled(yaml.getBoolean("refillEnabled", settings.isRefillEnabled()));
             settings.getBlacklist().clear();
             for (String s : yaml.getStringList("blacklist")) settings.getBlacklist().add(s);

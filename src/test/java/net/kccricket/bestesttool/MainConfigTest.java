@@ -169,6 +169,38 @@ class MainConfigTest extends BestToolsTestBase {
         assertTrue(warnings.isEmpty(), "A clean config.yml must not produce an unknown-key warning: " + warnings);
     }
 
+    /**
+     * Pins the bundled {@code config.yml}'s {@code defaults.switch_during_battle} against
+     * {@link net.kccricket.bestesttool.config.MainConfig#DEFAULT_SWITCH_DURING_BATTLE} so the two
+     * cannot silently drift apart — the constant exists precisely so the rename+invert of the old
+     * {@code dont_switch_during_battle} has exactly one place to change the default.
+     */
+    @Test
+    void bundledSwitchDuringBattleMatchesConstant() {
+        YamlConfiguration bundled = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "config.yml"));
+        assertEquals(net.kccricket.bestesttool.config.MainConfig.DEFAULT_SWITCH_DURING_BATTLE,
+                bundled.getBoolean("defaults.switch_during_battle"),
+                "config.yml's defaults.switch_during_battle must match MainConfig.DEFAULT_SWITCH_DURING_BATTLE");
+    }
+
+    @Test
+    void allowCombatSwitchingDefaultsTrue() {
+        assertTrue(plugin.configManager.main().getAllowCombatSwitching());
+    }
+
+    @Test
+    void allowCombatSwitchingIsRefreshedOnReload() throws IOException {
+        File configFile = new File(plugin.getDataFolder(), "config.yml");
+        String edited = Files.readString(configFile.toPath())
+                .replace("allow_combat_switching: true", "allow_combat_switching: false");
+        Files.writeString(configFile.toPath(), edited);
+
+        plugin.configManager.reloadAll();
+
+        assertTrue(!plugin.configManager.main().getAllowCombatSwitching(),
+                "allow_combat_switching must be re-read (via applyToRuntime's volatile refresh) on reload");
+    }
+
     /** Runs {@code action}, returning every message logged at WARNING or above by the plugin logger. */
     private List<String> captureWarnings(Runnable action) {
         List<String> messages = new ArrayList<>();

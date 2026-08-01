@@ -31,7 +31,9 @@ public class Blacklist {
     }
 
     public void add(String string) {
-        Material mat = Material.getMaterial(string);
+        // matchMaterial (unlike getMaterial) accepts namespaced IDs (minecraft:dirt) and any
+        // case, matching what the command-line blacklist add/remove suggestions now offer.
+        Material mat = Material.matchMaterial(string);
         if (mat != null) add(mat);
     }
 
@@ -51,10 +53,16 @@ public class Blacklist {
         STORE.clear(player);
     }
 
-    /** Alphabetical by material name, for deterministic display/serialization order. */
+    /**
+     * Namespaced material IDs (e.g. {@code minecraft:dirt}), alphabetical for deterministic
+     * display order — used for the chat listing/clickable links in {@code CommandBlacklist.show}
+     * and for {@code remove}'s tab-completion. Distinct from {@link #STORE}'s own on-disk PDC
+     * encoding (bare {@link Material#name()}, unchanged, so existing player data round-trips
+     * exactly as before) — this is purely a display/command-line format.
+     */
     public List<String> toStringList() {
         return STORE.get(player).stream()
-                .map(Material::name)
+                .map(m -> m.getKey().toString())
                 .sorted()
                 .toList();
     }

@@ -16,6 +16,8 @@ import io.papermc.paper.command.brigadier.Commands;
 
 import net.kccricket.bestesttool.security.Permissions;
 
+import net.kccricket.kcmclib.commands.Suggest;
+
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
 import org.bukkit.Material;
@@ -32,6 +34,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import net.kccricket.bestesttool.benchmark.BenchmarkWorkload;
 import net.kccricket.bestesttool.listeners.BestToolsListener;
+import net.kccricket.bestesttool.model.PlayerSetting;
 
 /**
  * Builds the {@code /bestesttool} Brigadier command tree, plus the {@code /refill}/{@code /rf}
@@ -53,14 +56,10 @@ public final class BestToolsCommands {
     /**
      * Materials offered as completions for {@code blacklist add}: non-legacy materials that are
      * blocks, since the blacklist is only ever checked against a mined block's type (see
-     * {@code BestToolsListener.onPlayerInteractWithBlock}), never against held items.
+     * {@code BestToolsListener.onPlayerInteractWithBlock}), never against held items. Namespaced
+     * IDs (e.g. {@code minecraft:dirt}) are produced and memoized by {@link Suggest#materialNames}.
      */
     static final Predicate<Material> SUGGESTABLE_MATERIAL = mat -> !mat.isLegacy() && mat.isBlock();
-
-    static final List<String> SUGGESTABLE_MATERIAL_NAMES = Arrays.stream(Material.values())
-            .filter(SUGGESTABLE_MATERIAL)
-            .map(m -> m.name().toLowerCase(Locale.ROOT))
-            .toList();
 
     // -------------------------------------------------------------------------
     // /bestesttool
@@ -80,21 +79,49 @@ public final class BestToolsCommands {
                 .then(buildToggleHotbarOnly(main))
                 .then(buildFavoriteSlot(main))
                 .then(buildRefill(main))
+                .then(boolPref(main, "swordsforleaves", Permissions.PERM_USE,
+                        PlayerSetting::isConsiderSwordsForLeaves, main.commandBestTools::setConsiderSwordsForLeaves))
+                .then(boolPref(main, "swordsforcobwebs", Permissions.PERM_USE,
+                        PlayerSetting::isConsiderSwordsForCobwebs, main.commandBestTools::setConsiderSwordsForCobwebs))
+                .then(boolPref(main, "switchduringbattle", Permissions.PERM_USE,
+                        PlayerSetting::isSwitchDuringBattle, main.commandBestTools::setSwitchDuringBattle))
+                .then(buildCombat(main))
                 .then(buildBlacklist(main))
                 .then(buildAdmin(main))
                 .build();
     }
 
     // -------------------------------------------------------------------------
+    // /bestesttool combat — groups the combat-gated preferences (weapon switching on attack).
+    // Requires BOTH allow_combat_switching (config) and bestesttool.combat (permission) — see
+    // Permissions.canUseCombat. switchduringbattle/swordsforleaves/swordsforcobwebs above are
+    // NOT combat preferences and stay available regardless of this gate.
+    // -------------------------------------------------------------------------
+
+    private static LiteralArgumentBuilder<CommandSourceStack> buildCombat(BestestToolPlugin main) {
+        return Commands.literal("combat")
+                .requires(src -> Permissions.canUseCombat(main, src.getSender()))
+                .then(boolPref(main, "swordonmobs", Permissions.PERM_USE,
+                        PlayerSetting::isSwordOnMobs, main.commandBestTools::setSwordOnMobs))
+                .then(boolPref(main, "useaxeassword", Permissions.PERM_USE,
+                        PlayerSetting::isUseAxeAsSword, main.commandBestTools::setUseAxeAsSword));
+    }
+
+    // -------------------------------------------------------------------------
     // /bestesttool admin — groups the admin-only subcommands (reload, debug, selftest,
     // benchmark) under a single node, mirroring the bestesttool.admin permission's children in
-    // paper-plugin.yml. The "admin" node itself carries no .requires: a sender granted only one
-    // child permission (e.g. bestesttool.admin.reload, without bestesttool.admin) must still be able to
-    // reach that child, so visibility is left to each child's own .requires, same as before.
+    // paper-plugin.yml. The "admin" node itself is guarded by the OR of every child's own
+    // .requires predicate (canReload/canDebug/canSelfTest/canBenchmark below): a sender granted
+    // only one child permission (e.g. bestesttool.admin.reload, without bestesttool.admin) must
+    // still be able to reach that child. A bare "no .requires" here would let Brigadier sync the
+    // node to every player, since it only prunes a literal whose *own* predicate fails, not one
+    // whose children all failed — that's what let "admin" show up in tab completion for everyone.
     // -------------------------------------------------------------------------
 
     private static LiteralArgumentBuilder<CommandSourceStack> buildAdmin(BestestToolPlugin main) {
         return Commands.literal("admin")
+                .requires(src -> canReload(src) || canDebug(src)
+                        || canSelfTest(main, src) || canBenchmark(main, src))
                 .then(buildReload(main))
                 .then(buildDebug(main))
                 .then(buildSelfTest(main))
@@ -123,21 +150,33 @@ public final class BestToolsCommands {
     }
 
     // -------------------------------------------------------------------------
-    // /bestesttool hotbaronly
+    // /bestesttool hotbaronly, and the shared shape behind every other boolean preference below
     // -------------------------------------------------------------------------
 
-    private static LiteralArgumentBuilder<CommandSourceStack> buildToggleHotbarOnly(BestestToolPlugin main) {
-        return Commands.literal("hotbaronly")
+    /**
+     * A player-facing boolean preference literal: bare = toggle to the opposite of the current
+     * value, {@code [<state>]} = set explicitly. Both arms are gated by an in-body {@code node}
+     * permission check ({@code noPermission} on denial) — the one shape behind {@code hotbaronly}
+     * and every {@code SwordPolicy}/combat preference toggle, so it exists exactly once.
+     */
+    private static LiteralArgumentBuilder<CommandSourceStack> boolPref(
+            BestestToolPlugin main, String literal, String permissionNode,
+            Predicate<PlayerSetting> current, BiConsumer<Player, Boolean> apply) {
+        return Commands.literal(literal)
                 .executes(ctx -> {
                     Player player = requirePlayer(main, ctx);
-                    if (player == null || !checkPermission(main, player, Permissions.PERM_USE)) {
+                    if (player == null || !checkPermission(main, player, permissionNode)) {
                         return Command.SINGLE_SUCCESS;
                     }
-                    main.commandBestTools.toggleHotbarOnly(player);
+                    apply.accept(player, !current.test(main.getPlayerSetting(player)));
                     return Command.SINGLE_SUCCESS;
                 })
-                .then(boolStateArg(main, Permissions.PERM_USE,
-                        (player, state) -> main.commandBestTools.setHotbarOnly(player, state)));
+                .then(boolStateArg(main, permissionNode, apply));
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> buildToggleHotbarOnly(BestestToolPlugin main) {
+        return boolPref(main, "hotbaronly", Permissions.PERM_USE,
+                PlayerSetting::isHotbarOnly, main.commandBestTools::setHotbarOnly);
     }
 
     // -------------------------------------------------------------------------
@@ -207,9 +246,17 @@ public final class BestToolsCommands {
     // node (via .requires), rather than answered with noPermission.
     // -------------------------------------------------------------------------
 
+    private static boolean canReload(CommandSourceStack src) {
+        return Permissions.isAllowedTo(src.getSender(), Permissions.PERM_RELOAD);
+    }
+
+    private static boolean canDebug(CommandSourceStack src) {
+        return Permissions.isAllowedTo(src.getSender(), Permissions.PERM_DEBUG);
+    }
+
     private static LiteralArgumentBuilder<CommandSourceStack> buildReload(BestestToolPlugin main) {
         return Commands.literal("reload")
-                .requires(src -> Permissions.isAllowedTo(src.getSender(), Permissions.PERM_RELOAD))
+                .requires(BestToolsCommands::canReload)
                 .executes(ctx -> {
                     CommandReload.reload(ctx.getSource().getSender(), main);
                     return Command.SINGLE_SUCCESS;
@@ -218,7 +265,7 @@ public final class BestToolsCommands {
 
     private static LiteralArgumentBuilder<CommandSourceStack> buildDebug(BestestToolPlugin main) {
         return Commands.literal("debug")
-                .requires(src -> Permissions.isAllowedTo(src.getSender(), Permissions.PERM_DEBUG))
+                .requires(BestToolsCommands::canDebug)
                 .executes(ctx -> {
                     CommandDebug.debug(ctx.getSource().getSender(), main, "debug");
                     return Command.SINGLE_SUCCESS;
@@ -249,14 +296,18 @@ public final class BestToolsCommands {
     // completion (and unparseable) rather than answered with a noPermission message.
     // -------------------------------------------------------------------------
 
+    private static boolean canSelfTest(BestestToolPlugin main, CommandSourceStack src) {
+        return main.getConfigManager().main().getEnableSelfTest()
+                && Permissions.isAllowedTo(src.getSender(), Permissions.PERM_SELFTEST);
+    }
+
     private static LiteralArgumentBuilder<CommandSourceStack> buildSelfTest(BestestToolPlugin main) {
         return Commands.literal("selftest")
-                .requires(src -> main.getConfigManager().main().getEnableSelfTest()
-                        && Permissions.isAllowedTo(src.getSender(), Permissions.PERM_SELFTEST))
+                .requires(src -> canSelfTest(main, src))
                 .then(Commands.literal("start")
                         .executes(ctx -> runSelfTestStart(main, ctx, null))
                         .then(Commands.argument("stage", StringArgumentType.word())
-                                .suggests((ctx, b) -> suggestToken(b, main.selfTestManager.stageNames()))
+                                .suggests((ctx, b) -> Suggest.token(b, main.selfTestManager.stageNames()))
                                 .executes(ctx -> runSelfTestStart(main, ctx, StringArgumentType.getString(ctx, "stage")))))
                 .then(Commands.literal("next").executes(ctx -> {
                     Player player = requirePlayer(main, ctx);
@@ -292,10 +343,14 @@ public final class BestToolsCommands {
     // works from console too.
     // -------------------------------------------------------------------------
 
+    private static boolean canBenchmark(BestestToolPlugin main, CommandSourceStack src) {
+        return main.getConfigManager().main().getEnableBenchmark()
+                && Permissions.isAllowedTo(src.getSender(), Permissions.PERM_BENCHMARK);
+    }
+
     private static LiteralArgumentBuilder<CommandSourceStack> buildBenchmark(BestestToolPlugin main) {
         return Commands.literal("benchmark")
-                .requires(src -> main.getConfigManager().main().getEnableBenchmark()
-                        && Permissions.isAllowedTo(src.getSender(), Permissions.PERM_BENCHMARK))
+                .requires(src -> canBenchmark(main, src))
                 .then(Commands.literal("start")
                         .executes(ctx -> runBenchmarkStart(main, ctx, BenchmarkWorkload.KitSize.FULL))
                         .then(Commands.literal("full")
@@ -365,7 +420,7 @@ public final class BestToolsCommands {
                         .executes(ctx -> runBlacklistFromInventory(main, ctx, add, true)))
                 .then(Commands.argument("materials", StringArgumentType.greedyString())
                         .suggests((ctx, builder) -> add
-                                ? suggestToken(builder, SUGGESTABLE_MATERIAL_NAMES)
+                                ? Suggest.token(builder, Suggest.materialNames(SUGGESTABLE_MATERIAL))
                                 : suggestBlacklistedMaterialToken(main, ctx, builder))
                         .executes(ctx -> {
                             Player player = requirePlayer(main, ctx);
@@ -393,34 +448,20 @@ public final class BestToolsCommands {
         return Command.SINGLE_SUCCESS;
     }
 
-    /** The sender's currently-blacklisted material names, lower-cased; empty for a non-player. */
+    /**
+     * The sender's currently-blacklisted material names (namespaced, e.g. {@code minecraft:dirt} —
+     * see {@link net.kccricket.bestesttool.model.Blacklist#toStringList}); empty for a non-player.
+     */
     static List<String> blacklistedMaterialNames(BestestToolPlugin main, CommandSender sender) {
         return sender instanceof Player player
-                ? main.getPlayerSetting(player).getBlacklist().toStringList().stream()
-                        .map(s -> s.toLowerCase(Locale.ROOT))
-                        .toList()
+                ? main.getPlayerSetting(player).getBlacklist().toStringList()
                 : List.of();
     }
 
     /** Suggests the currently-blacklisted materials for {@code blacklist remove}. */
     static CompletableFuture<Suggestions> suggestBlacklistedMaterialToken(
             BestestToolPlugin main, CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
-        return suggestToken(builder, blacklistedMaterialNames(main, ctx.getSource().getSender()));
-    }
-
-    /**
-     * Suggests {@code candidates} matching the last whitespace-separated token of a greedy-string
-     * argument's remaining input, replacing only that token (not everything typed so far).
-     */
-    static CompletableFuture<Suggestions> suggestToken(SuggestionsBuilder builder, List<String> candidates) {
-        String remaining = builder.getRemaining();
-        int lastSpace = remaining.lastIndexOf(' ');
-        String prefix = (lastSpace >= 0 ? remaining.substring(lastSpace + 1) : remaining).toLowerCase(Locale.ROOT);
-        SuggestionsBuilder tokenBuilder = builder.createOffset(builder.getStart() + lastSpace + 1);
-        for (String candidate : candidates) {
-            if (candidate.startsWith(prefix)) tokenBuilder.suggest(candidate);
-        }
-        return tokenBuilder.buildFuture();
+        return Suggest.token(builder, blacklistedMaterialNames(main, ctx.getSource().getSender()));
     }
 
     // -------------------------------------------------------------------------

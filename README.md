@@ -38,7 +38,8 @@ All commands live under `/bestesttool` (alias `/bt`). `/bestesttool refill` also
 aliases, `/refill` and `/rf`, that go straight to the same toggle — they don't expose the rest of
 the `/bestesttool` tree.
 
-The `hotbaronly`/`refill`/`debug` toggles below also take an optional `[<state>]`
+The `hotbaronly`/`refill`/`debug`/`swordsforleaves`/`swordsforcobwebs`/`switchduringbattle`/
+`combat swordonmobs`/`combat useaxeassword` toggles below also take an optional `[<state>]`
 argument — `yes`/`no`, `true`/`false`, `on`/`off`, or `enable`/`disable` — to set the value
 explicitly instead of flipping it; the bare form (no argument) still toggles. The root
 `/bestesttool` toggle does not, since it's the entry point to the rest of the subcommand tree.
@@ -49,6 +50,11 @@ explicitly instead of flipping it; the bare form (no argument) still toggles. Th
 | `/bestesttool hotbaronly [<state>]` | Toggle (or set) whether BestestTool only uses tools from your hotbar | `bestesttool.use` |
 | `/bestesttool favoriteslot [<-1-8>]` | Report (or set) which hotbar slot to place a tool in when it has to make room; `-1` means "whatever slot I'm holding" | `bestesttool.use` |
 | `/bestesttool refill [<state>]` (aliases `/refill`, `/rf`) | Toggle (or set) automatic hotbar refill | `bestesttool.refill` |
+| `/bestesttool swordsforleaves [<state>]` | Toggle (or set) using a sword to break leaves when you have no shears | `bestesttool.use` |
+| `/bestesttool swordsforcobwebs [<state>]` | Toggle (or set) using a sword to break cobwebs when you have no shears | `bestesttool.use` |
+| `/bestesttool switchduringbattle [<state>]` | Toggle (or set) whether BestestTool keeps switching tools while you hold a sword/bow/crossbow/trident (not a combat feature — see [Permissions](#permissions)) | `bestesttool.use` |
+| `/bestesttool combat swordonmobs [<state>]` | Toggle (or set) switching to your best sword/axe when attacking mobs | `bestesttool.use` + `bestesttool.combat` |
+| `/bestesttool combat useaxeassword [<state>]` | Toggle (or set) preferring an axe over a sword when it hits harder | `bestesttool.use` + `bestesttool.combat` |
 | `/bestesttool admin reload` | Reload `config.yml` and the language files | `bestesttool.admin.reload` |
 | `/bestesttool admin debug [<state>]` | Toggle (or set) debug logging | `bestesttool.admin.debug` |
 | `/bestesttool blacklist`, or `blacklist show` | Show your block blacklist | `bestesttool.use` |
@@ -67,18 +73,23 @@ explicitly instead of flipping it; the bare form (no argument) still toggles. Th
 
 `selftest` is additionally hidden entirely (not just permission-gated) unless `enable_selftest: true`
 is set in `config.yml` — see [Self-test](#self-test) below. `benchmark` is gated the same way behind
-`enable_benchmark: true` — see [Benchmark](#benchmark) below.
+`enable_benchmark: true` — see [Benchmark](#benchmark) below. `combat` is gated the same way behind
+`allow_combat_switching: true` (default `true`) plus the `bestesttool.combat` permission — when
+either is off, the `combat` subcommand doesn't exist and weapon-switching on attack is inert, but
+your stored `swordonmobs`/`useaxeassword` preferences are kept, not wiped, so they take effect again
+the moment combat switching is re-enabled.
 
 ## Permissions
 
-`bestesttool.use` and `bestesttool.refill` default to `true` — the plugin works for every player
-out of the box. `bestesttool.admin.reload`, `bestesttool.admin.debug`, `bestesttool.admin.selftest`,
-and `bestesttool.admin.benchmark` default to server operators only.
+`bestesttool.use`, `bestesttool.combat`, and `bestesttool.refill` default to `true` — the plugin
+works for every player out of the box. `bestesttool.admin.reload`, `bestesttool.admin.debug`,
+`bestesttool.admin.selftest`, and `bestesttool.admin.benchmark` default to server operators only.
 
 | Node | Default | Grants |
 | --- | --- | --- |
-| `bestesttool` | `true` | Umbrella node for `use` and `refill` (does not cascade to admin nodes) |
-| `bestesttool.use` | `true` | Automatic best-tool switching itself, plus `/bestesttool` and its `hotbaronly`/`favoriteslot`/`blacklist` subcommands |
+| `bestesttool` | `true` | Umbrella node for `use`, `combat`, and `refill` (does not cascade to admin nodes) |
+| `bestesttool.use` | `true` | Automatic best-tool switching itself, plus `/bestesttool` and its `hotbaronly`/`favoriteslot`/`blacklist`/`swordsforleaves`/`swordsforcobwebs`/`switchduringbattle` subcommands |
+| `bestesttool.combat` | `true` | Best-weapon switching when attacking mobs, and `/bestesttool combat` (also needs `allow_combat_switching: true` in `config.yml`) |
 | `bestesttool.refill` | `true` | Automatic hotbar refilling itself, plus `/bestesttool refill` (`/refill`, `/rf`) |
 | `bestesttool.admin` | `op` | Umbrella node for `admin.reload`, `admin.debug`, `admin.selftest`, and `admin.benchmark` |
 | `bestesttool.admin.reload` | `op` | `/bestesttool admin reload` |
@@ -103,9 +114,9 @@ It's off by default and gated behind two things at once:
 
 Running it forces you into survival mode for the duration (the plugin does nothing in creative —
 see [Requirements](#requirements) below for why) and replaces your hotbar with each stage's kit;
-your original inventory, game mode, and BestestTool settings (hotbar-only, favorite slot, sword-on-
-mobs, refill, blacklist) are all restored the moment the test ends, whether it finishes normally,
-is stopped early, or the server reloads/restarts mid-test. A crash-safety backup is also written to
+your original inventory, game mode, and BestestTool settings (hotbar-only, favorite slot, the sword/
+combat preferences, refill, blacklist) are all restored the moment the test ends, whether it
+finishes normally, is stopped early, or the server reloads/restarts mid-test. A crash-safety backup is also written to
 disk for the duration and restored automatically the next time you join if the server goes down
 before it gets to restore things itself.
 

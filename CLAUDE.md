@@ -24,10 +24,12 @@ Gradle project, uses the wrapper.
   bundled into the fat jar like any other `implementation` dependency — no relocation needed, since
   `net.kccricket.kcmclib` is a distinct namespace. It supplies logging (`Log`/`DebugLevel`),
   permission checks (`security.Permissions`), the update checker (`update.ModrinthUpdateChecker`),
-  the config-file lifecycle contract (`config.ManagedConfig`/`ResourceUpdater`), and the
-  localization stack (`text.lang.*`, `text.Components`, `text.CooldownMessenger`). To pull in a
-  library change: commit + push on the `KcMcLib` repo's `develop` branch, then `cd KcMcLib && git
-  pull origin develop` here and commit the updated submodule pointer.
+  the config-file lifecycle contract (`config.ManagedConfig`/`ResourceUpdater`), the messaging
+  stack (`text.Messenger`/`text.Send`, `text.lang.*`, `text.Components`), and shared Brigadier
+  suggestion helpers (`commands.Suggest` — namespaced `Material` name lists, prefix/token
+  filtering, enum-name suggestions; used by both BestestTool and ClickSorted's command trees). To
+  pull in a library change: commit + push on the `KcMcLib` repo's `develop` branch, then `cd
+  KcMcLib && git pull origin develop` here and commit the updated submodule pointer.
 - Compiles to Java 21 (`options.release` in `build.gradle.kts`), built against
   `io.papermc.paper:paper-api:26.2.build.+`. `paper-plugin.yml` declares `api-version: "1.20.6"`, the
   minimum supported server version (see `COMPATABILITY.md`) — do not casually lower it back below
@@ -111,16 +113,36 @@ using direct, compile-time references — no more per-version compatibility scaf
 - **`BestToolsCache`** / **`BestToolsCacheListener`** implement a cheap per-player last-block-type cache
   (`PlayerSetting.btcache`) so repeated interactions with the same block type skip the full lookup —
   invalidated whenever the player's inventory changes. This exists purely for performance (see
-  `PerformanceMeter`, toggled via `/bestesttool performance` and `measure_performance` config option).
-- **`PlayerSetting`** is per-player state (enabled flags, hotbar-only, blacklist, favorite slot). It
-  persists to the player's `PersistentDataContainer` as one native `NamespacedKey` leaf per field
-  (`BYTE` for booleans, `INTEGER` for `favorite_slot`, a comma-delimited `STRING` for the material
-  blacklist) — no third-party PDC library. Leaf names match the `defaults.*` config keys. New plugin,
-  no legacy data — no migration path.
+  `benchmark.BenchmarkManager`, run via `/bestesttool admin benchmark` and gated by the
+  `enable_benchmark` config option).
+- **`PlayerSetting`** is per-player state (enabled flags, hotbar-only, blacklist, favorite slot, and
+  the sword/combat preferences — `sword_on_mobs`/`use_axe_as_sword`/`switch_during_battle`/
+  `consider_swords_for_leaves`/`consider_swords_for_cobwebs`). It persists to the player's
+  `PersistentDataContainer` as one native `NamespacedKey` leaf per field (`BYTE` for booleans,
+  `INTEGER` for `favorite_slot`, a comma-delimited `STRING` for the material blacklist) — no
+  third-party PDC library. Leaf names match the `defaults.*` config keys. New plugin, no legacy
+  data — no migration path. Constructed via `new PlayerSetting(Player, PlayerDefaults)` —
+  `model.PlayerDefaults` is a record carrying every seed value (`MainConfig.playerDefaults()`
+  assembles it), rather than a long positional-boolean constructor. Only `sword_on_mobs`/
+  `use_axe_as_sword` are "combat" preferences, gated behind `allow_combat_switching` (config) and
+  `bestesttool.combat` (permission) via `Permissions.canUseCombat`; the other three (and the
+  blacklist/hotbar-only/etc.) are always available. The two sword-fallback preferences
+  (`consider_swords_for_leaves`/`consider_swords_for_cobwebs`) reach `BestToolsHandler`'s
+  per-item selection loop as a `tool.SwordPolicy` record (`SwordPolicy.from(playerSetting)`,
+  resolved once per selection, not looked up per candidate item) rather than threading
+  `PlayerSetting` itself into that hot loop — see `SwordPolicy`'s javadoc and
+  `BestToolsHandler.isCandidate`.
 - **`Blacklist`** is a per-player set of materials to never auto-switch for; managed via
   `/bestesttool blacklist ...` (`CommandBlacklist`). Mutations (`add`/`remove`) aren't explicitly persisted —
   they ride along on the next `PlayerSetting.save()` call some other mutator triggers. Known
-  pre-existing quirk, not a bug introduced by any recent refactor.
+  pre-existing quirk, not a bug introduced by any recent refactor. `toStringList()` returns
+  namespaced material IDs (e.g. `minecraft:dirt`, via `Material.getKey()`), used for the chat
+  listing/clickable links in `CommandBlacklist.show` and `remove`'s tab-completion; the on-disk PDC
+  encoding is unchanged (bare `Material.name()`, via `PdcStringSet`). Parsing (`add(String)`,
+  `CommandBlacklist.applyToMaterials`) uses `Material.matchMaterial(...)`, which accepts both
+  namespaced and bare input in any case — `Material.getMaterial(...)` (case-sensitive, rejects a
+  namespace) is a trap here and should not be reintroduced. `reset` sends one summary message
+  (`blacklistCleared`), not one per removed item.
 - **`RefillListener`/`RefillUtils`** implement the separate `/bestesttool refill` feature (aliases
   `/refill`, `/rf`; auto-refilling hotbar stacks from the rest of the inventory) — largely independent
   of the tool-switching logic above.
@@ -149,11 +171,17 @@ using direct, compile-time references — no more per-version compatibility scaf
   and `CommandDebug` are now plain action-method classes (no `CommandExecutor`/`onCommand`); permission
   checks, sender-type checks, and argument parsing all live in `BestToolsCommands`, which calls into
   them once a call site has already established the sender is an authorized `Player`. `reload`/`debug`/
-  `performance` are additionally gated with `.requires(...)` on their Brigadier nodes so they're hidden
-  from tab completion (and fail to parse at all) for senders lacking the node, rather than answered
-  with a `noPermission` chat message — the two static helpers' own internal permission checks
-  (`CommandReload.reload`/`CommandDebug.debug`) are therefore only reachable directly (as the test suite
-  does), not through the command path.
+  `selftest`/`benchmark` are additionally gated with `.requires(...)` on their Brigadier nodes so
+  they're hidden from tab completion (and fail to parse at all) for senders lacking the node, rather
+  than answered with a `noPermission` chat message — the two static helpers' own internal permission
+  checks (`CommandReload.reload`/`CommandDebug.debug`) are therefore only reachable directly (as the
+  test suite does), not through the command path. The `admin` parent node carries the OR of every
+  child's own `.requires` predicate (not a flat umbrella check), so a sender holding only one admin
+  child permission can still traverse it to reach that child — see `BestToolsCommands.buildAdmin`.
+  The five sword/combat preference toggles (`swordsforleaves`/`swordsforcobwebs`/
+  `switchduringbattle` flat; `combat swordonmobs`/`combat useaxeassword` under a node gated by
+  `Permissions.canUseCombat`, which needs both the `allow_combat_switching` config flag and the
+  `bestesttool.combat` permission) share one generic `boolPref(...)` builder with `hotbaronly`.
 
 ## Config/lang conventions
 

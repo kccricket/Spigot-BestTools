@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import net.kccricket.bestesttool.listeners.BestToolsListener;
+import net.kccricket.bestesttool.model.PlayerDefaults;
 import net.kccricket.bestesttool.model.PlayerSetting;
 import net.kccricket.bestesttool.tool.BestToolsHandler;
 import net.kccricket.bestesttool.tool.EnchantmentUtils;
@@ -131,8 +132,8 @@ class ToolSelectionTest extends BestToolsTestBase {
 
     @Test
     void weapons_containsCopperSword() {
-        // The dont_switch_during_battle guard (BestToolsListener#isWeapon) reads this list
-        // directly, so this is what actually protects a held copper sword during combat.
+        // The switch_during_battle guard (BestToolsSelector#decide, via BestToolsHandler#isWeapon)
+        // reads this list directly, so this is what actually protects a held copper sword during battle.
         assertTrue(plugin.toolHandler.weapons.contains(Material.COPPER_SWORD));
     }
 
@@ -171,7 +172,7 @@ class ToolSelectionTest extends BestToolsTestBase {
         FakeBlockData data = new FakeBlockData(Material.STONE, false,
                 Map.of(Material.WOODEN_PICKAXE, 2f, Material.STONE_PICKAXE, 4f), Set.of());
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE, 1.0f);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE, 1.0f, SwordPolicy.NONE);
 
         assertEquals(Material.STONE_PICKAXE, best.getType());
     }
@@ -189,7 +190,7 @@ class ToolSelectionTest extends BestToolsTestBase {
                 Map.of(Material.IRON_PICKAXE, 32f, Material.DIAMOND_PICKAXE, 8f),
                 Set.of(Material.DIAMOND_PICKAXE));
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(obsidian, items, false, Material.OBSIDIAN, 1.0f);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(obsidian, items, false, Material.OBSIDIAN, 1.0f, SwordPolicy.NONE);
 
         assertEquals(Material.DIAMOND_PICKAXE, best.getType());
     }
@@ -203,7 +204,7 @@ class ToolSelectionTest extends BestToolsTestBase {
         FakeBlockData diamondOre = new FakeBlockData(Material.DIAMOND_ORE, true,
                 Map.of(Material.WOODEN_PICKAXE, 2f, Material.IRON_PICKAXE, 6f), Set.of());
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(diamondOre, items, false, Material.DIAMOND_ORE, 1.0f);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(diamondOre, items, false, Material.DIAMOND_ORE, 1.0f, SwordPolicy.NONE);
 
         assertEquals(Material.IRON_PICKAXE, best.getType());
     }
@@ -215,7 +216,7 @@ class ToolSelectionTest extends BestToolsTestBase {
 
         FakeBlockData dirt = new FakeBlockData(Material.DIRT, false, Map.of(Material.IRON_SHOVEL, 6f), Set.of());
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(dirt, items, false, Material.DIRT, 1.0f);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(dirt, items, false, Material.DIRT, 1.0f, SwordPolicy.NONE);
 
         assertEquals(Material.IRON_SHOVEL, best.getType());
         assertTrue(dirt.preferredToolChecks.isEmpty());
@@ -230,7 +231,7 @@ class ToolSelectionTest extends BestToolsTestBase {
         FakeBlockData data = new FakeBlockData(Material.STONE, false,
                 Map.of(Material.IRON_PICKAXE, 6f, Material.DIAMOND_PICKAXE, 6f), Set.of());
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE, 1.0f);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE, 1.0f, SwordPolicy.NONE);
 
         assertEquals(first, best);
     }
@@ -242,7 +243,7 @@ class ToolSelectionTest extends BestToolsTestBase {
 
         FakeBlockData data = new FakeBlockData(Material.STONE, false, Map.of(), Set.of());
 
-        assertNull(plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE, 1.0f));
+        assertNull(plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE, 1.0f, SwordPolicy.NONE));
     }
 
     @Test
@@ -253,7 +254,7 @@ class ToolSelectionTest extends BestToolsTestBase {
 
         FakeBlockData glowstone = new FakeBlockData(Material.GLOWSTONE, false, Map.of(Material.IRON_PICKAXE, 6f), Set.of());
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(glowstone, items, true, Material.GLOWSTONE, 1.0f);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(glowstone, items, true, Material.GLOWSTONE, 1.0f, SwordPolicy.NONE);
 
         assertEquals(silkPick, best);
     }
@@ -265,7 +266,7 @@ class ToolSelectionTest extends BestToolsTestBase {
 
         FakeBlockData glowstone = new FakeBlockData(Material.GLOWSTONE, false, Map.of(Material.IRON_PICKAXE, 6f), Set.of());
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(glowstone, items, true, Material.GLOWSTONE, 1.0f);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(glowstone, items, true, Material.GLOWSTONE, 1.0f, SwordPolicy.NONE);
 
         assertEquals(plainPick, best);
     }
@@ -280,8 +281,8 @@ class ToolSelectionTest extends BestToolsTestBase {
 
         FakeBlockData glass = new FakeBlockData(Material.GLASS, false, Map.of(), Set.of());
 
-        assertEquals(silkPick, plugin.toolHandler.getBestItemStackFromArray(glass, items, true, Material.GLASS, 0.0f));
-        assertNull(plugin.toolHandler.getBestItemStackFromArray(glass, items, true, Material.GLASS, 1.0f));
+        assertEquals(silkPick, plugin.toolHandler.getBestItemStackFromArray(glass, items, true, Material.GLASS, 0.0f, SwordPolicy.NONE));
+        assertNull(plugin.toolHandler.getBestItemStackFromArray(glass, items, true, Material.GLASS, 1.0f, SwordPolicy.NONE));
     }
 
     @Test
@@ -291,46 +292,44 @@ class ToolSelectionTest extends BestToolsTestBase {
 
         FakeBlockData glass = new FakeBlockData(Material.GLASS, false, Map.of(), Set.of());
 
-        assertNull(plugin.toolHandler.getBestItemStackFromArray(glass, items, true, Material.GLASS, 0.0f));
+        assertNull(plugin.toolHandler.getBestItemStackFromArray(glass, items, true, Material.GLASS, 0.0f, SwordPolicy.NONE));
     }
 
-    // --- isCandidate: the only remaining category filter (sword-for-leaves/cobweb toggles) -------
+    // --- isCandidate: the only remaining category filter (SwordPolicy's leaves/cobweb toggles) ---
 
     @Test
-    void isCandidate_excludesSwordForLeavesWhenToggleOff() {
-        assertFalse(plugin.toolHandler.isCandidate(new ItemStack(Material.IRON_SWORD), Material.OAK_LEAVES));
-    }
-
-    @Test
-    void isCandidate_includesSwordForLeavesWhenToggleOn() {
-        plugin.getConfig().set("consider_swords_for_leaves", true);
-        BestToolsHandler handler = new BestToolsHandler(plugin);
-
-        assertTrue(handler.isCandidate(new ItemStack(Material.IRON_SWORD), Material.OAK_LEAVES));
+    void isCandidate_excludesSwordForLeavesWhenPolicyOff() {
+        assertFalse(plugin.toolHandler.isCandidate(new ItemStack(Material.IRON_SWORD), Material.OAK_LEAVES, SwordPolicy.NONE));
     }
 
     @Test
-    void isCandidate_excludesSwordForCobwebWhenToggleOff() {
-        assertFalse(plugin.toolHandler.isCandidate(new ItemStack(Material.IRON_SWORD), Material.COBWEB));
+    void isCandidate_includesSwordForLeavesWhenPolicyOn() {
+        SwordPolicy policy = new SwordPolicy(true, false);
+
+        assertTrue(plugin.toolHandler.isCandidate(new ItemStack(Material.IRON_SWORD), Material.OAK_LEAVES, policy));
     }
 
     @Test
-    void isCandidate_includesSwordForCobwebWhenToggleOn() {
-        plugin.getConfig().set("consider_swords_for_cobwebs", true);
-        BestToolsHandler handler = new BestToolsHandler(plugin);
+    void isCandidate_excludesSwordForCobwebWhenPolicyOff() {
+        assertFalse(plugin.toolHandler.isCandidate(new ItemStack(Material.IRON_SWORD), Material.COBWEB, SwordPolicy.NONE));
+    }
 
-        assertTrue(handler.isCandidate(new ItemStack(Material.IRON_SWORD), Material.COBWEB));
+    @Test
+    void isCandidate_includesSwordForCobwebWhenPolicyOn() {
+        SwordPolicy policy = new SwordPolicy(false, true);
+
+        assertTrue(plugin.toolHandler.isCandidate(new ItemStack(Material.IRON_SWORD), Material.COBWEB, policy));
     }
 
     @Test
     void isCandidate_nonSwordAlwaysCandidate() {
-        assertTrue(plugin.toolHandler.isCandidate(new ItemStack(Material.SHEARS), Material.OAK_LEAVES));
-        assertTrue(plugin.toolHandler.isCandidate(new ItemStack(Material.IRON_HOE), Material.COBWEB));
+        assertTrue(plugin.toolHandler.isCandidate(new ItemStack(Material.SHEARS), Material.OAK_LEAVES, SwordPolicy.NONE));
+        assertTrue(plugin.toolHandler.isCandidate(new ItemStack(Material.IRON_HOE), Material.COBWEB, SwordPolicy.NONE));
     }
 
     @Test
     void isCandidate_swordUnrestrictedAwayFromLeavesAndCobwebs() {
-        assertTrue(plugin.toolHandler.isCandidate(new ItemStack(Material.IRON_SWORD), Material.STONE));
+        assertTrue(plugin.toolHandler.isCandidate(new ItemStack(Material.IRON_SWORD), Material.STONE, SwordPolicy.NONE));
     }
 
     // --- isDamageable: the regression that let a pristine tool masquerade as a bare hand --------
@@ -546,13 +545,23 @@ class ToolSelectionTest extends BestToolsTestBase {
     }
 
     @Test
-    void swordOnMobsAndFavoriteSlotPersistAcrossPdcReload() {
+    void allPreferencesPersistAcrossPdcReload() {
+        // Regression guard for the new leaves/setters: every preference set on the first
+        // PlayerSetting must survive being "re-seeded" with the opposite defaults on a second
+        // construction for the same player — PDC always wins over a fresh seed.
         PlayerMock player = newPlayer();
 
-        new PlayerSetting(player, true, true, true, 3, true);
-        PlayerSetting reloaded = new PlayerSetting(player, false, false, false, 0, false);
+        PlayerDefaults seeded = new PlayerDefaults(true, true, true, 3, true, true, true, true, true);
+        new PlayerSetting(player, seeded);
+
+        PlayerDefaults opposite = new PlayerDefaults(false, false, false, 0, false, false, false, false, false);
+        PlayerSetting reloaded = new PlayerSetting(player, opposite);
 
         assertTrue(reloaded.isSwordOnMobs());
+        assertTrue(reloaded.isUseAxeAsSword());
+        assertTrue(reloaded.isSwitchDuringBattle());
+        assertTrue(reloaded.isConsiderSwordsForLeaves());
+        assertTrue(reloaded.isConsiderSwordsForCobwebs());
         assertEquals(3, reloaded.getFavoriteSlot());
     }
 
