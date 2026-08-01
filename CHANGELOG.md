@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- Fixed `/bestesttool admin benchmark`'s per-batch progress line (`benchmarkTick`) never actually
+  reaching the player who started the run — the lang key existed but nothing sent it. Each batch now
+  reports to the player (when the sender is a player) in addition to the existing console log line
 - Replaced `text.MessageUtil` and the shared `CooldownMessenger` with a single KcMcLib
   `net.kccricket.kcmclib.text.Messenger`, reached via `plugin.messages()`: every send is now
   `messenger.to(target).<severity>().send("key", ...)`, with `.throttle(key, seconds)` folding

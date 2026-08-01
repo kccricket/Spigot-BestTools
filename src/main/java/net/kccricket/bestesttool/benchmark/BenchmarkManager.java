@@ -10,6 +10,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Material;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Locale;
@@ -135,6 +136,14 @@ public final class BenchmarkManager {
             Log.log(Level.INFO, String.format(Locale.US,
                     "[benchmark] batch %,d selections in %.2f ms (%.1f ns/selection)",
                     justRan.n(), justRan.elapsedMillis(), justRan.nsPerSelection()));
+
+            // Console already got the line above; only the player needs the lang-driven echo.
+            if (session.sender instanceof Player) {
+                main.messages().to(session.sender).status().send("benchmarkTick",
+                        Placeholder.unparsed("n", String.valueOf(justRan.n())),
+                        Placeholder.unparsed("ms", String.format(Locale.US, "%.2f", justRan.elapsedMillis())),
+                        Placeholder.unparsed("nspersel", String.format(Locale.US, "%.1f", justRan.nsPerSelection())));
+            }
         }
 
         if (session.run.isDone()) {
