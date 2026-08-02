@@ -5,6 +5,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -28,6 +29,12 @@ public final class SelfTestArena {
     /** Blocks between adjacent case positions along the facing axis, so hitboxes/swing range don't overlap. */
     private static final int SPACING = 3;
     private static final double LABEL_HEIGHT = 1.6;
+    /**
+     * Vanilla leaf decay counts distance to the nearest log block of any species — placed directly
+     * under a leaves case instead of the usual pedestal, this keeps the block from decaying out from
+     * under a slow tester.
+     */
+    private static final Material LEAF_SUPPORT_LOG = Material.OAK_LOG;
 
     private final SelfTestSpec.Stage stage;
     private final List<Location> positions = new ArrayList<>();
@@ -91,7 +98,7 @@ public final class SelfTestArena {
     private void placeBlockCase(Location loc, Material pedestal, SelfTestSpec.Case c) {
         Block pedestalBlock = loc.clone().add(0, -1, 0).getBlock();
         savedStates.add(pedestalBlock.getState());
-        pedestalBlock.setType(pedestal, false);
+        pedestalBlock.setType(Tag.LEAVES.isTagged(c.blockSubject) ? LEAF_SUPPORT_LOG : pedestal, false);
 
         Block subjectBlock = loc.getBlock();
         savedStates.add(subjectBlock.getState());
@@ -112,6 +119,12 @@ public final class SelfTestArena {
         Block pedestalBlock = loc.clone().add(0, -1, 0).getBlock();
         savedStates.add(pedestalBlock.getState());
         pedestalBlock.setType(pedestal, false);
+
+        // Blocks direct sky access over the mob's head so undead subjects (e.g. zombies) don't
+        // catch fire in daylight and die before the tester gets to attack them.
+        Block overheadBlock = loc.clone().add(0, 2, 0).getBlock();
+        savedStates.add(overheadBlock.getState());
+        overheadBlock.setType(pedestal, false);
 
         Entity entity = world.spawnEntity(loc.clone().add(0, 0.1, 0), c.entitySubject);
         if (entity instanceof LivingEntity living) {

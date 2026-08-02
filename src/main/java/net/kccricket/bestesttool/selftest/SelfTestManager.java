@@ -15,8 +15,10 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import net.kccricket.bestesttool.tool.EnchantmentUtils;
 
 /**
@@ -215,7 +217,40 @@ public final class SelfTestManager {
             }
             inv.setItem(item.slot, stack);
         }
-        inv.setHeldItemSlot(0);
+        inv.setHeldItemSlot(startingHeldSlot(stage));
+    }
+
+    /**
+     * Which hotbar slot to start the stage holding. REFILL cases need their placeable kit item in
+     * hand, so they always start at slot 0; BLOCKS/COMBAT stages avoid a slot whose item already
+     * matches case 0's expectation (e.g. the kit's netherite pickaxe for a case that expects a
+     * netherite pickaxe) — otherwise a broken switch could pass silently just because the right
+     * answer was already in hand before the tester interacted with anything.
+     */
+    private static int startingHeldSlot(SelfTestSpec.Stage stage) {
+        if (stage.kind == SelfTestSpec.StageKind.REFILL) return 0;
+        int slot = slotAvoiding(stage, stage.cases.get(0).expectation);
+        return slot >= 0 ? slot : 0;
+    }
+
+    /**
+     * A hotbar slot from {@code stage}'s kit whose item does not already satisfy {@code expectation}
+     * — preferring a genuinely empty slot (bare hand) unless {@code expectation} itself is
+     * {@code BARE_HAND}, in which case an empty hand would trivially satisfy it and a real item is
+     * picked instead. Returns {@code -1} if the kit offers nothing safe (every item already matches).
+     */
+    static int slotAvoiding(SelfTestSpec.Stage stage, SelfTestSpec.Expectation expectation) {
+        if (expectation.kind == SelfTestSpec.Expectation.Kind.BARE_HAND) {
+            return stage.kit.isEmpty() ? -1 : stage.kit.get(0).slot;
+        }
+        Set<Integer> filled = stage.kit.stream().map(k -> k.slot).collect(Collectors.toSet());
+        for (int slot = 0; slot <= 8; slot++) {
+            if (!filled.contains(slot)) return slot;
+        }
+        for (SelfTestSpec.KitItem item : stage.kit) {
+            if (!expectation.materials.contains(item.material)) return item.slot;
+        }
+        return -1;
     }
 
     /** Called by {@link SelfTestListener} once a case's outcome is known. */
@@ -245,7 +280,29 @@ public final class SelfTestManager {
             session.arena = null;
             session.stageIndex++;
             beginStage(session);
+        } else if (stage.kind != SelfTestSpec.StageKind.REFILL) {
+            avoidHoldingNextAnswerAlready(session.player, stage, stage.cases.get(session.caseIndex).expectation);
         }
+    }
+
+    /**
+     * If the tester is already holding (or already bare-handed for) exactly what the next case
+     * expects — e.g. two consecutive cases both expecting a netherite pickaxe, or both combat cases
+     * in the bundled stages both expecting a diamond sword — switch away from it before they
+     * interact with the next subject. Otherwise a broken switch could pass silently because the
+     * right answer simply carried over from the previous case rather than being switched to.
+     */
+    private void avoidHoldingNextAnswerAlready(Player player, SelfTestSpec.Stage stage, SelfTestSpec.Expectation next) {
+        ItemStack held = player.getInventory().getItemInMainHand();
+        boolean alreadyCorrect = switch (next.kind) {
+            case EXACT, ANY_OF -> next.materials.contains(held.getType());
+            case BARE_HAND -> SelfTestEvaluator.isEmpty(held) || !main.toolHandler.isDamageable(held);
+            case UNCHANGED -> false;
+        };
+        if (!alreadyCorrect) return;
+
+        int slot = slotAvoiding(stage, next);
+        if (slot >= 0) player.getInventory().setHeldItemSlot(slot);
     }
 
     private void finish(SelfTestSession session) {
