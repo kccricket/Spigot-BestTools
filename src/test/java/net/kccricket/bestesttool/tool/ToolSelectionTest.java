@@ -12,10 +12,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockbukkit.mockbukkit.block.data.BlockDataMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -573,42 +571,136 @@ class ToolSelectionTest extends BestToolsTestBase {
         return item;
     }
 
-    /**
-     * Minimal live-mining-data double for {@link BestToolsHandler#getBestItemStackFromArray}.
-     * MockBukkit's own {@code BlockDataMock} throws {@code UnimplementedOperationException} for
-     * getDestroySpeed/isPreferredTool/requiresCorrectToolForDrops, so this fake overrides just
-     * those three real Paper API methods with canned per-Material answers. Extending BlockDataMock
-     * rather than implementing the (large) BlockData interface from scratch keeps everything else
-     * inherited — those extra methods are never called by the code under test.
-     */
-    private static final class FakeBlockData extends BlockDataMock {
-        private final boolean requiresCorrect;
-        private final Map<Material, Float> speeds;
-        private final Set<Material> preferred;
-        final List<ItemStack> preferredToolChecks = new ArrayList<>();
+    // --- getBestRoscoeFromInventory/isRoscoe: use_axe_as_sword -------------------------------
+    // Damage values come from SwordUtils.getBaseDamage (pinned by SwordUtilsTest): NETHERITE_AXE
+    // 10, DIAMOND_SWORD/WOODEN_AXE 7, NETHERITE_SWORD 8.
 
-        FakeBlockData(Material material, boolean requiresCorrect, Map<Material, Float> speeds, Set<Material> preferred) {
-            super(material);
-            this.requiresCorrect = requiresCorrect;
-            this.speeds = speeds;
-            this.preferred = preferred;
-        }
+    @Test
+    void getBestRoscoeFromInventory_ignoresAxeEntirelyWhenUseAxeAsSwordOff() {
+        PlayerMock player = newPlayer();
+        PlayerInventory inv = player.getInventory();
+        inv.setItem(0, new ItemStack(Material.DIAMOND_SWORD));
+        inv.setItem(1, new ItemStack(Material.NETHERITE_AXE));
 
-        @Override
-        public boolean requiresCorrectToolForDrops() {
-            return requiresCorrect;
-        }
+        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, false);
 
-        @Override
-        public float getDestroySpeed(ItemStack itemStack, boolean considerEnchants) {
-            return speeds.getOrDefault(itemStack.getType(), 1.0f);
-        }
+        assertEquals(Material.DIAMOND_SWORD, best.getType(),
+                "with useAxe=false, axes must not even be considered, regardless of damage");
+    }
 
-        @Override
-        public boolean isPreferredTool(ItemStack tool) {
-            preferredToolChecks.add(tool);
-            return preferred.contains(tool.getType());
-        }
+    @Test
+    void getBestRoscoeFromInventory_prefersHigherDamageAxeWhenUseAxeAsSwordOn() {
+        PlayerMock player = newPlayer();
+        PlayerInventory inv = player.getInventory();
+        inv.setItem(0, new ItemStack(Material.DIAMOND_SWORD));
+        inv.setItem(1, new ItemStack(Material.NETHERITE_AXE));
+
+        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, true);
+
+        assertEquals(Material.NETHERITE_AXE, best.getType());
+    }
+
+    @Test
+    void getBestRoscoeFromInventory_keepsSwordWhenItOutDamagesEveryAxe() {
+        // useAxe=true means axes also compete, not that axes always win.
+        PlayerMock player = newPlayer();
+        PlayerInventory inv = player.getInventory();
+        inv.setItem(0, new ItemStack(Material.NETHERITE_SWORD));
+        inv.setItem(1, new ItemStack(Material.WOODEN_AXE));
+
+        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, true);
+
+        assertEquals(Material.NETHERITE_SWORD, best.getType());
+    }
+
+    @Test
+    void getBestRoscoeFromInventory_returnsNullWhenOnlyAxesAndUseAxeAsSwordOff() {
+        PlayerMock player = newPlayer();
+        PlayerInventory inv = player.getInventory();
+        inv.setItem(0, new ItemStack(Material.IRON_AXE));
+
+        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, false);
+
+        assertNull(best);
+    }
+
+    @Test
+    void getBestRoscoeFromInventory_smiteSwordBeatsPlainAxeAgainstUndead() {
+        // DIAMOND_SWORD (7) + Smite II (2.5*2=5) = 12 beats NETHERITE_AXE's plain 10 against a
+        // zombie — proves the ranking is by computed damage (including enchant bonus), not tier.
+        PlayerMock player = newPlayer();
+        PlayerInventory inv = player.getInventory();
+        inv.setItem(0, enchanted(Material.DIAMOND_SWORD, "smite", 2));
+        inv.setItem(1, new ItemStack(Material.NETHERITE_AXE));
+
+        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, true);
+
+        assertEquals(Material.DIAMOND_SWORD, best.getType());
+    }
+
+    // --- selectBestTool: consider_swords_for_leaves/consider_swords_for_cobwebs, end-to-end ---
+
+    @Test
+    void selectBestTool_leavesSwordChosenOnlyWhenPolicyAllowsIt() {
+        ItemStack[] items = {new ItemStack(Material.IRON_SWORD)};
+        FakeBlockData leaves = new FakeBlockData(Material.OAK_LEAVES, false, Map.of(Material.IRON_SWORD, 15f), Set.of());
+
+        assertNull(plugin.toolHandler.selectBestTool(leaves, Material.OAK_LEAVES, items, () -> false, SwordPolicy.NONE),
+                "a sword must not be offered for leaves when the policy is off");
+        assertEquals(Material.IRON_SWORD,
+                plugin.toolHandler.selectBestTool(leaves, Material.OAK_LEAVES, items, () -> false, new SwordPolicy(true, false)).getType());
+    }
+
+    @Test
+    void selectBestTool_cobwebSwordChosenOnlyWhenPolicyAllowsIt() {
+        ItemStack[] items = {new ItemStack(Material.IRON_SWORD)};
+        FakeBlockData cobweb = new FakeBlockData(Material.COBWEB, false, Map.of(Material.IRON_SWORD, 15f), Set.of());
+
+        assertNull(plugin.toolHandler.selectBestTool(cobweb, Material.COBWEB, items, () -> false, SwordPolicy.NONE),
+                "a sword must not be offered for cobwebs when the policy is off");
+        assertEquals(Material.IRON_SWORD,
+                plugin.toolHandler.selectBestTool(cobweb, Material.COBWEB, items, () -> false, new SwordPolicy(false, true)).getType());
+    }
+
+    @Test
+    void selectBestTool_shearsStillBeatSwordForLeavesWithPolicyOn() {
+        // The policy opens the door for a sword to compete; it must not reorder the ranking once
+        // a better candidate (shears) is present.
+        ItemStack[] items = {new ItemStack(Material.SHEARS), new ItemStack(Material.IRON_SWORD)};
+        FakeBlockData leaves = new FakeBlockData(Material.OAK_LEAVES, false,
+                Map.of(Material.SHEARS, 15f, Material.IRON_SWORD, 10f), Set.of());
+
+        ItemStack best = plugin.toolHandler.selectBestTool(leaves, Material.OAK_LEAVES, items, () -> false, new SwordPolicy(true, true));
+
+        assertEquals(Material.SHEARS, best.getType());
+    }
+
+    @Test
+    void selectBestTool_swordPolicyDoesNotAffectOtherBlocks() {
+        ItemStack[] items = {new ItemStack(Material.IRON_SWORD)};
+        FakeBlockData stone = new FakeBlockData(Material.STONE, false, Map.of(Material.IRON_SWORD, 5f), Set.of());
+
+        ItemStack best = plugin.toolHandler.selectBestTool(stone, Material.STONE, items, () -> false, SwordPolicy.NONE);
+
+        assertEquals(Material.IRON_SWORD, best.getType(),
+                "the leaves/cobweb-only sword filter must not restrict swords anywhere else");
+    }
+
+    @Test
+    void swordPolicyFrom_mapsEachPreferenceToItsOwnField() {
+        PlayerMock leavesOnly = newPlayer();
+        plugin.getPlayerSetting(leavesOnly).setConsiderSwordsForLeaves(true);
+        plugin.getPlayerSetting(leavesOnly).setConsiderSwordsForCobwebs(false);
+        SwordPolicy leavesPolicy = SwordPolicy.from(plugin.getPlayerSetting(leavesOnly));
+        assertTrue(leavesPolicy.forLeaves());
+        assertFalse(leavesPolicy.forCobwebs());
+
+        PlayerMock cobwebsOnly = newPlayer();
+        plugin.getPlayerSetting(cobwebsOnly).setConsiderSwordsForLeaves(false);
+        plugin.getPlayerSetting(cobwebsOnly).setConsiderSwordsForCobwebs(true);
+        SwordPolicy cobwebsPolicy = SwordPolicy.from(plugin.getPlayerSetting(cobwebsOnly));
+        assertFalse(cobwebsPolicy.forLeaves());
+        assertTrue(cobwebsPolicy.forCobwebs());
     }
 
 }

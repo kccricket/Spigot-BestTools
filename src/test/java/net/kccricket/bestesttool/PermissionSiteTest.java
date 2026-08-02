@@ -14,9 +14,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockbukkit.mockbukkit.entity.LivingEntityMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
-import java.io.File;
-import java.nio.file.Files;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class PermissionSiteTest extends BestToolsTestBase {
@@ -88,11 +85,7 @@ class PermissionSiteTest extends BestToolsTestBase {
         PlayerMock player = newPlayer();
         plugin.getPlayerSetting(player).toggleBestToolsEnabled();
 
-        File configFile = new File(plugin.getDataFolder(), "config.yml");
-        String edited = Files.readString(configFile.toPath())
-                .replace("allow_combat_switching: true", "allow_combat_switching: false");
-        Files.writeString(configFile.toPath(), edited);
-        plugin.configManager.reloadAll();
+        rewriteConfig("allow_combat_switching: true", "allow_combat_switching: false");
 
         PlayerInventory inv = player.getInventory();
         inv.setItem(0, new ItemStack(Material.WOODEN_SWORD));

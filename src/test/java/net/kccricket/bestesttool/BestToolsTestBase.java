@@ -6,6 +6,9 @@ import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Handler;
@@ -83,5 +86,18 @@ public abstract class BestToolsTestBase {
         List<String> messages = captureLogMessages(action);
         assertTrue(messages.stream().anyMatch(m -> m.contains(expectedSubstring)),
                 "Expected a logged message containing \"" + expectedSubstring + "\"; got: " + messages);
+    }
+
+    /**
+     * Rewrites one literal in the on-disk {@code config.yml} and reloads. Fails loudly if
+     * {@code find} isn't present, rather than silently no-op'ing (which would make a gate test
+     * pass for the wrong reason after an unrelated wording change to the file).
+     */
+    protected void rewriteConfig(String find, String replace) throws IOException {
+        File configFile = new File(plugin.getDataFolder(), "config.yml");
+        String content = Files.readString(configFile.toPath());
+        assertTrue(content.contains(find), "config.yml must contain \"" + find + "\" to rewrite");
+        Files.writeString(configFile.toPath(), content.replace(find, replace));
+        plugin.configManager.reloadAll();
     }
 }
