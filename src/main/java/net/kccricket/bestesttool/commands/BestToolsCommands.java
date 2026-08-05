@@ -101,9 +101,9 @@ public final class BestToolsCommands {
     private static LiteralArgumentBuilder<CommandSourceStack> buildCombat(BestestToolPlugin main) {
         return Commands.literal("combat")
                 .requires(src -> Permissions.canUseCombat(main, src.getSender()))
-                .then(boolPref(main, "swordonmobs", Permissions.PERM_USE,
+                .then(boolPref(main, "swordonmobs", Permissions.PERM_COMBAT,
                         PlayerSetting::isSwordOnMobs, main.commandBestTools::setSwordOnMobs))
-                .then(boolPref(main, "useaxeassword", Permissions.PERM_USE,
+                .then(boolPref(main, "useaxeassword", Permissions.PERM_COMBAT,
                         PlayerSetting::isUseAxeAsSword, main.commandBestTools::setUseAxeAsSword));
     }
 
