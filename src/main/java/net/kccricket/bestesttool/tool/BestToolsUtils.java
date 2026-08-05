@@ -20,7 +20,7 @@ public class BestToolsUtils {
     // tier Mojang adds next, the way it missed copper here until this was caught by review).
     final Material[] extraWeapons = {Material.BOW, Material.CROSSBOW, Material.TRIDENT, Material.MACE};
     final Material[] instaBreakableByHand = {Material.COMPARATOR, Material.REPEATER, Material.REDSTONE_WIRE, Material.REDSTONE_TORCH, Material.REDSTONE_WALL_TORCH, Material.TORCH, Material.SOUL_TORCH, Material.WALL_TORCH, Material.SOUL_WALL_TORCH, Material.COPPER_TORCH, Material.COPPER_WALL_TORCH,
-            Material.SCAFFOLDING, Material.SLIME_BLOCK, Material.HONEY_BLOCK, Material.TNT, Material.TRIPWIRE, Material.TRIPWIRE_HOOK, Material.SHORT_GRASS, Material.SUGAR_CANE, Material.LILY_PAD,
+            Material.SCAFFOLDING, Material.SLIME_BLOCK, Material.HONEY_BLOCK, Material.TNT, Material.TRIPWIRE, Material.TRIPWIRE_HOOK, Material.SHORT_GRASS, Material.FERN, Material.TALL_GRASS, Material.LARGE_FERN, Material.NETHER_SPROUTS, Material.SUGAR_CANE, Material.LILY_PAD,
             Material.OAK_SAPLING, Material.SPRUCE_SAPLING, Material.BIRCH_SAPLING, Material.JUNGLE_SAPLING, Material.ACACIA_SAPLING, Material.DARK_OAK_SAPLING,
             Material.BROWN_MUSHROOM, Material.RED_MUSHROOM, Material.CRIMSON_FUNGUS, Material.WARPED_FUNGUS, Material.CRIMSON_ROOTS, Material.WARPED_ROOTS, Material.WEEPING_VINES, Material.TWISTING_VINES,
             Material.DEAD_BUSH, Material.WHEAT, Material.CARROTS, Material.POTATOES, Material.BEETROOTS, Material.PUMPKIN_STEM, Material.MELON_STEM, Material.NETHER_WART, Material.FLOWER_POT,
