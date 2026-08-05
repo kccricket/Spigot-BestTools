@@ -102,6 +102,7 @@ selfTestAlreadyRunning: "<yellow>You already have a self-test running. Use <gold
 selfTestNoneRunning: "<gray>You don't have a self-test running.</gray>"
 # Placeholder: <n>
 selfTestNeedsSpace: "<red>Not enough clear space ahead of you to build the test arena (need <n> blocks in a line). Move somewhere more open and try again.</red>"
+selfTestArenaBuildFailed: "<red>Failed to build the test arena for this stage (e.g. mobs can't be spawned on Peaceful difficulty). Your inventory has been restored.</red>"
 # Placeholders: <stage>, <total>
 selfTestStarted: "<green>Self-test started</green> <gray>(stage <gold><stage></gold>, <total> case(s)). Break the marked blocks in order. Your inventory and game mode will be restored when you're done.</gray>"
 # Placeholder: <stage>

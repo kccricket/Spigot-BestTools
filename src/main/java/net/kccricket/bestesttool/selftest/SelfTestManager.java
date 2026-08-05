@@ -193,6 +193,10 @@ public final class SelfTestManager {
         session.applyTestSettings(main, stage.kind == SelfTestSpec.StageKind.REFILL);
         giveKit(session.player, stage);
         session.arena = SelfTestArena.build(session.player, stage, spec.pedestal);
+        if (session.arena == null) {
+            stop(session.player, "selfTestArenaBuildFailed");
+            return;
+        }
         session.caseIndex = 0;
         session.stagePassed = 0;
 

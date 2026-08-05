@@ -83,14 +83,21 @@ public final class SelfTestArena {
         SelfTestArena arena = new SelfTestArena(stage);
         arena.positions.addAll(positions);
 
-        for (int i = 0; i < count; i++) {
-            SelfTestSpec.Case c = stage.cases.get(i);
-            Location loc = positions.get(i);
-            switch (stage.kind) {
-                case BLOCKS -> arena.placeBlockCase(loc, pedestal, c);
-                case REFILL -> arena.placeMarker(loc, pedestal, c);
-                case COMBAT -> arena.spawnMob(world, loc, pedestal, c);
+        try {
+            for (int i = 0; i < count; i++) {
+                SelfTestSpec.Case c = stage.cases.get(i);
+                Location loc = positions.get(i);
+                switch (stage.kind) {
+                    case BLOCKS -> arena.placeBlockCase(loc, pedestal, c);
+                    case REFILL -> arena.placeMarker(loc, pedestal, c);
+                    case COMBAT -> arena.spawnMob(world, loc, pedestal, c);
+                }
             }
+        } catch (IllegalStateException e) {
+            // e.g. World#spawnEntity refuses a hostile mob on Peaceful difficulty — undo whatever
+            // this build already placed rather than leaving it orphaned in the world.
+            arena.teardown();
+            return null;
         }
         return arena;
     }
