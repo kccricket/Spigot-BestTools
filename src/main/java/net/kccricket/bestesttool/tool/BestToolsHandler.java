@@ -292,7 +292,7 @@ public class BestToolsHandler {
         if(list.size()==0) {
             return null;
         }
-        list.sort((o1, o2) -> SwordUtils.getDamage(o1,enemy) < SwordUtils.getDamage(o2,enemy) ? 1 : -1);
+        list.sort((o1, o2) -> Double.compare(SwordUtils.getDamage(o2,enemy), SwordUtils.getDamage(o1,enemy)));
         return list.get(0);
     }
 
