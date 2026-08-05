@@ -51,6 +51,7 @@ public final class BenchmarkManager {
         final BlockData[] blockData;
         final ItemStack[] kit;
         ScheduledTask task;
+        volatile boolean cancelled;
 
         // Consumes the selection result so the JIT can't prove the call is dead code and elide it.
         @SuppressWarnings("unused")
@@ -77,11 +78,18 @@ public final class BenchmarkManager {
             return;
         }
 
-        main.messages().to(sender).status().send("benchmarkStarted",
-                Placeholder.unparsed("kit", kitSize.name().toLowerCase(Locale.ROOT)));
-
+        // Published to `active` above; a concurrent stop()/abortAll() can now see this session
+        // and flip `cancelled` before the task below is even assigned. Check the flag afterward
+        // so that race can't leave an orphaned, unstoppable repeating task.
         session.task = main.getServer().getGlobalRegionScheduler()
                 .runAtFixedRate(main, ignored -> tick(session), 1L, 1L);
+        if (session.cancelled) {
+            session.task.cancel();
+            return;
+        }
+
+        main.messages().to(sender).status().send("benchmarkStarted",
+                Placeholder.unparsed("kit", kitSize.name().toLowerCase(Locale.ROOT)));
     }
 
     public void stop(CommandSender sender) {
@@ -115,6 +123,7 @@ public final class BenchmarkManager {
     }
 
     private void cancel(Session session) {
+        session.cancelled = true;
         if (session.task != null) session.task.cancel();
     }
 
