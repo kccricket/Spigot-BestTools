@@ -155,7 +155,10 @@ public final class SelfTestListener implements Listener {
 
         // RefillListener's own refill runs via player.getScheduler().run(...) off the back of this
         // same event — give it a couple of ticks to land before reading the outcome.
+        SelfTestArena expectedArena = session.arena;
+        int expectedCaseIndex = session.caseIndex;
         player.getScheduler().runDelayed(main, task -> {
+            if (session.arena != expectedArena || session.caseIndex != expectedCaseIndex) return;
             ItemStack after = player.getInventory().getItemInMainHand();
             boolean pass = SelfTestEvaluator.matches(c.expectation, null, after, main.toolHandler.isDamageable(after));
             manager.recordResult(session, pass, c.subjectName(), c.expectation.describe(), SelfTestEvaluator.describe(after));
