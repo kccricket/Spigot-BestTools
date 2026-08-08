@@ -93,7 +93,8 @@ public final class SelfTestStages {
             if (c != null) cases.add(c);
         }
 
-        return new SelfTestSpec.Stage(name, kind, kit, cases);
+        boolean avoidBreaking = Boolean.TRUE.equals(rawStage.get("avoid_breaking"));
+        return new SelfTestSpec.Stage(name, kind, kit, cases, avoidBreaking);
     }
 
     private static SelfTestSpec.StageKind parseKind(String raw) {
@@ -131,7 +132,8 @@ public final class SelfTestStages {
                 }
             }
         }
-        return new SelfTestSpec.KitItem(slot, material, amount, enchantments);
+        boolean nearBreaking = Boolean.TRUE.equals(raw.get("near_breaking"));
+        return new SelfTestSpec.KitItem(slot, material, amount, enchantments, nearBreaking);
     }
 
     private static SelfTestSpec.Case parseCase(String stageName, SelfTestSpec.StageKind kind, Map<?, ?> raw) {

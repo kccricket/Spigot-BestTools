@@ -5,6 +5,7 @@ import net.kccricket.bestesttool.tool.BestToolsHandler.Tool;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.PlayerInventory;
 import org.junit.jupiter.api.Test;
@@ -107,7 +108,7 @@ class ToolSelectionTest extends BestToolsTestBase {
         inv.setItem(0, new ItemStack(Material.WOODEN_SWORD));
         inv.setItem(1, new ItemStack(Material.IRON_SWORD));
 
-        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, false);
+        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, false, false);
 
         assertEquals(Material.IRON_SWORD, best.getType());
     }
@@ -154,7 +155,7 @@ class ToolSelectionTest extends BestToolsTestBase {
         inv.setItem(0, new ItemStack(Material.WOODEN_SWORD));
         inv.setItem(1, new ItemStack(Material.COPPER_SWORD));
 
-        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, false);
+        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, false, false);
 
         assertEquals(Material.COPPER_SWORD, best.getType());
     }
@@ -170,7 +171,7 @@ class ToolSelectionTest extends BestToolsTestBase {
         FakeBlockData data = new FakeBlockData(Material.STONE, false,
                 Map.of(Material.WOODEN_PICKAXE, 2f, Material.STONE_PICKAXE, 4f), Set.of());
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE, 1.0f, SwordPolicy.NONE);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE, 1.0f, SwordPolicy.NONE, false);
 
         assertEquals(Material.STONE_PICKAXE, best.getType());
     }
@@ -188,7 +189,7 @@ class ToolSelectionTest extends BestToolsTestBase {
                 Map.of(Material.IRON_PICKAXE, 32f, Material.DIAMOND_PICKAXE, 8f),
                 Set.of(Material.DIAMOND_PICKAXE));
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(obsidian, items, false, Material.OBSIDIAN, 1.0f, SwordPolicy.NONE);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(obsidian, items, false, Material.OBSIDIAN, 1.0f, SwordPolicy.NONE, false);
 
         assertEquals(Material.DIAMOND_PICKAXE, best.getType());
     }
@@ -202,7 +203,7 @@ class ToolSelectionTest extends BestToolsTestBase {
         FakeBlockData diamondOre = new FakeBlockData(Material.DIAMOND_ORE, true,
                 Map.of(Material.WOODEN_PICKAXE, 2f, Material.IRON_PICKAXE, 6f), Set.of());
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(diamondOre, items, false, Material.DIAMOND_ORE, 1.0f, SwordPolicy.NONE);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(diamondOre, items, false, Material.DIAMOND_ORE, 1.0f, SwordPolicy.NONE, false);
 
         assertEquals(Material.IRON_PICKAXE, best.getType());
     }
@@ -214,7 +215,7 @@ class ToolSelectionTest extends BestToolsTestBase {
 
         FakeBlockData dirt = new FakeBlockData(Material.DIRT, false, Map.of(Material.IRON_SHOVEL, 6f), Set.of());
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(dirt, items, false, Material.DIRT, 1.0f, SwordPolicy.NONE);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(dirt, items, false, Material.DIRT, 1.0f, SwordPolicy.NONE, false);
 
         assertEquals(Material.IRON_SHOVEL, best.getType());
         assertTrue(dirt.preferredToolChecks.isEmpty());
@@ -229,7 +230,7 @@ class ToolSelectionTest extends BestToolsTestBase {
         FakeBlockData data = new FakeBlockData(Material.STONE, false,
                 Map.of(Material.IRON_PICKAXE, 6f, Material.DIAMOND_PICKAXE, 6f), Set.of());
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE, 1.0f, SwordPolicy.NONE);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE, 1.0f, SwordPolicy.NONE, false);
 
         assertEquals(first, best);
     }
@@ -241,7 +242,7 @@ class ToolSelectionTest extends BestToolsTestBase {
 
         FakeBlockData data = new FakeBlockData(Material.STONE, false, Map.of(), Set.of());
 
-        assertNull(plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE, 1.0f, SwordPolicy.NONE));
+        assertNull(plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE, 1.0f, SwordPolicy.NONE, false));
     }
 
     @Test
@@ -252,7 +253,7 @@ class ToolSelectionTest extends BestToolsTestBase {
 
         FakeBlockData glowstone = new FakeBlockData(Material.GLOWSTONE, false, Map.of(Material.IRON_PICKAXE, 6f), Set.of());
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(glowstone, items, true, Material.GLOWSTONE, 1.0f, SwordPolicy.NONE);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(glowstone, items, true, Material.GLOWSTONE, 1.0f, SwordPolicy.NONE, false);
 
         assertEquals(silkPick, best);
     }
@@ -264,7 +265,7 @@ class ToolSelectionTest extends BestToolsTestBase {
 
         FakeBlockData glowstone = new FakeBlockData(Material.GLOWSTONE, false, Map.of(Material.IRON_PICKAXE, 6f), Set.of());
 
-        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(glowstone, items, true, Material.GLOWSTONE, 1.0f, SwordPolicy.NONE);
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(glowstone, items, true, Material.GLOWSTONE, 1.0f, SwordPolicy.NONE, false);
 
         assertEquals(plainPick, best);
     }
@@ -279,8 +280,8 @@ class ToolSelectionTest extends BestToolsTestBase {
 
         FakeBlockData glass = new FakeBlockData(Material.GLASS, false, Map.of(), Set.of());
 
-        assertEquals(silkPick, plugin.toolHandler.getBestItemStackFromArray(glass, items, true, Material.GLASS, 0.0f, SwordPolicy.NONE));
-        assertNull(plugin.toolHandler.getBestItemStackFromArray(glass, items, true, Material.GLASS, 1.0f, SwordPolicy.NONE));
+        assertEquals(silkPick, plugin.toolHandler.getBestItemStackFromArray(glass, items, true, Material.GLASS, 0.0f, SwordPolicy.NONE, false));
+        assertNull(plugin.toolHandler.getBestItemStackFromArray(glass, items, true, Material.GLASS, 1.0f, SwordPolicy.NONE, false));
     }
 
     @Test
@@ -290,7 +291,54 @@ class ToolSelectionTest extends BestToolsTestBase {
 
         FakeBlockData glass = new FakeBlockData(Material.GLASS, false, Map.of(), Set.of());
 
-        assertNull(plugin.toolHandler.getBestItemStackFromArray(glass, items, true, Material.GLASS, 0.0f, SwordPolicy.NONE));
+        assertNull(plugin.toolHandler.getBestItemStackFromArray(glass, items, true, Material.GLASS, 0.0f, SwordPolicy.NONE, false));
+    }
+
+    // --- avoid_breaking_tools: the durability-aware skip/fallback ------------------------------
+
+    @Test
+    void getBestItemStackFromArray_avoidBreaking_skipsNearBreakingItemWhenHealthyAlternativeExists() {
+        ItemStack nearBroken = damagedTo(Material.IRON_PICKAXE, 1);
+        ItemStack healthy = new ItemStack(Material.WOODEN_PICKAXE);
+        ItemStack[] items = {nearBroken, healthy};
+
+        FakeBlockData data = new FakeBlockData(Material.STONE, false,
+                Map.of(Material.IRON_PICKAXE, 6f, Material.WOODEN_PICKAXE, 2f), Set.of());
+
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE, 1.0f, SwordPolicy.NONE, true);
+
+        assertEquals(Material.WOODEN_PICKAXE, best.getType(),
+                "the faster iron pickaxe is one hit from breaking, so the healthier (slower) wooden one must win instead");
+    }
+
+    @Test
+    void selectBestTool_avoidBreaking_returnsNullWhenOnlyCandidateIsNearBreaking() {
+        // Mining deliberately does NOT fall back to a near-broken item the way combat does — with
+        // no healthier alternative, selectBestTool must return null so the caller (BestToolsSelector)
+        // falls through to its existing bare-hand path instead of handing over the near-broken tool.
+        ItemStack nearBroken = damagedTo(Material.IRON_PICKAXE, 1);
+        ItemStack[] items = {nearBroken};
+
+        FakeBlockData data = new FakeBlockData(Material.STONE, false, Map.of(Material.IRON_PICKAXE, 6f), Set.of());
+
+        ItemStack best = plugin.toolHandler.selectBestTool(data, Material.STONE, items, () -> false, SwordPolicy.NONE, true);
+
+        assertNull(best, "with no healthier alternative, mining must fall through to bare hand, not use the near-broken pickaxe");
+    }
+
+    @Test
+    void getBestItemStackFromArray_avoidBreakingFalse_stillConsidersNearBreakingItems() {
+        ItemStack nearBroken = damagedTo(Material.IRON_PICKAXE, 1);
+        ItemStack healthy = new ItemStack(Material.WOODEN_PICKAXE);
+        ItemStack[] items = {nearBroken, healthy};
+
+        FakeBlockData data = new FakeBlockData(Material.STONE, false,
+                Map.of(Material.IRON_PICKAXE, 6f, Material.WOODEN_PICKAXE, 2f), Set.of());
+
+        ItemStack best = plugin.toolHandler.getBestItemStackFromArray(data, items, false, Material.STONE, 1.0f, SwordPolicy.NONE, false);
+
+        assertEquals(Material.IRON_PICKAXE, best.getType(),
+                "with the preference off, durability must not affect the ranking at all");
     }
 
     // --- isCandidate: the only remaining category filter (SwordPolicy's leaves/cobweb toggles) ---
@@ -351,6 +399,28 @@ class ToolSelectionTest extends BestToolsTestBase {
     @Test
     void isDamageable_falseForNull() {
         assertFalse(plugin.toolHandler.isDamageable(null));
+    }
+
+    // --- isAboutToBreak: avoid_breaking_tools' durability check -------------------------------
+
+    @Test
+    void isAboutToBreak_trueForItemWithOneDurabilityRemaining() {
+        assertTrue(plugin.toolHandler.isAboutToBreak(damagedTo(Material.IRON_PICKAXE, 1)));
+    }
+
+    @Test
+    void isAboutToBreak_falseForPristineItem() {
+        assertFalse(plugin.toolHandler.isAboutToBreak(new ItemStack(Material.IRON_PICKAXE)));
+    }
+
+    @Test
+    void isAboutToBreak_falseForItemWithDurabilityToSpare() {
+        assertFalse(plugin.toolHandler.isAboutToBreak(damagedTo(Material.IRON_PICKAXE, 10)));
+    }
+
+    @Test
+    void isAboutToBreak_falseForNonDamageableMaterial() {
+        assertFalse(plugin.toolHandler.isAboutToBreak(new ItemStack(Material.DIRT)));
     }
 
     // --- neverSwitch/isNeverSwitch: bedrock-class blocks and decorated pots -------------------
@@ -549,10 +619,10 @@ class ToolSelectionTest extends BestToolsTestBase {
         // construction for the same player — PDC always wins over a fresh seed.
         PlayerMock player = newPlayer();
 
-        PlayerDefaults seeded = new PlayerDefaults(true, true, true, 3, true, true, true, true, true);
+        PlayerDefaults seeded = new PlayerDefaults(true, true, true, 3, true, true, true, true, true, true);
         new PlayerSetting(player, seeded);
 
-        PlayerDefaults opposite = new PlayerDefaults(false, false, false, 0, false, false, false, false, false);
+        PlayerDefaults opposite = new PlayerDefaults(false, false, false, 0, false, false, false, false, false, false);
         PlayerSetting reloaded = new PlayerSetting(player, opposite);
 
         assertTrue(reloaded.isSwordOnMobs());
@@ -560,6 +630,7 @@ class ToolSelectionTest extends BestToolsTestBase {
         assertTrue(reloaded.isSwitchDuringBattle());
         assertTrue(reloaded.isConsiderSwordsForLeaves());
         assertTrue(reloaded.isConsiderSwordsForCobwebs());
+        assertTrue(reloaded.isAvoidBreakingTools());
         assertEquals(3, reloaded.getFavoriteSlot());
     }
 
@@ -567,6 +638,15 @@ class ToolSelectionTest extends BestToolsTestBase {
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
         meta.addEnchant(EnchantmentUtils.getEnchantment(enchantKey), level, true);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /** {@code remaining} points of durability left before the item breaks. */
+    private ItemStack damagedTo(Material mat, int remaining) {
+        ItemStack item = new ItemStack(mat);
+        Damageable meta = (Damageable) item.getItemMeta();
+        meta.setDamage(item.getType().getMaxDurability() - remaining);
         item.setItemMeta(meta);
         return item;
     }
@@ -582,7 +662,7 @@ class ToolSelectionTest extends BestToolsTestBase {
         inv.setItem(0, new ItemStack(Material.DIAMOND_SWORD));
         inv.setItem(1, new ItemStack(Material.NETHERITE_AXE));
 
-        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, false);
+        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, false, false);
 
         assertEquals(Material.DIAMOND_SWORD, best.getType(),
                 "with useAxe=false, axes must not even be considered, regardless of damage");
@@ -595,7 +675,7 @@ class ToolSelectionTest extends BestToolsTestBase {
         inv.setItem(0, new ItemStack(Material.DIAMOND_SWORD));
         inv.setItem(1, new ItemStack(Material.NETHERITE_AXE));
 
-        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, true);
+        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, true, false);
 
         assertEquals(Material.NETHERITE_AXE, best.getType());
     }
@@ -608,7 +688,7 @@ class ToolSelectionTest extends BestToolsTestBase {
         inv.setItem(0, new ItemStack(Material.NETHERITE_SWORD));
         inv.setItem(1, new ItemStack(Material.WOODEN_AXE));
 
-        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, true);
+        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, true, false);
 
         assertEquals(Material.NETHERITE_SWORD, best.getType());
     }
@@ -619,7 +699,7 @@ class ToolSelectionTest extends BestToolsTestBase {
         PlayerInventory inv = player.getInventory();
         inv.setItem(0, new ItemStack(Material.IRON_AXE));
 
-        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, false);
+        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, false, false);
 
         assertNull(best);
     }
@@ -633,9 +713,37 @@ class ToolSelectionTest extends BestToolsTestBase {
         inv.setItem(0, enchanted(Material.DIAMOND_SWORD, "smite", 2));
         inv.setItem(1, new ItemStack(Material.NETHERITE_AXE));
 
-        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, true);
+        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, true, false);
 
         assertEquals(Material.DIAMOND_SWORD, best.getType());
+    }
+
+    @Test
+    void getBestRoscoeFromInventory_avoidBreaking_skipsNearBreakingWeaponWhenHealthyAlternativeExists() {
+        PlayerMock player = newPlayer();
+        PlayerInventory inv = player.getInventory();
+        inv.setItem(0, damagedTo(Material.NETHERITE_SWORD, 1));
+        inv.setItem(1, new ItemStack(Material.WOODEN_SWORD));
+
+        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, false, true);
+
+        assertEquals(Material.WOODEN_SWORD, best.getType(),
+                "the higher-damage netherite sword is one hit from breaking, so the healthier wooden one must win instead");
+    }
+
+    @Test
+    void getBestRoscoeFromInventory_avoidBreaking_fallsBackWhenOnlyCandidateIsNearBreaking() {
+        // Deliberately unlike mining's selectBestTool_avoidBreaking_returnsNullWhenOnlyCandidateIsNearBreaking:
+        // combat has no bare-hand fallback, and going unarmed mid-fight is usually worse than one
+        // more hit with a nearly-spent weapon, so this path keeps using it rather than going null.
+        PlayerMock player = newPlayer();
+        PlayerInventory inv = player.getInventory();
+        inv.setItem(0, damagedTo(Material.NETHERITE_SWORD, 1));
+
+        ItemStack best = plugin.toolHandler.getBestRoscoeFromInventory(EntityType.ZOMBIE, player, true, null, false, true);
+
+        assertEquals(Material.NETHERITE_SWORD, best.getType(),
+                "with no healthier alternative, the near-broken sword must still be offered rather than nothing");
     }
 
     // --- selectBestTool: consider_swords_for_leaves/consider_swords_for_cobwebs, end-to-end ---
@@ -645,10 +753,10 @@ class ToolSelectionTest extends BestToolsTestBase {
         ItemStack[] items = {new ItemStack(Material.IRON_SWORD)};
         FakeBlockData leaves = new FakeBlockData(Material.OAK_LEAVES, false, Map.of(Material.IRON_SWORD, 15f), Set.of());
 
-        assertNull(plugin.toolHandler.selectBestTool(leaves, Material.OAK_LEAVES, items, () -> false, SwordPolicy.NONE),
+        assertNull(plugin.toolHandler.selectBestTool(leaves, Material.OAK_LEAVES, items, () -> false, SwordPolicy.NONE, false),
                 "a sword must not be offered for leaves when the policy is off");
         assertEquals(Material.IRON_SWORD,
-                plugin.toolHandler.selectBestTool(leaves, Material.OAK_LEAVES, items, () -> false, new SwordPolicy(true, false)).getType());
+                plugin.toolHandler.selectBestTool(leaves, Material.OAK_LEAVES, items, () -> false, new SwordPolicy(true, false), false).getType());
     }
 
     @Test
@@ -656,10 +764,10 @@ class ToolSelectionTest extends BestToolsTestBase {
         ItemStack[] items = {new ItemStack(Material.IRON_SWORD)};
         FakeBlockData cobweb = new FakeBlockData(Material.COBWEB, false, Map.of(Material.IRON_SWORD, 15f), Set.of());
 
-        assertNull(plugin.toolHandler.selectBestTool(cobweb, Material.COBWEB, items, () -> false, SwordPolicy.NONE),
+        assertNull(plugin.toolHandler.selectBestTool(cobweb, Material.COBWEB, items, () -> false, SwordPolicy.NONE, false),
                 "a sword must not be offered for cobwebs when the policy is off");
         assertEquals(Material.IRON_SWORD,
-                plugin.toolHandler.selectBestTool(cobweb, Material.COBWEB, items, () -> false, new SwordPolicy(false, true)).getType());
+                plugin.toolHandler.selectBestTool(cobweb, Material.COBWEB, items, () -> false, new SwordPolicy(false, true), false).getType());
     }
 
     @Test
@@ -670,7 +778,7 @@ class ToolSelectionTest extends BestToolsTestBase {
         FakeBlockData leaves = new FakeBlockData(Material.OAK_LEAVES, false,
                 Map.of(Material.SHEARS, 15f, Material.IRON_SWORD, 10f), Set.of());
 
-        ItemStack best = plugin.toolHandler.selectBestTool(leaves, Material.OAK_LEAVES, items, () -> false, new SwordPolicy(true, true));
+        ItemStack best = plugin.toolHandler.selectBestTool(leaves, Material.OAK_LEAVES, items, () -> false, new SwordPolicy(true, true), false);
 
         assertEquals(Material.SHEARS, best.getType());
     }
@@ -680,7 +788,7 @@ class ToolSelectionTest extends BestToolsTestBase {
         ItemStack[] items = {new ItemStack(Material.IRON_SWORD)};
         FakeBlockData stone = new FakeBlockData(Material.STONE, false, Map.of(Material.IRON_SWORD, 5f), Set.of());
 
-        ItemStack best = plugin.toolHandler.selectBestTool(stone, Material.STONE, items, () -> false, SwordPolicy.NONE);
+        ItemStack best = plugin.toolHandler.selectBestTool(stone, Material.STONE, items, () -> false, SwordPolicy.NONE, false);
 
         assertEquals(Material.IRON_SWORD, best.getType(),
                 "the leaves/cobweb-only sword filter must not restrict swords anywhere else");

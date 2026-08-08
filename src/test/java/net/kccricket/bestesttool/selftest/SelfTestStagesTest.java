@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import net.kccricket.bestesttool.selftest.SelfTestSpec;
@@ -50,11 +51,12 @@ class SelfTestStagesTest extends BestToolsTestBase {
         SelfTestSpec spec = SelfTestStages.load(plugin);
 
         assertEquals(Material.SMOOTH_STONE, spec.pedestal);
-        assertEquals(4, spec.stages.size());
+        assertEquals(5, spec.stages.size());
         assertEquals(0, spec.indexOfStage("core-mining"));
         assertEquals(1, spec.indexOfStage("fallbacks"));
         assertEquals(2, spec.indexOfStage("combat"));
         assertEquals(3, spec.indexOfStage("refill"));
+        assertEquals(4, spec.indexOfStage("avoid-breaking"));
         assertEquals(-1, spec.indexOfStage("no-such-stage"));
     }
 
@@ -116,6 +118,25 @@ class SelfTestStagesTest extends BestToolsTestBase {
         SelfTestSpec.KitItem backupStack = stage.kit.stream()
                 .filter(k -> k.slot == 1).findFirst().orElseThrow();
         assertEquals(64, backupStack.amount);
+    }
+
+    @Test
+    void avoidBreakingStageParsesStageFlagAndNearBreakingKitItemFlag() {
+        SelfTestSpec spec = SelfTestStages.load(plugin);
+        SelfTestSpec.Stage stage = spec.stage(spec.indexOfStage("avoid-breaking"));
+
+        assertTrue(stage.avoidBreaking, "the stage's own avoid_breaking: true must be parsed");
+
+        SelfTestSpec.KitItem nearBreakingPick = stage.kit.stream()
+                .filter(k -> k.slot == 0).findFirst().orElseThrow();
+        assertTrue(nearBreakingPick.nearBreaking);
+
+        SelfTestSpec.KitItem healthyPick = stage.kit.stream()
+                .filter(k -> k.slot == 1).findFirst().orElseThrow();
+        assertFalse(healthyPick.nearBreaking, "near_breaking defaults to false when omitted");
+
+        SelfTestSpec.Stage coreMining = spec.stage(spec.indexOfStage("core-mining"));
+        assertFalse(coreMining.avoidBreaking, "avoid_breaking defaults to false when omitted");
     }
 
     @Test

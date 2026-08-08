@@ -67,7 +67,8 @@ public class BestToolsListener implements Listener {
         Log.debug("Getting the best roscoe for "+enemy.getType().name());
 
         PlayerInventory inv = p.getInventory();
-        ItemStack bestRoscoe = handler.getBestRoscoeFromInventory(enemy.getType(), p,playerSetting.isHotbarOnly(),inv.getItemInMainHand(),playerSetting.isUseAxeAsSword());
+        boolean avoidBreaking = main.configManager.main().getAllowAvoidBreakingTools() && playerSetting.isAvoidBreakingTools();
+        ItemStack bestRoscoe = handler.getBestRoscoeFromInventory(enemy.getType(), p,playerSetting.isHotbarOnly(),inv.getItemInMainHand(),playerSetting.isUseAxeAsSword(),avoidBreaking);
 
         if(bestRoscoe==null || bestRoscoe.equals(inv.getItemInMainHand())) {
             return;

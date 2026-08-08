@@ -39,12 +39,20 @@ public final class SelfTestSpec {
         final StageKind kind;
         final List<KitItem> kit;
         final List<Case> cases;
+        /**
+         * Whether {@code avoidBreakingTools} should be forced <b>on</b> for this stage (instead of
+         * the usual forced-off — see {@link SelfTestSession#applyTestSettings}). Only meaningful for
+         * a stage whose kit includes a {@link KitItem#nearBreaking} item, since a pristine kit
+         * behaves identically either way.
+         */
+        final boolean avoidBreaking;
 
-        Stage(String name, StageKind kind, List<KitItem> kit, List<Case> cases) {
+        Stage(String name, StageKind kind, List<KitItem> kit, List<Case> cases, boolean avoidBreaking) {
             this.name = name;
             this.kind = kind;
             this.kit = List.copyOf(kit);
             this.cases = List.copyOf(cases);
+            this.avoidBreaking = avoidBreaking;
         }
     }
 
@@ -55,12 +63,19 @@ public final class SelfTestSpec {
         final int amount;
         /** Enchantment key (as registered in {@code Registry.ENCHANTMENT}, e.g. {@code "silk_touch"}) -> level. */
         final Map<String, Integer> enchantments;
+        /**
+         * When true, this item is handed out already at one point of durability from breaking (see
+         * {@code BestToolsHandler.isAboutToBreak}) instead of pristine — used to exercise
+         * {@code avoidBreakingTools} (paired with the stage's own {@link Stage#avoidBreaking} flag).
+         */
+        final boolean nearBreaking;
 
-        KitItem(int slot, Material material, int amount, Map<String, Integer> enchantments) {
+        KitItem(int slot, Material material, int amount, Map<String, Integer> enchantments, boolean nearBreaking) {
             this.slot = slot;
             this.material = material;
             this.amount = amount;
             this.enchantments = Map.copyOf(enchantments);
+            this.nearBreaking = nearBreaking;
         }
     }
 

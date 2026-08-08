@@ -79,6 +79,14 @@ public class CommandBestTools {
         main.messages().to(p).status().send(enabled ? "swordsForCobwebsEnabled" : "swordsForCobwebsDisabled");
     }
 
+    void setAvoidBreakingTools(Player p, boolean enabled) {
+        PlayerSetting setting = main.getPlayerSetting(p);
+        setting.getBtcache().invalidated();
+        setting.setHasSeenBestToolsMessage(true);
+        setting.setAvoidBreakingTools(enabled);
+        main.messages().to(p).status().send(enabled ? "avoidBreakingToolsEnabled" : "avoidBreakingToolsDisabled");
+    }
+
     /** Reports the effective favorite slot (already resolved to the held slot if unset/out-of-range). */
     void reportFavoriteSlot(Player p) {
         int slot = main.getPlayerSetting(p).getFavoriteSlot();

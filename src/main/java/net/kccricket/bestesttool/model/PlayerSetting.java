@@ -30,6 +30,7 @@ public class PlayerSetting {
         private static final NamespacedKey KEY_SWITCH_DURING_BATTLE = new NamespacedKey(NAMESPACE, "switch_during_battle");
         private static final NamespacedKey KEY_CONSIDER_SWORDS_FOR_LEAVES = new NamespacedKey(NAMESPACE, "consider_swords_for_leaves");
         private static final NamespacedKey KEY_CONSIDER_SWORDS_FOR_COBWEBS = new NamespacedKey(NAMESPACE, "consider_swords_for_cobwebs");
+        private static final NamespacedKey KEY_AVOID_BREAKING_TOOLS = new NamespacedKey(NAMESPACE, "avoid_breaking_tools");
         private static final NamespacedKey KEY_HAS_SEEN_BESTTOOLS_MESSAGE = new NamespacedKey(NAMESPACE, "has_seen_besttools_message");
         private static final NamespacedKey KEY_HAS_SEEN_REFILL_MESSAGE = new NamespacedKey(NAMESPACE, "has_seen_refill_message");
 
@@ -48,6 +49,7 @@ public class PlayerSetting {
         private boolean switchDuringBattle;
         private boolean considerSwordsForLeaves;
         private boolean considerSwordsForCobwebs;
+        private boolean avoidBreakingTools;
 
         private boolean hasSeenBestToolsMessage = false;
         private boolean hasSeenRefillMessage = false;
@@ -91,6 +93,11 @@ public class PlayerSetting {
 
         public boolean isConsiderSwordsForCobwebs() {
                 return considerSwordsForCobwebs;
+        }
+
+        /** Whether BestTools skips an item that's about to break (mining or combat) when a healthier alternative exists. See config.yml's avoid_breaking_tools comment. */
+        public boolean isAvoidBreakingTools() {
+                return avoidBreakingTools;
         }
 
         public boolean isHasSeenBestToolsMessage() {
@@ -137,6 +144,7 @@ public class PlayerSetting {
                 this.switchDuringBattle = getBoolean(pdc, KEY_SWITCH_DURING_BATTLE, switchDuringBattle);
                 this.considerSwordsForLeaves = getBoolean(pdc, KEY_CONSIDER_SWORDS_FOR_LEAVES, considerSwordsForLeaves);
                 this.considerSwordsForCobwebs = getBoolean(pdc, KEY_CONSIDER_SWORDS_FOR_COBWEBS, considerSwordsForCobwebs);
+                this.avoidBreakingTools = getBoolean(pdc, KEY_AVOID_BREAKING_TOOLS, avoidBreakingTools);
                 this.favoriteSlot = pdc.getOrDefault(KEY_FAVORITE_SLOT, PersistentDataType.INTEGER, favoriteSlot);
         }
 
@@ -152,6 +160,7 @@ public class PlayerSetting {
                 pdc.set(KEY_SWITCH_DURING_BATTLE, PersistentDataType.BYTE, (byte) (switchDuringBattle ? 1 : 0));
                 pdc.set(KEY_CONSIDER_SWORDS_FOR_LEAVES, PersistentDataType.BYTE, (byte) (considerSwordsForLeaves ? 1 : 0));
                 pdc.set(KEY_CONSIDER_SWORDS_FOR_COBWEBS, PersistentDataType.BYTE, (byte) (considerSwordsForCobwebs ? 1 : 0));
+                pdc.set(KEY_AVOID_BREAKING_TOOLS, PersistentDataType.BYTE, (byte) (avoidBreakingTools ? 1 : 0));
                 pdc.set(KEY_FAVORITE_SLOT, PersistentDataType.INTEGER, favoriteSlot);
         }
 
@@ -169,6 +178,7 @@ public class PlayerSetting {
                 this.switchDuringBattle = defaults.switchDuringBattle();
                 this.considerSwordsForLeaves = defaults.considerSwordsForLeaves();
                 this.considerSwordsForCobwebs = defaults.considerSwordsForCobwebs();
+                this.avoidBreakingTools = defaults.avoidBreakingTools();
                 this.favoriteSlot = defaults.favoriteSlot();
                 getPDCValues(player);
                 this.save();
@@ -229,6 +239,13 @@ public class PlayerSetting {
                 considerSwordsForCobwebs = enabled;
                 save();
                 return considerSwordsForCobwebs;
+        }
+
+        /** Also used by {@link SelfTestSession} to force/restore this preference around a test run. */
+        public boolean setAvoidBreakingTools(boolean enabled) {
+                avoidBreakingTools = enabled;
+                save();
+                return avoidBreakingTools;
         }
 
         public void setHasSeenBestToolsMessage(boolean seen) {

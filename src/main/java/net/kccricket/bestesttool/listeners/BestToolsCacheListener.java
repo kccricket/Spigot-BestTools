@@ -8,6 +8,8 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.*;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.jetbrains.annotations.NotNull;
 
 public class BestToolsCacheListener implements @NotNull Listener {
@@ -46,11 +48,53 @@ public class BestToolsCacheListener implements @NotNull Listener {
         cacheInvalidated(e.getPlayer(),"ItemHeldChanged");
     }
 
+    /**
+     * The F-key hand swap changes main-hand contents (which feed the battle-weapon gate,
+     * {@code shouldKeepHeldItem}, and the "already holding the right tool" check) but fires no
+     * {@code InventoryClickEvent} or {@code PlayerItemHeldEvent} — it's a standalone player-action
+     * packet, not a container click or a hotbar slot change.
+     */
+    @EventHandler
+    public void onSwapHandItems(PlayerSwapHandItemsEvent e) {
+        cacheInvalidated(e.getPlayer(), "SwapHandItems");
+    }
+
+    /**
+     * Game mode fully gates the feature (see {@code PlayerUtils.isAllowedGamemode}), so a change
+     * must invalidate even though it never touches the inventory. Paper fires this before applying
+     * the change and skips it entirely on a no-op set, so there's no redundant-invalidation cost.
+     */
+    @EventHandler
+    public void onGameModeChange(PlayerGameModeChangeEvent e) {
+        cacheInvalidated(e.getPlayer(), "GameModeChange");
+    }
+
+    /**
+     * Death clears the player's entire inventory with no inventory event on that path (the clear
+     * happens after {@code PlayerDeathEvent} so plugins can see the pre-death state). Respawn is
+     * the first point afterward where the cleared inventory is guaranteed visible.
+     */
+    @EventHandler
+    public void onRespawn(PlayerRespawnEvent e) {
+        cacheInvalidated(e.getPlayer(), "Respawn");
+    }
+
+    /**
+     * Invalidates whenever a pickup could actually change what the next selection returns: the
+     * item is itself a new candidate (tool or sword — {@code isTool} alone misses swords), or the
+     * hotbar still has an empty slot the pickup could consume (which changes
+     * {@code getBareHandSlot}'s answer). Fires before the item is added to the inventory, so the
+     * empty-slot check below reads the correct pre-pickup state. Anything else (e.g. picking up
+     * dirt with a full hotbar) can't change the decision, so the cache stays warm through ordinary
+     * mining.
+     */
     @EventHandler
     public void onPlayerPickupTool(EntityPickupItemEvent e) {
-        if(!(e.getEntity() instanceof Player)) return;
-        if(main.toolHandler.isTool(e.getItem().getItemStack())) {
-            cacheInvalidated((Player) e.getEntity(),"PickupItem");
+        if(!(e.getEntity() instanceof Player player)) return;
+        ItemStack stack = e.getItem().getItemStack();
+        PlayerInventory inv = player.getInventory();
+        if(main.toolHandler.pickupCouldAffectSelection(stack, inv)) {
+            cacheInvalidated(player,"PickupItem");
         }
     }
 

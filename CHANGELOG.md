@@ -1,6 +1,28 @@
 # Changelog
 
 ## Unreleased
+- Implemented "avoid breaking tools" for real — a `// TODO: Check if durability is 1` had sat
+  unimplemented in both the mining and combat selection paths since the plugin's second-ever
+  commit in 2020. BestTools now skips an item that's one hit from breaking when a healthier
+  alternative exists, for both mining tool switching and combat weapon switching. If nothing
+  healthy is left: mining switches to a bare hand rather than handing over the near-broken tool;
+  combat keeps using the near-broken weapon, since there's no bare-hand fallback for attacking and
+  going unarmed mid-fight is usually worse than one more hit. Controlled per player via
+  `/bestesttool avoidbreaking [<state>]` (default on, gated by `bestesttool.use` like
+  `switchduringbattle`), with a new server-wide `allow_avoid_breaking_tools` kill switch (default
+  on) in `config.yml`. The live `/bestesttool admin selftest` now covers the mining half of this
+  end-to-end too, via two new `avoid-breaking-skip`/`avoid-breaking-fallback` stages (a stage-level
+  `avoid_breaking: true` flag and a kit item's `near_breaking: true` flag in `stages.yml`)
+- Closed several more gaps in the per-player best-tool cache going stale (see the entry below on
+  drag/click): swapping hands with **F** (`PlayerSwapHandItemsEvent`), changing game mode, and
+  dying/respawning now all invalidate it too, since each can change what the next selection
+  should return without touching drop/pickup/held-slot/inventory-click/drag/item-break. Also
+  widened the pickup gate — it previously only invalidated for `isTool()` items, missing swords
+  entirely, and ignored that picking up *any* item can consume the last empty hotbar slot BestTools
+  would otherwise offer as a bare-hand stand-in. Finally, `/bestesttool admin reload` now
+  invalidates every online player's cache, so changing `global_block_blacklist` or
+  `allow_in_adventure_mode` takes effect immediately instead of waiting on an unrelated event to
+  clear a stale cache first
 - Moved `sword_on_mobs`, `use_axe_as_sword`, `consider_swords_for_leaves`, and
   `consider_swords_for_cobwebs` from server-wide config keys into per-player preferences
   (`defaults.*` still sets the starting value for new players), and added five new commands to

@@ -57,6 +57,7 @@ public final class SelfTestSession {
     private final boolean savedSwitchDuringBattle;
     private final boolean savedConsiderSwordsForLeaves;
     private final boolean savedConsiderSwordsForCobwebs;
+    private final boolean savedAvoidBreakingTools;
     private final boolean savedRefillEnabled;
     private final List<String> savedBlacklist;
 
@@ -82,6 +83,7 @@ public final class SelfTestSession {
         this.savedSwitchDuringBattle = settings.isSwitchDuringBattle();
         this.savedConsiderSwordsForLeaves = settings.isConsiderSwordsForLeaves();
         this.savedConsiderSwordsForCobwebs = settings.isConsiderSwordsForCobwebs();
+        this.savedAvoidBreakingTools = settings.isAvoidBreakingTools();
         this.savedRefillEnabled = settings.isRefillEnabled();
         this.savedBlacklist = new ArrayList<>(settings.getBlacklist().toStringList());
 
@@ -90,7 +92,7 @@ public final class SelfTestSession {
     }
 
     /** Forces the plugin state a self-test run needs, regardless of what the tester had set. */
-    void applyTestSettings(BestestToolPlugin main, boolean refillEnabledForThisStage) {
+    void applyTestSettings(BestestToolPlugin main, boolean refillEnabledForThisStage, boolean avoidBreakingForThisStage) {
         player.setGameMode(GameMode.SURVIVAL);
         PlayerSetting settings = main.getPlayerSetting(player);
         settings.setBestToolsEnabled(true);
@@ -105,6 +107,11 @@ public final class SelfTestSession {
         settings.setSwitchDuringBattle(false);
         settings.setConsiderSwordsForLeaves(false);
         settings.setConsiderSwordsForCobwebs(false);
+        // Forced explicitly rather than read from config.yml's default, same as the rest of this
+        // block: most stages' kits are pristine, so this is forced off; the avoid-breaking-* stages
+        // pass true here (see Stage#avoidBreaking) to actually exercise the near_breaking kit items
+        // stages.yml gives them.
+        settings.setAvoidBreakingTools(avoidBreakingForThisStage);
         settings.setRefillEnabled(refillEnabledForThisStage);
         settings.getBlacklist().clear();
         settings.getBtcache().invalidated();
@@ -132,6 +139,7 @@ public final class SelfTestSession {
             yaml.set("switchDuringBattle", savedSwitchDuringBattle);
             yaml.set("considerSwordsForLeaves", savedConsiderSwordsForLeaves);
             yaml.set("considerSwordsForCobwebs", savedConsiderSwordsForCobwebs);
+            yaml.set("avoidBreakingTools", savedAvoidBreakingTools);
             yaml.set("refillEnabled", savedRefillEnabled);
             yaml.set("blacklist", savedBlacklist);
 
@@ -171,6 +179,7 @@ public final class SelfTestSession {
         settings.setSwitchDuringBattle(savedSwitchDuringBattle);
         settings.setConsiderSwordsForLeaves(savedConsiderSwordsForLeaves);
         settings.setConsiderSwordsForCobwebs(savedConsiderSwordsForCobwebs);
+        settings.setAvoidBreakingTools(savedAvoidBreakingTools);
         settings.setRefillEnabled(savedRefillEnabled);
         settings.getBlacklist().clear();
         for (String s : savedBlacklist) settings.getBlacklist().add(s);
@@ -221,6 +230,7 @@ public final class SelfTestSession {
             settings.setSwitchDuringBattle(yaml.getBoolean("switchDuringBattle", settings.isSwitchDuringBattle()));
             settings.setConsiderSwordsForLeaves(yaml.getBoolean("considerSwordsForLeaves", settings.isConsiderSwordsForLeaves()));
             settings.setConsiderSwordsForCobwebs(yaml.getBoolean("considerSwordsForCobwebs", settings.isConsiderSwordsForCobwebs()));
+            settings.setAvoidBreakingTools(yaml.getBoolean("avoidBreakingTools", settings.isAvoidBreakingTools()));
             settings.setRefillEnabled(yaml.getBoolean("refillEnabled", settings.isRefillEnabled()));
             settings.getBlacklist().clear();
             for (String s : yaml.getStringList("blacklist")) settings.getBlacklist().add(s);

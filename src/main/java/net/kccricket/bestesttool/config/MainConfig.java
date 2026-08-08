@@ -38,6 +38,10 @@ public class MainConfig implements ManagedConfig {
     // four sword/battle toggles that used to live here moved to PlayerSetting (read once per
     // player, not per event) when they became per-player preferences.
     private volatile boolean allowCombatSwitching = true;
+    // Read on the same two hot paths as allowCombatSwitching above (every block-interact decision
+    // and every EntityDamageByEntityEvent), so it gets the same volatile-cache treatment rather
+    // than a live per-call read like getAllowInAdventureMode.
+    private volatile boolean allowAvoidBreakingTools = true;
     private volatile Set<Material> globalBlockBlacklist = Set.of();
 
     public MainConfig(BestestToolPlugin plugin) {
@@ -126,6 +130,7 @@ public class MainConfig implements ManagedConfig {
         Log.setDebugLevel(DebugLevel.parse(plugin.getConfig().getString("debug_level"), DebugLevel.OFF));
         defaultLocale = parseLocaleToken(plugin.getConfig().getString("default_locale", "en_us"));
         allowCombatSwitching = plugin.getConfig().getBoolean("allow_combat_switching", true);
+        allowAvoidBreakingTools = plugin.getConfig().getBoolean("allow_avoid_breaking_tools", true);
         globalBlockBlacklist = parseGlobalBlockBlacklist();
     }
 
@@ -205,13 +210,17 @@ public class MainConfig implements ManagedConfig {
         return plugin.getConfig().getBoolean("defaults.consider_swords_for_cobwebs", false);
     }
 
+    public boolean getDefaultAvoidBreakingTools() {
+        return plugin.getConfig().getBoolean("defaults.avoid_breaking_tools", true);
+    }
+
     /** Assembles every per-player preference default in one read, for {@link net.kccricket.bestesttool.model.PlayerSetting}'s constructor. */
     public PlayerDefaults playerDefaults() {
         return new PlayerDefaults(
                 getDefaultBestToolsEnabled(), getDefaultRefillEnabled(), getDefaultHotbarOnly(),
                 getDefaultFavoriteSlot(), getDefaultSwordOnMobs(), getDefaultUseAxeAsSword(),
                 getDefaultSwitchDuringBattle(), getDefaultConsiderSwordsForLeaves(),
-                getDefaultConsiderSwordsForCobwebs());
+                getDefaultConsiderSwordsForCobwebs(), getDefaultAvoidBreakingTools());
     }
 
     // -------------------------------------------------------------------------
@@ -230,6 +239,16 @@ public class MainConfig implements ManagedConfig {
      */
     public boolean getAllowCombatSwitching() {
         return allowCombatSwitching;
+    }
+
+    /**
+     * Server-wide kill switch for {@code avoid_breaking_tools} (mining and combat selection
+     * alike) — no permission pairing, unlike {@link #getAllowCombatSwitching()}: it's a pure
+     * on/off, not a feature gate. Read on the same hot paths as combat switching, so it's cached
+     * the same way.
+     */
+    public boolean getAllowAvoidBreakingTools() {
+        return allowAvoidBreakingTools;
     }
 
     /** Parsed once per load/reload; an unrecognized material name is warned about and skipped. */

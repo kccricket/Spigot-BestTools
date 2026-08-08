@@ -46,6 +46,7 @@ class SelfTestSessionTest extends BestToolsTestBase {
         settings.setHotbarOnly(false);
         settings.setFavoriteSlot(3);
         settings.setSwordOnMobs(false);
+        settings.setAvoidBreakingTools(false);
         settings.getBlacklist().add(Material.OBSIDIAN);
 
         SelfTestSession session = new SelfTestSession(plugin, player, EMPTY_SPEC);
@@ -56,7 +57,7 @@ class SelfTestSessionTest extends BestToolsTestBase {
         inv.setItem(0, new ItemStack(Material.NETHERITE_PICKAXE));
         inv.setHeldItemSlot(0);
         player.setGameMode(GameMode.CREATIVE);
-        session.applyTestSettings(plugin, true);
+        session.applyTestSettings(plugin, true, true);
 
         session.restoreAndClear(plugin);
 
@@ -70,6 +71,7 @@ class SelfTestSessionTest extends BestToolsTestBase {
         assertFalse(restored.isHotbarOnly());
         assertEquals(3, restored.getFavoriteSlot());
         assertFalse(restored.isSwordOnMobs());
+        assertFalse(restored.isAvoidBreakingTools(), "session started with avoid_breaking_tools off; must not leak the forced 'true'");
         assertTrue(restored.getBlacklist().contains(Material.OBSIDIAN));
         assertFalse(restored.isRefillEnabled(), "session started with refill_enabled off by default; must not leak the forced 'true'");
     }
@@ -82,7 +84,7 @@ class SelfTestSessionTest extends BestToolsTestBase {
         player.getInventory().setHeldItemSlot(4);
 
         SelfTestSession session = new SelfTestSession(plugin, player, EMPTY_SPEC);
-        session.applyTestSettings(plugin, false); // forces favoriteSlot to -1 too, but from a different starting slot
+        session.applyTestSettings(plugin, false, false); // forces favoriteSlot to -1 too, but from a different starting slot
         player.getInventory().setHeldItemSlot(7);
         session.restoreAndClear(plugin);
 

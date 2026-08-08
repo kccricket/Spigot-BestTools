@@ -133,12 +133,12 @@ public final class BenchmarkManager {
         long start = System.nanoTime();
         for (int i = 0; i < n; i++) {
             int idx = i % session.materials.length;
-            // SwordPolicy.NONE: the benchmark deliberately pins the sword-fallback preferences
-            // off so results stay comparable across releases and independent of any player's
-            // (or config.yml's) actual settings.
+            // SwordPolicy.NONE and avoidBreaking=false: the benchmark deliberately pins every
+            // preference off so results stay comparable across releases and independent of any
+            // player's (or config.yml's) actual settings.
             ItemStack result = main.toolHandler.selectBestTool(
                     session.blockData[idx], session.materials[idx], session.kit, BenchmarkWorkload.NEVER_SILK,
-                    SwordPolicy.NONE);
+                    SwordPolicy.NONE, false);
             if (result != null) session.sink += result.hashCode();
         }
         long elapsed = System.nanoTime() - start;

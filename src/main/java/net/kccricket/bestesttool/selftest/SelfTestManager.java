@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
@@ -190,7 +191,7 @@ public final class SelfTestManager {
             return;
         }
 
-        session.applyTestSettings(main, stage.kind == SelfTestSpec.StageKind.REFILL);
+        session.applyTestSettings(main, stage.kind == SelfTestSpec.StageKind.REFILL, stage.avoidBreaking);
         giveKit(session.player, stage);
         session.arena = SelfTestArena.build(session.player, stage, spec.pedestal);
         if (session.arena == null) {
@@ -210,15 +211,26 @@ public final class SelfTestManager {
         inv.setContents(new ItemStack[inv.getContents().length]);
         for (SelfTestSpec.KitItem item : stage.kit) {
             ItemStack stack = new ItemStack(item.material, item.amount);
+            ItemMeta meta = null;
             if (!item.enchantments.isEmpty()) {
-                ItemMeta meta = stack.getItemMeta();
+                meta = stack.getItemMeta();
                 for (Map.Entry<String, Integer> e : item.enchantments.entrySet()) {
                     Enchantment enchant = EnchantmentUtils.getEnchantment(e.getKey());
                     if (enchant != null) meta.addEnchant(enchant, e.getValue(), true);
                     else Log.warning("Unknown enchantment key in self-test kit: " + e.getKey());
                 }
-                stack.setItemMeta(meta);
             }
+            if (item.nearBreaking) {
+                if (meta == null) meta = stack.getItemMeta();
+                int maxDurability = item.material.getMaxDurability();
+                if (meta instanceof Damageable damageable && maxDurability > 0) {
+                    damageable.setDamage(maxDurability - 1);
+                } else {
+                    Log.warning("self-test kit item in slot " + item.slot + " (" + item.material
+                            + ") is marked near_breaking but isn't damageable");
+                }
+            }
+            if (meta != null) stack.setItemMeta(meta);
             inv.setItem(item.slot, stack);
         }
         inv.setHeldItemSlot(startingHeldSlot(stage));

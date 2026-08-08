@@ -80,15 +80,18 @@ class CommandBestToolsTest extends BestToolsTestBase {
         assertTrue(plugin.getPlayerSetting(player).isHotbarOnly());
     }
 
-    // --- The five new preference toggles: swordsforleaves/swordsforcobwebs/switchduringbattle
-    // are flat; swordonmobs/useaxeassword live under the combat-gated node. All five share the
-    // same boolPref shape as hotbaronly, so one parameterized pair of tests covers all of them. ---
+    // --- The six preference toggles: swordsforleaves/swordsforcobwebs/switchduringbattle/
+    // avoidbreaking are flat; swordonmobs/useaxeassword live under the combat-gated node. All six
+    // share the same boolPref shape as hotbaronly, so one parameterized pair of tests covers all
+    // of them. avoidbreaking rides the plain bestesttool.use gate, same as the three flat ones —
+    // no dedicated permission node, unlike combat. ---
 
     private static Stream<Arguments> booleanPreferences() {
         return Stream.of(
                 Arguments.of("swordsforleaves", (Function<PlayerSetting, Boolean>) PlayerSetting::isConsiderSwordsForLeaves),
                 Arguments.of("swordsforcobwebs", (Function<PlayerSetting, Boolean>) PlayerSetting::isConsiderSwordsForCobwebs),
                 Arguments.of("switchduringbattle", (Function<PlayerSetting, Boolean>) PlayerSetting::isSwitchDuringBattle),
+                Arguments.of("avoidbreaking", (Function<PlayerSetting, Boolean>) PlayerSetting::isAvoidBreakingTools),
                 Arguments.of("combat swordonmobs", (Function<PlayerSetting, Boolean>) PlayerSetting::isSwordOnMobs),
                 Arguments.of("combat useaxeassword", (Function<PlayerSetting, Boolean>) PlayerSetting::isUseAxeAsSword));
     }

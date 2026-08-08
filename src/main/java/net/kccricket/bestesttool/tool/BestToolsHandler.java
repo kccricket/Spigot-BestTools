@@ -35,10 +35,6 @@ public class BestToolsHandler {
     public static final int hotbarSize = 9;
     public static final int inventorySize = 36;
 
-    // Configurable Start //
-    boolean preventItemBreak = false; // Will not use Items that would break on this use
-    // Configurable End //
-
     final HashMap<Material,Tool> toolMap = new HashMap<>();
     ArrayList<Tag<Material>> usedTags = new ArrayList<>();
 
@@ -216,6 +212,19 @@ public class BestToolsHandler {
         return -1;
     }
 
+    /**
+     * Whether picking up {@code stack} could change what {@link #getBestToolFromInventory} or
+     * {@link #getBareHandSlot} would answer — used by {@code BestToolsCacheListener} to decide
+     * whether a pickup must invalidate the per-player cache. True if the stack is itself a new
+     * selection candidate (tool or sword), or if the hotbar still has an empty slot the pickup
+     * could consume, since {@code getBareHandSlot} prefers a genuinely empty hotbar slot over any
+     * stand-in item. Called before the item is added to the inventory (see
+     * {@code EntityPickupItemEvent}), so the empty-slot check reads the correct pre-pickup state.
+     */
+    public boolean pickupCouldAffectSelection(@NotNull ItemStack stack, @NotNull PlayerInventory inv) {
+        return isToolOrRoscoe(stack) || getEmptyHotbarSlot(inv) != -1;
+    }
+
     public boolean hasSilktouch(ItemStack item) {
         if(item==null) return false;
         if(!item.hasItemMeta()) return false;
@@ -237,10 +246,21 @@ public class BestToolsHandler {
      *              it. The Silk Touch pass ({@code trySilktouch}) is called with {@code 0.0}
      *              instead, since on a block where Silk Touch is the only way to get a drop at all
      *              (see {@link #silkChangesDrops}) the enchant is the point, not the speed.
+     * @param avoidBreaking When true, an item one hit from breaking (see {@link #isAboutToBreak})
+     *              is skipped entirely. Unlike {@code trySilktouch}, there is no fallback retry
+     *              here for mining: if excluding near-broken items leaves nothing, {@link
+     *              #selectBestTool} returns {@code null} and the caller falls through to its
+     *              existing bare-hand path ({@link BestToolsSelector.Outcome#BARE_HAND}) instead
+     *              of handing the player the near-broken item. Combat's equivalent,
+     *              {@link #getBestRoscoeFromArray}, deliberately keeps the old retry-and-use-it-
+     *              anyway behavior instead, since there's no bare-hand fallback in combat and
+     *              going unarmed mid-fight is usually worse than one more hit with a nearly-spent
+     *              weapon.
      */
     @Nullable
     ItemStack getBestItemStackFromArray(@NotNull BlockData data, @NotNull ItemStack[] items, boolean trySilktouch,
-                                         @NotNull Material target, float floor, @NotNull SwordPolicy policy) {
+                                         @NotNull Material target, float floor, @NotNull SwordPolicy policy,
+                                         boolean avoidBreaking) {
 
         boolean needsCorrect = data.requiresCorrectToolForDrops();
 
@@ -251,7 +271,7 @@ public class BestToolsHandler {
 
         for(ItemStack item : items) {
             if(item==null) continue; // IntelliJ says this is always false
-            // TODO: Check if durability is 1
+            if(avoidBreaking && isAboutToBreak(item)) continue;
 
             if(trySilktouch && (!isToolOrRoscoe(item) || !hasSilktouch(item))) continue;
             if(!isCandidate(item,target,policy)) continue;
@@ -269,7 +289,7 @@ public class BestToolsHandler {
 
         if(bestAny == null) {
             if(trySilktouch) {
-                return getBestItemStackFromArray(data,items,false,target,1.0f,policy);
+                return getBestItemStackFromArray(data,items,false,target,1.0f,policy,avoidBreaking);
             } else {
                 return null;
             }
@@ -277,13 +297,39 @@ public class BestToolsHandler {
         return needsCorrect && bestCorrect != null ? bestCorrect : bestAny;
     }
 
+    /**
+     * Whether {@code item} would break the next time it's used — damageable, and one point of
+     * durability away from its current max. Used by {@code avoidBreakingTools} to keep BestTools
+     * from handing a player a tool/weapon that's about to snap when a healthier alternative
+     * exists. A pristine item's meta still implements {@link Damageable} for a damageable
+     * material (the interface comes from the {@link Material}, not from whether a component patch
+     * is persisted) and {@code getDamage()} defaults to {@code 0}, so this correctly answers
+     * {@code false} for anything not actually near its limit.
+     */
+    boolean isAboutToBreak(@NotNull ItemStack item) {
+        if (!(item.getItemMeta() instanceof Damageable damageable)) return false;
+        int maxDurability = damageable.hasMaxDamage() ? damageable.getMaxDamage() : item.getType().getMaxDurability();
+        return maxDurability > 0 && maxDurability - damageable.getDamage() <= 1;
+    }
+
     @Nullable
-    ItemStack getBestRoscoeFromArray(@NotNull ItemStack[] items, ItemStack currentItem, EntityType enemy, boolean useAxe) {
+    ItemStack getBestRoscoeFromArray(@NotNull ItemStack[] items, ItemStack currentItem, EntityType enemy, boolean useAxe, boolean avoidBreaking) {
+        ItemStack best = getBestRoscoeFromArrayPass(items, currentItem, enemy, useAxe, avoidBreaking);
+        if (best == null && avoidBreaking) {
+            // Excluding near-broken items left nothing at all — retry once allowing them, so the
+            // player still gets a weapon instead of being left with whatever's already in hand
+            // just because every candidate is almost spent.
+            best = getBestRoscoeFromArrayPass(items, currentItem, enemy, useAxe, false);
+        }
+        return best;
+    }
+
+    private ItemStack getBestRoscoeFromArrayPass(ItemStack[] items, ItemStack currentItem, EntityType enemy, boolean useAxe, boolean avoidBreaking) {
 
         ArrayList<ItemStack> list = new ArrayList<>();
         for(ItemStack item : items) {
             if(item==null) continue; // IntelliJ says this is always false
-            // TODO: Check if durability is 1
+            if(avoidBreaking && isAboutToBreak(item)) continue;
 
             if(isRoscoe(item,useAxe)) {
                 list.add(item);
@@ -360,9 +406,9 @@ public class BestToolsHandler {
      * @return
      */
     @Nullable
-    ItemStack getBestToolFromInventory(@NotNull Block block, Player p, boolean hotbarOnly, @NotNull SwordPolicy policy) {
+    ItemStack getBestToolFromInventory(@NotNull Block block, Player p, boolean hotbarOnly, @NotNull SwordPolicy policy, boolean avoidBreaking) {
         ItemStack[] items = inventoryToArray(p,hotbarOnly);
-        return selectBestTool(block.getBlockData(), block.getType(), items, () -> silkChangesDrops(block), policy);
+        return selectBestTool(block.getBlockData(), block.getType(), items, () -> silkChangesDrops(block), policy, avoidBreaking);
     }
 
     /**
@@ -377,18 +423,23 @@ public class BestToolsHandler {
      * evaluating it eagerly would call {@link Block#getDrops(ItemStack)} on every block interaction.
      * In production this is {@link #silkChangesDrops(Block)}, already memoized per {@link Material}
      * by {@link #silkMattersCache}; the benchmark instead passes a constant.
+     * <p>
+     * When {@code avoidBreaking} excludes every candidate (including on the Silk Touch pass) this
+     * returns {@code null} rather than retrying with it off — see
+     * {@link #getBestItemStackFromArray}'s {@code avoidBreaking} doc for why mining deliberately
+     * does not fall back to a near-broken item the way {@link #getBestRoscoeFromArray} does.
      */
     @Nullable
     public ItemStack selectBestTool(@NotNull BlockData data, @NotNull Material mat, @NotNull ItemStack[] items,
-                              @NotNull BooleanSupplier silkChangesDrops, @NotNull SwordPolicy policy) {
-        ItemStack bestStack = getBestItemStackFromArray(data,items,profitsFromSilkTouch(mat),mat,1.0f,policy);
+                              @NotNull BooleanSupplier silkChangesDrops, @NotNull SwordPolicy policy, boolean avoidBreaking) {
+        ItemStack bestStack = getBestItemStackFromArray(data,items,profitsFromSilkTouch(mat),mat,1.0f,policy,avoidBreaking);
         if(bestStack!=null) {
             Log.debug("bestStack is "+bestStack.toString());
             return bestStack;
         }
         Log.debug("bestStack is null");
         if(silkChangesDrops.getAsBoolean()) {
-            ItemStack silkStack = getBestItemStackFromArray(data,items,true,mat,0.0f,policy);
+            ItemStack silkStack = getBestItemStackFromArray(data,items,true,mat,0.0f,policy,avoidBreaking);
             if(silkStack!=null) {
                 Log.debug("silkStack is "+silkStack.toString());
                 return silkStack;
@@ -403,10 +454,10 @@ public class BestToolsHandler {
      * @return
      */
     @Nullable
-    public ItemStack getBestRoscoeFromInventory(@NotNull EntityType enemy, Player p, boolean hotbarOnly, ItemStack currentItem, boolean useAxe) {
+    public ItemStack getBestRoscoeFromInventory(@NotNull EntityType enemy, Player p, boolean hotbarOnly, ItemStack currentItem, boolean useAxe, boolean avoidBreaking) {
         ItemStack[] items = inventoryToArray(p,hotbarOnly);
 
-        return getBestRoscoeFromArray(items,currentItem,enemy,useAxe);
+        return getBestRoscoeFromArray(items,currentItem,enemy,useAxe,avoidBreaking);
 
     }
 

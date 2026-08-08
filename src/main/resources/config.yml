@@ -34,6 +34,9 @@
 # /bestesttool swordsforcobwebs [<state>]:    Toggle (or set) using swords as a cobweb-breaking fallback
 # /bestesttool switchduringbattle [<state>]:  Toggle (or set) whether BestTools keeps switching tools
 #                                  while you hold a sword/bow/crossbow/trident
+# /bestesttool avoidbreaking [<state>]:       Toggle (or set) whether BestTools avoids handing you a
+#                                  tool/weapon that's about to break, mining or combat (needs
+#                                  allow_avoid_breaking_tools below)
 # /bestesttool combat swordonmobs [<state>]:  Toggle (or set) switching to your best sword/axe when
 #                                  attacking mobs (needs allow_combat_switching below, plus the
 #                                  bestesttool.combat permission)
@@ -112,6 +115,14 @@ defaults:
   # /bestesttool swordsforcobwebs.
   consider_swords_for_cobwebs: false
 
+  # Skip an item that's down to its last point of durability (breaks on next use) if a healthier
+  # alternative exists, for both mining tool switching and combat weapon switching. If every
+  # candidate is about to break: for mining, BestTools switches to a bare hand instead of the
+  # near-broken tool; for combat, it keeps using the near-broken weapon anyway, since going
+  # unarmed mid-fight is usually worse. Can be changed per player using /bestesttool avoidbreaking
+  # (needs allow_avoid_breaking_tools below).
+  avoid_breaking_tools: true
+
 
 # ----- General config -----
 
@@ -127,6 +138,12 @@ allow_in_adventure_mode: false
 # consider_swords_for_leaves, or consider_swords_for_cobwebs above — none of those are combat
 # features.
 allow_combat_switching: true
+
+# Server-wide kill switch for defaults.avoid_breaking_tools above (and each player's own
+# /bestesttool avoidbreaking preference). When false, BestTools may hand you an item on its last
+# point of durability even if your own preference is on — unlike allow_combat_switching, this has
+# no paired permission, it's a plain on/off.
+allow_avoid_breaking_tools: true
 
 # NOT IMPLEMENTED YET, comes with next update
 # use-sword-on-friendly-mobs: false

@@ -18,11 +18,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class SelfTestManagerSlotAvoidanceTest {
 
     private static SelfTestSpec.KitItem kitItem(int slot, Material material) {
-        return new SelfTestSpec.KitItem(slot, material, 1, Map.of());
+        return new SelfTestSpec.KitItem(slot, material, 1, Map.of(), false);
     }
 
     private static SelfTestSpec.Stage stage(SelfTestSpec.KitItem... items) {
-        return new SelfTestSpec.Stage("test", SelfTestSpec.StageKind.BLOCKS, List.of(items), List.of());
+        return new SelfTestSpec.Stage("test", SelfTestSpec.StageKind.BLOCKS, List.of(items), List.of(), false);
     }
 
     @Test

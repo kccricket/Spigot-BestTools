@@ -39,7 +39,7 @@ aliases, `/refill` and `/rf`, that go straight to the same toggle — they don't
 the `/bestesttool` tree.
 
 The `hotbaronly`/`refill`/`debug`/`swordsforleaves`/`swordsforcobwebs`/`switchduringbattle`/
-`combat swordonmobs`/`combat useaxeassword` toggles below also take an optional `[<state>]`
+`avoidbreaking`/`combat swordonmobs`/`combat useaxeassword` toggles below also take an optional `[<state>]`
 argument — `yes`/`no`, `true`/`false`, `on`/`off`, or `enable`/`disable` — to set the value
 explicitly instead of flipping it; the bare form (no argument) still toggles. The root
 `/bestesttool` toggle does not, since it's the entry point to the rest of the subcommand tree.
@@ -53,6 +53,7 @@ explicitly instead of flipping it; the bare form (no argument) still toggles. Th
 | `/bestesttool swordsforleaves [<state>]` | Toggle (or set) using a sword to break leaves when you have no shears | `bestesttool.use` |
 | `/bestesttool swordsforcobwebs [<state>]` | Toggle (or set) using a sword to break cobwebs when you have no shears | `bestesttool.use` |
 | `/bestesttool switchduringbattle [<state>]` | Toggle (or set) whether BestestTool keeps switching tools while you hold a sword/bow/crossbow/trident (not a combat feature — see [Permissions](#permissions)) | `bestesttool.use` |
+| `/bestesttool avoidbreaking [<state>]` | Toggle (or set) skipping a tool/weapon that's about to break, for mining and combat alike, when a healthier alternative exists — mining falls back to a bare hand if nothing healthy is left, combat keeps the near-broken weapon rather than going unarmed (needs `allow_avoid_breaking_tools: true` in `config.yml`) | `bestesttool.use` |
 | `/bestesttool combat swordonmobs [<state>]` | Toggle (or set) switching to your best sword/axe when attacking mobs | `bestesttool.use` + `bestesttool.combat` |
 | `/bestesttool combat useaxeassword [<state>]` | Toggle (or set) preferring an axe over a sword when it hits harder | `bestesttool.use` + `bestesttool.combat` |
 | `/bestesttool admin reload` | Reload `config.yml` and the language files | `bestesttool.admin.reload` |
@@ -88,7 +89,7 @@ works for every player out of the box. `bestesttool.admin.reload`, `bestesttool.
 | Node | Default | Grants |
 | --- | --- | --- |
 | `bestesttool` | `true` | Umbrella node for `use`, `combat`, and `refill` (does not cascade to admin nodes) |
-| `bestesttool.use` | `true` | Automatic best-tool switching itself, plus `/bestesttool` and its `hotbaronly`/`favoriteslot`/`blacklist`/`swordsforleaves`/`swordsforcobwebs`/`switchduringbattle` subcommands |
+| `bestesttool.use` | `true` | Automatic best-tool switching itself, plus `/bestesttool` and its `hotbaronly`/`favoriteslot`/`blacklist`/`swordsforleaves`/`swordsforcobwebs`/`switchduringbattle`/`avoidbreaking` subcommands |
 | `bestesttool.combat` | `true` | Best-weapon switching when attacking mobs, and `/bestesttool combat` (also needs `allow_combat_switching: true` in `config.yml`) |
 | `bestesttool.refill` | `true` | Automatic hotbar refilling itself, plus `/bestesttool refill` (`/refill`, `/rf`) |
 | `bestesttool.admin` | `op` | Umbrella node for `admin.reload`, `admin.debug`, `admin.selftest`, and `admin.benchmark` |

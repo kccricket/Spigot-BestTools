@@ -227,6 +227,10 @@ public class BestestToolPlugin extends JavaPlugin {
         selfTestManager.reloadSpec();
         dumpIfConfigured();
         updateChecker.restart();
+        // Config keys like global_block_blacklist/allow_in_adventure_mode feed BestToolsSelector's
+        // decision directly (see BestToolsSelector.decide), so a stale per-player cache would keep
+        // reusing a pre-reload verdict for whichever block type it last decided on.
+        playerSettings.values().forEach(setting -> setting.getBtcache().invalidated());
     }
 
     private void dumpIfConfigured() {

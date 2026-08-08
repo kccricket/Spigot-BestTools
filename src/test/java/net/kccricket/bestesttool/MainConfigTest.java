@@ -201,6 +201,29 @@ class MainConfigTest extends BestToolsTestBase {
                 "allow_combat_switching must be re-read (via applyToRuntime's volatile refresh) on reload");
     }
 
+    @Test
+    void defaultAvoidBreakingToolsDefaultsTrue() {
+        assertTrue(plugin.configManager.main().getDefaultAvoidBreakingTools());
+    }
+
+    @Test
+    void allowAvoidBreakingToolsDefaultsTrue() {
+        assertTrue(plugin.configManager.main().getAllowAvoidBreakingTools());
+    }
+
+    @Test
+    void allowAvoidBreakingToolsIsRefreshedOnReload() throws IOException {
+        File configFile = new File(plugin.getDataFolder(), "config.yml");
+        String edited = Files.readString(configFile.toPath())
+                .replace("allow_avoid_breaking_tools: true", "allow_avoid_breaking_tools: false");
+        Files.writeString(configFile.toPath(), edited);
+
+        plugin.configManager.reloadAll();
+
+        assertTrue(!plugin.configManager.main().getAllowAvoidBreakingTools(),
+                "allow_avoid_breaking_tools must be re-read (via applyToRuntime's volatile refresh) on reload");
+    }
+
     /** Runs {@code action}, returning every message logged at WARNING or above by the plugin logger. */
     private List<String> captureWarnings(Runnable action) {
         List<String> messages = new ArrayList<>();

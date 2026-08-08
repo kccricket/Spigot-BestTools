@@ -91,7 +91,8 @@ public final class BestToolsSelector {
         if (action != Action.LEFT_CLICK_BLOCK) return ToolDecision.NOT_APPLICABLE_DECISION;
         if (hand != EquipmentSlot.HAND) return ToolDecision.NOT_APPLICABLE_DECISION;
 
-        ItemStack bestTool = handler.getBestToolFromInventory(block, p, playerSetting.isHotbarOnly(), SwordPolicy.from(playerSetting));
+        boolean avoidBreaking = main.configManager.main().getAllowAvoidBreakingTools() && playerSetting.isAvoidBreakingTools();
+        ItemStack bestTool = handler.getBestToolFromInventory(block, p, playerSetting.isHotbarOnly(), SwordPolicy.from(playerSetting), avoidBreaking);
         return bestTool != null ? ToolDecision.switchTo(bestTool) : ToolDecision.BARE_HAND_DECISION;
     }
 }

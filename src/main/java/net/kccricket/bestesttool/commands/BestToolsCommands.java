@@ -85,6 +85,8 @@ public final class BestToolsCommands {
                         PlayerSetting::isConsiderSwordsForCobwebs, main.commandBestTools::setConsiderSwordsForCobwebs))
                 .then(boolPref(main, "switchduringbattle", Permissions.PERM_USE,
                         PlayerSetting::isSwitchDuringBattle, main.commandBestTools::setSwitchDuringBattle))
+                .then(boolPref(main, "avoidbreaking", Permissions.PERM_USE,
+                        PlayerSetting::isAvoidBreakingTools, main.commandBestTools::setAvoidBreakingTools))
                 .then(buildCombat(main))
                 .then(buildBlacklist(main))
                 .then(buildAdmin(main))

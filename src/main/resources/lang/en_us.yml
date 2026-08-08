@@ -55,6 +55,10 @@ swordsForCobwebsDisabled: "<gray>BestTools will no longer use a sword to break c
 switchDuringBattleEnabled: "<gray>BestTools will keep switching tools even while you hold a weapon.</gray>"
 switchDuringBattleDisabled: "<gray>BestTools will leave your hand alone while you hold a weapon.</gray>"
 
+# Command feedback — /bestesttool avoidbreaking toggle (needs allow_avoid_breaking_tools in config.yml)
+avoidBreakingToolsEnabled: "<gray>BestTools will avoid handing you a tool or weapon that's about to break, when you have a healthier alternative.</gray>"
+avoidBreakingToolsDisabled: "<gray>BestTools will no longer avoid near-broken tools or weapons.</gray>"
+
 # Command feedback — /bestesttool combat swordonmobs toggle (needs allow_combat_switching in
 # config.yml and the bestesttool.combat permission — otherwise the node is hidden entirely
 # rather than answered with a message, same as admin reload/debug/selftest/benchmark)

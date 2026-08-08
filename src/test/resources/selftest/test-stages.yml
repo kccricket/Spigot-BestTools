@@ -91,3 +91,15 @@ stages:
       # slots 2-8 intentionally left empty
     cases:
       - { block: DIRT, expect: DIRT }
+
+  - name: avoid-breaking
+    kind: blocks
+    avoid_breaking: true
+    kit:
+      - slot: 0
+        material: DIAMOND_PICKAXE
+        near_breaking: true
+      - { slot: 1, material: IRON_PICKAXE }
+    cases:
+      - { block: STONE, expect: IRON_PICKAXE }
+      - { block: OBSIDIAN, expect: BARE_HAND }

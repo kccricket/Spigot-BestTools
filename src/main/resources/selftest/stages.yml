@@ -7,9 +7,15 @@
 # This bundled file can be overridden wholesale by plugins/BestestTool/selftest.yml — that file, if
 # present, replaces this one entirely rather than being merged with it.
 #
-# kit: a list of hotbar items. Each entry needs "slot" (0-8) and "material"; "amount" defaults to 1
-#      and "enchantments" (registry keys -> level, e.g. silk_touch: 1) defaults to none. A slot with
-#      no entry stays empty on purpose, so the bare-hand fallback has a real empty slot to use.
+# kit: a list of hotbar items. Each entry needs "slot" (0-8) and "material"; "amount" defaults to 1,
+#      "enchantments" (registry keys -> level, e.g. silk_touch: 1) defaults to none, and
+#      "near_breaking: true" hands the item out already at one point of durability from breaking
+#      (see BestToolsHandler.isAboutToBreak) instead of pristine, to exercise avoidBreakingTools. A
+#      slot with no entry stays empty on purpose, so the bare-hand fallback has a real empty slot to use.
+#
+# A stage may also set "avoid_breaking: true" to force the tester's avoidBreakingTools preference on
+# for that stage instead of the usual forced-off (see SelfTestSession.applyTestSettings) — only
+# meaningful paired with a near_breaking kit item above.
 #
 # expect (blocks/combat cases): a Material name, a list of Material names (any one is a pass),
 #      "BARE_HAND" (an empty hand or a non-damageable item), or "UNCHANGED" (the plugin must not
@@ -87,3 +93,32 @@ stages:
       # slots 2-8 intentionally left empty
     cases:
       - { block: DIRT, expect: DIRT }
+
+  - name: avoid-breaking-skip
+    kind: blocks
+    avoid_breaking: true
+    kit:
+      - slot: 0
+        material: DIAMOND_PICKAXE
+        near_breaking: true
+      - { slot: 1, material: IRON_PICKAXE }
+      # slots 2-8 intentionally left empty
+    cases:
+      # The diamond pickaxe would normally win on speed, but it's one hit from breaking and a
+      # healthy (if slower) iron pickaxe is available, so avoidBreakingTools must skip it.
+      - { block: STONE, expect: IRON_PICKAXE }
+
+  - name: avoid-breaking-fallback
+    kind: blocks
+    avoid_breaking: true
+    kit:
+      - slot: 0
+        material: DIAMOND_PICKAXE
+        near_breaking: true
+      # no other pickaxe-family tool in the kit — nothing left to fall back to once the
+      # near-breaking pickaxe is excluded. slots 1-8 intentionally left empty.
+    cases:
+      # With no healthy alternative, mining must switch to a bare hand rather than hand over the
+      # near-breaking pickaxe anyway (unlike combat's getBestRoscoeFromArray, which deliberately
+      # keeps using a near-breaking weapon when it's the only candidate).
+      - { block: STONE, expect: BARE_HAND }
